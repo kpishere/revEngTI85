@@ -487,26 +487,18 @@
         ram:01b9 c8              RET        Z              ; Return if no key
         ram:01ba 32 06 80        LD         (DAT_ram_8006),A ; Store key code at 0x8006
         ram:01bd c9              RET                        ; Return
-        ram:01be 21              ??         21h    !
-        ram:01bf 00              ??         00h
-        ram:01c0 80              ??         80h
-        ram:01c1 f3              ??         F3h
-        ram:01c2 7e              ??         7Eh    ~
-        ram:01c3 36              ??         36h    6
-        ram:01c4 00              ??         00h
-        ram:01c5 fd              ??         FDh
-        ram:01c6 cb              ??         CBh
-        ram:01c7 00              ??         00h
-        ram:01c8 9e              ??         9Eh
-        ram:01c9 fb              ??         FBh
-        ram:01ca c9              ??         C9h
-        ram:01cb fd              ??         FDh
-        ram:01cc cb              ??         CBh
-        ram:01cd 12              ??         12h
-        ram:01ce 76              ??         76h    v
-        ram:01cf c0              ??         C0h
-        ram:01d0 18              ??         18h
-        ram:01d1 08              ??         08h
+                             FUN_ram_01be                                    XREF[0]:     ; Read keystroke
+        ram:01be 21 00 80        LD         HL,0x8000       ; Set HL to keystroke storage address
+        ram:01c1 f3              DI                         ; Disable interrupts for atomic read
+        ram:01c2 7e              LD         A,(HL)          ; Load current keystroke into A
+        ram:01c3 36 00           LD         (HL),0x00      ; Clear stored keystroke at 0x8000
+        ram:01c5 fd cb 00 9e     RES        0x3,(IY+0x0)  ; Clear key-pressed flag
+        ram:01c9 fb              EI                         ; Re-enable interrupts
+        ram:01ca c9              RET                        ; Return with A = scancode, HL = 0x8000
+                             FUN_ram_01cb                                    XREF[0]:     ; Update alpha flag 1
+        ram:01cb fd cb 12 76     BIT        0x6,(IY+0x12)  ; Test alpha lock flag
+        ram:01cf c0              RET        NZ             ; Return if alpha mode already set/locked
+        ram:01d0 18 08           JR         LAB_ram_01da    ; Otherwise, jump to alpha update handler
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
