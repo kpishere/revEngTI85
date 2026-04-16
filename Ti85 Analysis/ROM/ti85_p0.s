@@ -505,92 +505,87 @@
                              undefined FUN_ram_01d2()
              undefined         A:1            <RETURN>
                              FUN_ram_01d2                                    XREF[1]:     FUN_ram_0ccc:0ccc(c)
-        ram:01d2 fd cb 05 a6     RES        0x4,(IY+0x5)
+                             ; Speculative functionality: System flag reset/mode clearing routine.
+                             ; Clears bit 4 of IY+5 (possibly alpha/secondary input mode flag),
+                             ; clears bit 6 of IY+12 (system status flag),
+                             ; and conditionally clears bit 4 of IY+12 if bit 7 of IY+12 is clear
+                             ; (bit 7 may indicate alpha mode locked; if not locked, clear additional flag).
+                             ; Used for initializing or disabling calculator states/modes.
+        ram:01d2 fd cb 05 a6     RES        0x4,(IY+0x5)    ; Clear bit 4 of IY+5
                              LAB_ram_01d6                                    XREF[1]:     FUN_ram_056e:0579(j)
-        ram:01d6 fd cb 12 b6     RES        0x6,(IY+0x12)
-        ram:01da fd cb 12 7e     BIT        0x7,(IY+0x12)
-        ram:01de c0              RET        NZ
-        ram:01df fd cb 12 a6     RES        0x4,(IY+0x12)
+        ram:01d6 fd cb 12 b6     RES        0x6,(IY+0x12)   ; Clear bit 6 of IY+12
+        ram:01da fd cb 12 7e     BIT        0x7,(IY+0x12)   ; Test bit 7 of IY+12 (alpha lock?)
+        ram:01de c0              RET        NZ              ; Return if bit 7 set (alpha locked)
+        ram:01df fd cb 12 a6     RES        0x4,(IY+0x12)   ; Clear bit 4 of IY+12 if alpha not locked
         ram:01e3 c9              RET
-        ram:01e4 fd              ??         FDh
-        ram:01e5 cb              ??         CBh
-        ram:01e6 12              ??         12h
-        ram:01e7 fe              ??         FEh
-        ram:01e8 18              ??         18h
-        ram:01e9 04              ??         04h
-        ram:01ea fd              ??         FDh
-        ram:01eb cb              ??         CBh
-        ram:01ec 12              ??         12h
-        ram:01ed f6              ??         F6h
-        ram:01ee fd              ??         FDh
-        ram:01ef cb              ??         CBh
-        ram:01f0 12              ??         12h
-        ram:01f1 e6              ??         E6h
-        ram:01f2 fd              ??         FDh
-        ram:01f3 cb              ??         CBh
-        ram:01f4 12              ??         12h
-        ram:01f5 ae              ??         AEh
-        ram:01f6 c9              ??         C9h
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                             undefined FUN_ram_01e4()
+                             undefined         A:1            <RETURN>
+                             FUN_ram_01e4                                    XREF[0]:     
+                             ; Speculative functionality: System flag configuration routine.
+                             ; Tests bit 7 of IY+12 (possibly alpha lock or mode indicator),
+                             ; conditionally sets bit 6 if bit 7 is set,
+                             ; always sets bit 4 and clears bit 5 of IY+12.
+                             ; Likely configures flags for modes like graph/input/display states.
+                             ; Used to enable or adjust calculator behaviors based on current state.
+        ram:01e4 fd cb 12 fe     BIT        0x7,(IY+0x12)   ; Test bit 7 of IY+12
+        ram:01e8 28 04           JR         Z,LAB_ram_01ee   ; Jump if bit 7 clear
+        ram:01ea fd cb 12 f6     SET        0x6,(IY+0x12)   ; Set bit 6 if bit 7 set
+                             LAB_ram_01ee                                    XREF[1]:     ram:01e8(j)
+        ram:01ee fd cb 12 e6     SET        0x4,(IY+0x12)   ; Always set bit 4
+        ram:01f2 fd cb 12 ae     RES        0x5,(IY+0x12)   ; Always clear bit 5
+        ram:01f6 c9              RET
         ram:01f7 cd 75 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
                              LAB_ram_01fa                                    XREF[1]:     FUN_ram_0aeb:0b91(j)
-        ram:01fa fd cb 11 56     BIT        0x2,(IY+0x11)
-        ram:01fe 28 08           JR         Z,LAB_ram_0208
-        ram:0200 fd cb 11 96     RES        0x2,(IY+0x11)
-        ram:0204 37              SCF
+                             ; Speculative: Checks bit 2 of IY+11 (system flag), if set, clears it, sets carry flag,
+                             ; and calls a handler function. Possibly for managing interrupts, modes, or event flags.
+        ram:01fa fd cb 11 56     BIT        0x2,(IY+0x11)   ; Test bit 2 of IY+11
+        ram:01fe 28 08           JR         Z,LAB_ram_0208   ; Jump if bit clear
+        ram:0200 fd cb 11 96     RES        0x2,(IY+0x11)   ; Clear bit 2 if set
+        ram:0204 37              SCF                        ; Set carry flag
         ram:0205 cd 81 05        CALL       FUN_ram_0581                                     undefined FUN_ram_0581()
                              LAB_ram_0208                                    XREF[1]:     ram:01fe(j)
+                             ; Speculative: Calls thunk functions for display/memory operations.
+                             ; Likely for updating screen, handling post-event cleanup, or switching ROM pages.
         ram:0208 cd 7b 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
         ram:020b cd 81 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:020e cd              ??         CDh
-        ram:020f 87              ??         87h
-        ram:0210 3e              ??         3Eh    >
-        ram:0211 32              ??         32h    2
-        ram:0212 05              ??         05h
-        ram:0213 80              ??         80h
-        ram:0214 fe              ??         FEh
-        ram:0215 0b              ??         0Bh
-        ram:0216 c4              ??         C4h
-        ram:0217 8d              ??         8Dh
-        ram:0218 3e              ??         3Eh    >
+                             ; Speculative: Calls various thunk functions (ROM page switches), stores A to system RAM (8005h),
+                             ; compares A with 0bh, conditionally calls another thunk if not equal. Possibly for mode/event
+                             ; handling, initializing or updating display/memory states, or processing system flags.
+        ram:020e cd 87 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
+                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
+        ram:0211 32 05 80        LD         (DAT_ram_8005),A
+        ram:0214 fe 0b           CP         0xb
+        ram:0216 c4 8d 3e        CALL       NZ,thunk_FUN_ram_335f                             undefined thunk_FUN_ram_335f()
+                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
         ram:0219 cd 93 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:021c b7              ??         B7h
-        ram:021d 20              ??         20h
-        ram:021e 11              ??         11h
-        ram:021f fd              ??         FDh
-        ram:0220 cb              ??         CBh
-        ram:0221 0d              ??         0Dh
-        ram:0222 46              ??         46h    F
-        ram:0223 20              ??         20h
-        ram:0224 06              ??         06h
-        ram:0225 fd              ??         FDh
-        ram:0226 cb              ??         CBh
-        ram:0227 09              ??         09h
-        ram:0228 a6              ??         A6h
-        ram:0229 18              ??         18h
-        ram:022a cc              ??         CCh
-        ram:022b 3e              ??         3Eh    >
-        ram:022c 06              ??         06h
-        ram:022d c3              ??         C3h
-        ram:022e c6              ??         C6h
-        ram:022f 02              ??         02h
-        ram:0230 47              ??         47h    G
-        ram:0231 fd              ??         FDh
-        ram:0232 36              ??         36h    6
-        ram:0233 10              ??         10h
-        ram:0234 00              ??         00h
-        ram:0235 fe              ??         FEh
-        ram:0236 c2              ??         C2h
-        ram:0237 38              ??         38h    8
-        ram:0238 23              ??         23h    #
-        ram:0239 fe              ??         FEh
-        ram:023a c7              ??         C7h
-        ram:023b 30              ??         30h    0
-        ram:023c 07              ??         07h
-        ram:023d cd 99 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
+                             ; Speculative: Tests and manipulates system flags at IY+0d and IY+9, performs conditional jumps,
+                             ; loads A with 6, jumps to function at 02c6, sets register B, clears IY+10, compares A with c2h and c7h,
+                             ; and jumps based on carry and comparison results. Possibly for mode/state transitions, event handling,
+                             ; or conditional execution based on calculator status.
+        ram:021c b7              OR         A
+        ram:021d 20 11           JR         NZ,LAB_ram_0236
+        ram:021f fd cb 0d 46     BIT        0x0,(IY+0xd)
+        ram:0223 20 06           JR         NZ,LAB_ram_022b
+        ram:0225 fd cb 09 a6     RES        0x4,(IY+0x9)
+        ram:0229 18 cc           JR         LAB_ram_01f9
+                             LAB_ram_022b                                    XREF[1]:     ram:0223(j)
+        ram:022b 3e 06           LD         A,0x6
+        ram:022d c3 c6 02        JP         LAB_ram_02c6
+                             LAB_ram_0236                                    XREF[1]:     ram:021d(j)
+        ram:0236 47              LD         B,A
+        ram:0237 fd 36 10 00     LD         (IY+0x10),0x0
+        ram:023b fe c2           CP         0xc2
+        ram:023d 38 23           JR         C,LAB_ram_0262
+        ram:023f fe c7           CP         0xc7
+        ram:0241 30 07           JR         NC,LAB_ram_024a
+        ram:0243 cd 99 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
         ram:0240 28              ??         28h    (
         ram:0241 0e              ??         0Eh
@@ -12171,6 +12166,10 @@
                                                                                           thunk_FUN_ram_335f:3e75(c),
                                                                                           thunk_FUN_ram_335f:3e7b(T),
                                                                                           thunk_FUN_ram_335f:3e7b(c), [more]
+                             ; Speculative: ROM page switching handler. Saves registers, accesses stack for page data,
+                             ; reads current page from port 5, modifies stack with new page info (0x84, 0x33),
+                             ; and outputs new page number to port 5 to switch ROM banks for calling functions
+                             ; in other pages. Used as a thunk for inter-page function calls.
         ram:335f e5              PUSH       HL
         ram:3360 e5              PUSH       HL
         ram:3361 f5              PUSH       AF
