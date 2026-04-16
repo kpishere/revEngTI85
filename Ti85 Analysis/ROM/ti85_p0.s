@@ -3143,8 +3143,8 @@
         ram:0d18 d3 03           OUT        (DAT_io_0003),A ; Port 3: Enable ON key interrupts
         ram:0d1a fb              EI                         ; Enable interrupts globally
         ram:0d1b 76              HALT                       ; Wait for first timer interrupt
-        ram:0d1c cd 21 20        CALL       FUN_ram_2021    ; Call system initialization functions
-        ram:0d1f cd fe 1f        CALL       FUN_ram_1ffe
+        ram:0d1c cd 21 20        CALL       FUN_ram_2021    ; Initialize floating-point registers (OP1-OP6)
+        ram:0d1f cd fe 1f        CALL       FUN_ram_1ffe    ; Copy OP2 to OP3 register during initialization
         ram:0d22 cd 8e 1f        CALL       FUN_ram_1f8e
         ram:0d25 da 60 20        JP         C,LAB_ram_2060  ; Jump to error handler if carry set
         ram:0d28 c3 56 20        JP         LAB_ram_2056    ; Jump to main program execution
@@ -7751,11 +7751,13 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_1ffe()
+                             ; System initialization: Copy OP2 to OP3 register
+                             ; Part of floating-point register initialization sequence
              undefined         A:1            <RETURN>
                              FUN_ram_1ffe                                    XREF[1]:     RST0:0d1f(c)
-        ram:1ffe 21 8d 80        LD         HL,0x808d
-        ram:2001 11 a3 80        LD         DE,0x80a3
-        ram:2004 c3 9b 20        JP         LAB_ram_209b
+        ram:1ffe 21 8d 80        LD         HL,0x808d       ; Source: OP2 register
+        ram:2001 11 a3 80        LD         DE,0x80a3       ; Destination: OP3 register
+        ram:2004 c3 9b 20        JP         LAB_ram_209b_11_bytesCpy    ; Jump to memory copy routine
         ram:2007 21              ??         21h    !
         ram:2008 a3              ??         A3h
         ram:2009 80              ??         80h
@@ -7786,11 +7788,14 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_2021()
+                             ; System initialization: Initialize floating-point registers (OP1-OP6)
+                             ; Copies initial values from 0x8082 area to 0x8098 area in system RAM
+                             ; This sets up the calculator's floating-point register stack
              undefined         A:1            <RETURN>
                              FUN_ram_2021                                    XREF[1]:     RST0:0d1c(c)
-        ram:2021 11 98 80        LD         DE,0x8098
-        ram:2024 21 82 80        LD         HL,0x8082
-        ram:2027 18 72           JR         LAB_ram_209b
+        ram:2021 11 98 80        LD         DE,0x8098       ; Destination: OP1-OP6 register area start
+        ram:2024 21 82 80        LD         HL,0x8082       ; Source: Initial register values
+        ram:2027 18 72           JR         LAB_ram_209b_11_bytesCpy    ; Jump to memory copy routine
         ram:2029 21              ??         21h    !
         ram:202a ae              ??         AEh
         ram:202b 80              ??         80h
@@ -7819,11 +7824,13 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_2041()
+                             ; Floating-point operation: Copy OP1 to OP2 register
+                             ; Used in floating-point addition (RST1) to prepare operands
              undefined         A:1            <RETURN>
                              FUN_ram_2041                                    XREF[1]:     RST1:0008(T), RST1:0008(j)
-        ram:2041 21 82 80        LD         HL,0x8082
-        ram:2044 11 8d 80        LD         DE,0x808d
-        ram:2047 18 52           JR         LAB_ram_209b
+        ram:2041 21 82 80        LD         HL,0x8082       ; Source: OP1 register
+        ram:2044 11 8d 80        LD         DE,0x808d       ; Destination: OP2 register
+        ram:2047 18 52           JR         LAB_ram_209b_11_bytesCpy    ; Jump to memory copy routine
         ram:2049 21              ??         21h    !
         ram:204a b9              ??         B9h
         ram:204b 80              ??         80h
@@ -7909,21 +7916,25 @@
         ram:2095 21 8d 80        LD         HL,0x808d
                              LAB_ram_2098                                    XREF[2]:     ram:2059(j), ram:2063(j)
         ram:2098 11 82 80        LD         DE,0x8082
-                             LAB_ram_209b                                    XREF[3]:     FUN_ram_1ffe:2004(j),
+                             LAB_ram_209b_11_bytesCpy                                    XREF[3]:     FUN_ram_1ffe:2004(j),
                                                                                           FUN_ram_2021:2027(j),
                                                                                           FUN_ram_2041:2047(j)
-        ram:209b ed a0           LDI
+                             ; Memory copy routine: Copies 11 bytes from (HL) to (DE) using LDI
+                             ; Used during initialization to set up system memory areas
+        ram:209b ed a0           LDI                        ; Copy byte from (HL) to (DE), increment both pointers
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
-                             undefined FUN_ram_209d()
+                             undefined FUN_ram_209d_10_bytesCpy()
+                             ; Copy routine entry point: copies 10 bytes from (HL) to (DE)
              undefined         A:1            <RETURN>
-                             FUN_ram_209d                                    XREF[3]:     FUN_ram_2104:2107(c),
+                             FUN_ram_209d_10_bytesCpy                                    XREF[3]:     FUN_ram_2104:2107(c),
                                                                                           FUN_ram_2e87:2e59(c),
                                                                                           FUN_ram_2e87:2ea0(c)
         ram:209d ed a0           LDI
         ram:209f ed a0           LDI
-                             LAB_ram_20a1                                    XREF[1]:     FUN_ram_20e7:20ed(j)
+                             LAB_ram_20a1_8_bytesCpy                                    XREF[1]:     FUN_ram_20e7:20ed(j)
+                             ; Copy routine entry point: copies 8 bytes from (HL) to (DE)
         ram:20a1 ed a0           LDI
         ram:20a3 ed a0           LDI
         ram:20a5 ed a0           LDI
@@ -7994,7 +8005,7 @@
                              FUN_ram_20e7                                    XREF[1]:     FUN_ram_0e5b:0f3b(c)
         ram:20e7 11 85 80        LD         DE,0x8085
         ram:20ea 21 9b 80        LD         HL,0x809b
-        ram:20ed 18 b2           JR         LAB_ram_20a1
+        ram:20ed 18 b2           JR         LAB_ram_20a1_8_bytesCpy
         ram:20ef 11              ??         11h
         ram:20f0 9b              ??         9Bh
         ram:20f1 80              ??         80h
@@ -8023,7 +8034,7 @@
              undefined         A:1            <RETURN>
                              FUN_ram_2104                                    XREF[1]:     RST4:0020(T), RST4:0020(j)
         ram:2104 11 82 80        LD         DE,0x8082
-        ram:2107 c3 9d 20        JP         FUN_ram_209d                                     undefined FUN_ram_209d()
+        ram:2107 c3 9d 20        JP         FUN_ram_209d_10_bytesCpy                                     undefined FUN_ram_209d_10_bytesCpy()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
         ram:210a e7              ??         E7h
         ram:210b 11              ??         11h
@@ -11186,7 +11197,7 @@
         ram:2e54 e1              POP        HL
         ram:2e55 ed 5b e1 8b     LD         DE,(DAT_ram_8be1)
                              LAB_ram_2e59                                    XREF[1]:     ram:2ea4(j)
-        ram:2e59 cd 9d 20        CALL       FUN_ram_209d                                     undefined FUN_ram_209d()
+        ram:2e59 cd 9d 20        CALL       FUN_ram_209d_10_bytesCpy                                     undefined FUN_ram_209d_10_bytesCpy()
         ram:2e5c ed 53 e1 8b     LD         (DAT_ram_8be1),DE
         ram:2e60 c9              RET
         ram:2e61 3a              ??         3Ah    :
@@ -11243,7 +11254,7 @@
         ram:2e98 cd b8 2f        CALL       FUN_ram_2fb8                                     undefined FUN_ram_2fb8()
         ram:2e9b e1              POP        HL
         ram:2e9c ed 5b e1 8b     LD         DE,(DAT_ram_8be1)
-        ram:2ea0 cd 9d 20        CALL       FUN_ram_209d                                     undefined FUN_ram_209d()
+        ram:2ea0 cd 9d 20        CALL       FUN_ram_209d_10_bytesCpy                                     undefined FUN_ram_209d_10_bytesCpy()
         ram:2ea3 23              INC        HL
         ram:2ea4 18 b3           JR         LAB_ram_2e59
         ram:2ea6 2a              ??         2Ah    *
