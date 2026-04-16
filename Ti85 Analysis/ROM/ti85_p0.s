@@ -1,4 +1,26 @@
                              //
+                             // TI-85 ROM Page 0 Disassembly
+                             // This file contains the disassembled Z80 assembly code from the TI-85 calculator's ROM.
+                             // The TI-85 uses a Z80 CPU with custom hardware ports for LCD, keypad, memory paging, etc.
+                             //
+                             // Memory Map (TI-85):
+                             // 0000-3FFF: ROM Page 0 (this file)
+                             // 4000-7FFF: Banked ROM pages (selected via port 5)
+                             // 8000-FFFF: RAM (system RAM at 8000+, user memory, display buffer at FC00-FFFF)
+                             //
+                             // Hardware Ports:
+                             // Port 0: LCD video buffer offset
+                             // Port 1: Keypad (write masks, read key status)
+                             // Port 2: LCD contrast
+                             // Port 3: ON status, LCD power, interrupt control
+                             // Port 4: Video buffer width, interrupt speed
+                             // Port 5: Memory page selection
+                             // Port 6: Power mode
+                             // Port 7: Link port
+                             //
+                             // RST Vectors: Z80 restart instructions (interrupt handlers)
+                             // RST0-RST7 jump to fixed addresses, used for common system calls
+                             //
                              // Page 0
                              // fileOffset=0, length=16384
                              // ram: ram:0000-ram:3fff
@@ -7,21 +29,25 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined RST0()
+                             ; RST0 - System initialization/reset handler
+                             ; Called on power-on or system reset
              undefined         A:1            <RETURN>
                              RST0                                            XREF[1]:     Entry Point(*)
-        ram:0000 3e 17           LD         A,0x17
-        ram:0002 d3 04           OUT        (DAT_io_0004),A
-        ram:0004 c3 ed 0c        JP         SetStackPointer
-        ram:0007 ff              ??         FFh
+        ram:0000 3e 17           LD         A,0x17          ; Load A with 0x17 (23 decimal)
+        ram:0002 d3 04           OUT        (DAT_io_0004),A ; Output to port 4: Set video buffer width to 16-byte (normal)
+                                                         ; and interrupt speed to normal (bits 4-3 = 10, bits 2-1 = 11)
+        ram:0004 c3 ed 0c        JP         SetStackPointer ; Jump to stack pointer initialization
+        ram:0007 ff              ??         FFh            ; Unused byte (padding to align RST vectors)
                              **************************************************************
                              *                       THUNK FUNCTION                       *
                              **************************************************************
                              thunk undefined RST1()
+                             ; RST1 - Thunk to floating point addition routine
                                Thunked-Function: FUN_ram_2041
              undefined         A:1            <RETURN>
                              RST1                                            XREF[1]:     Entry Point(*)
-        ram:0008 c3 41 20        JP         FUN_ram_2041
-        ram:000b fd              ??         FDh
+        ram:0008 c3 41 20        JP         FUN_ram_2041    ; Jump to FP addition function at 0x2041
+        ram:000b fd              ??         FDh            ; Unused bytes (padding)
         ram:000c cb              ??         CBh
         ram:000d 07              ??         07h
         ram:000e 46              ??         46h    F
@@ -30,11 +56,12 @@
                              *                       THUNK FUNCTION                       *
                              **************************************************************
                              thunk undefined RST2()
+                             ; RST2 - Thunk to floating point multiplication routine
                                Thunked-Function: FUN_ram_26c8
              undefined         A:1            <RETURN>
                              RST2                                            XREF[1]:     Entry Point(*)
-        ram:0010 c3 c8 26        JP         FUN_ram_26c8
-        ram:0013 fd              ??         FDh
+        ram:0010 c3 c8 26        JP         FUN_ram_26c8    ; Jump to FP multiplication function at 0x26c8
+        ram:0013 fd              ??         FDh            ; Unused bytes (padding)
         ram:0014 cb              ??         CBh
         ram:0015 08              ??         08h
         ram:0016 4e              ??         4Eh    N
@@ -43,27 +70,31 @@
                              *                       THUNK FUNCTION                       *
                              **************************************************************
                              thunk undefined RST3()
+                             ; RST3 - Thunk to floating point division routine
                                Thunked-Function: FUN_ram_2e87
              undefined         A:1            <RETURN>
                              RST3                                            XREF[1]:     Entry Point(*)
-        ram:0018 c3 87 2e        JP         FUN_ram_2e87
+        ram:0018 c3 87 2e        JP         FUN_ram_2e87    ; Jump to FP division function at 0x2e87
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_001b()
+                             ; Set system flag bit 0 at IY+0x3
+                             ; IY appears to be a system flags base pointer
              undefined         A:1            <RETURN>
                              FUN_ram_001b                                    XREF[1]:     FUN_ram_2c0b:2c0e(c)
-        ram:001b fd cb 03 c6     SET        0x0,(IY+0x3)
+        ram:001b fd cb 03 c6     SET        0x0,(IY+0x3)    ; Set bit 0 of system flags byte at IY+0x3
         ram:001f c9              RET
                              **************************************************************
                              *                       THUNK FUNCTION                       *
                              **************************************************************
                              thunk undefined RST4()
+                             ; RST4 - Thunk to another floating point operation (possibly comparison or conversion)
                                Thunked-Function: FUN_ram_2104
              undefined         A:1            <RETURN>
                              RST4                                            XREF[1]:     Entry Point(*)
-        ram:0020 c3 04 21        JP         FUN_ram_2104
-        ram:0023 3a              ??         3Ah    :
+        ram:0020 c3 04 21        JP         FUN_ram_2104    ; Jump to FP operation at 0x2104
+        ram:0023 3a              ??         3Ah    :       ; Unused bytes (padding)
         ram:0024 56              ??         56h    V
         ram:0025 8a              ??         8Ah
         ram:0026 b7              ??         B7h
@@ -72,37 +103,45 @@
                              *                       THUNK FUNCTION                       *
                              **************************************************************
                              thunk undefined RST5()
+                             ; RST5 - Thunk to system function (possibly display or I/O related)
                                Thunked-Function: FUN_ram_0e5b
              undefined         A:1            <RETURN>
                              RST5                                            XREF[1]:     Entry Point(*)
-        ram:0028 c3 5b 0e        JP         FUN_ram_0e5b
+        ram:0028 c3 5b 0e        JP         FUN_ram_0e5b    ; Jump to system function at 0x0e5b
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_002b()
+                             ; Clear system variable at 0x8a56
+                             ; This appears to be a system status or error flag
              undefined         A:1            <RETURN>
                              FUN_ram_002b                                    XREF[1]:     FUN_ram_056e:0575(c)
-        ram:002b 97              SUB        A
-        ram:002c 32 56 8a        LD         (DAT_ram_8a56),A
+        ram:002b 97              SUB        A               ; Clear A register (A = 0)
+        ram:002c 32 56 8a        LD         (DAT_ram_8a56),A ; Store 0 at system RAM location 0x8a56
         ram:002f c9              RET
                              **************************************************************
                              *                       THUNK FUNCTION                       *
                              **************************************************************
                              thunk undefined RST6()
+                             ; RST6 - Thunk to system function (possibly keyboard or I/O related)
                                Thunked-Function: FUN_ram_0d78
              undefined         A:1            <RETURN>
                              RST6                                            XREF[2]:     Entry Point(*), ram:3f4a(c)
-        ram:0030 c3 78 0d        JP         FUN_ram_0d78
+        ram:0030 c3 78 0d        JP         FUN_ram_0d78    ; Jump to system function at 0x0d78
                              LAB_ram_0033                                    XREF[1]:     ram:045f(j)
-        ram:0033 7e              LD         A,(HL)
-        ram:0034 23              INC        HL
-        ram:0035 66              LD         H,(HL)
-        ram:0036 6f              LD         L,A
-        ram:0037 c9              RET
+                             ; Load HL with word at (HL) - indirect load
+        ram:0033 7e              LD         A,(HL)          ; Load A with byte at HL
+        ram:0034 23              INC        HL              ; Increment HL
+        ram:0035 66              LD         H,(HL)          ; Load H with byte at HL
+        ram:0036 6f              LD         L,A             ; Load L with original A
+        ram:0037 c9              RET                        ; Return with HL = word that was at original HL
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined RST7()
+                             ; RST7 - Main interrupt service routine
+                             ; Handles ON key, timer interrupts, and other hardware events
+                             ; Reads port 3 (ON status/interrupt flags) to determine interrupt source
              undefined         A:1            <RETURN>
                              RST7                                            XREF[52]:    Entry Point(*), ram:3fcd(c),
                                                                                           ram:3fce(c), ram:3fcf(c),
@@ -114,46 +153,50 @@
                                                                                           ram:3fda(c), ram:3fdb(c),
                                                                                           ram:3fdc(c), ram:3fdd(c),
                                                                                           ram:3fde(c), ram:3fdf(c), [more]
-        ram:0038 08              EX         AF,AF_
-        ram:0039 d9              EXX
-        ram:003a db 03           IN         A,(DAT_io_0003)
-        ram:003c 1f              RRA
-        ram:003d 38 10           JR         C,LAB_ram_004f
-        ram:003f 1f              RRA
-        ram:0040 38 14           JR         C,LAB_ram_0056
-        ram:0042 18 02           JR         LAB_ram_0046
+        ram:0038 08              EX         AF,AF_          ; Exchange AF with shadow AF registers
+        ram:0039 d9              EXX                        ; Exchange with shadow BC/DE/HL registers
+        ram:003a db 03           IN         A,(DAT_io_0003) ; Read port 3 (ON status/interrupt flags)
+        ram:003c 1f              RRA                        ; Rotate right - check bit 0 (ON interrupt happened)
+        ram:003d 38 10           JR         C,LAB_ram_004f  ; If ON interrupt, handle it
+        ram:003f 1f              RRA                        ; Check bit 1 (timer interrupt happened)
+        ram:0040 38 14           JR         C,LAB_ram_0056  ; If timer interrupt, handle it
+        ram:0042 18 02           JR         LAB_ram_0046    ; Neither interrupt, skip to exit
                              LAB_ram_0044                                    XREF[2]:     RST7:0054(j), ram:0072(j)
-        ram:0044 d3 03           OUT        (DAT_io_0003),A
+        ram:0044 d3 03           OUT        (DAT_io_0003),A ; Write to port 3 to acknowledge interrupt
                              LAB_ram_0046                                    XREF[1]:     RST7:0042(j)
-        ram:0046 3e 0b           LD         A,0xb
+        ram:0046 3e 0b           LD         A,0xb           ; Load A with 0x0B
                              LAB_ram_0048                                    XREF[1]:     FUN_ram_0aeb:0b12(j)
-        ram:0048 d3 03           OUT        (DAT_io_0003),A
-        ram:004a 08              EX         AF,AF_
-        ram:004b d9              EXX
-        ram:004c fb              EI
-        ram:004d ed 4d           RETI
+        ram:0048 d3 03           OUT        (DAT_io_0003),A ; Write 0x0B to port 3 (re-enable interrupts)
+        ram:004a 08              EX         AF,AF_          ; Restore AF registers
+        ram:004b d9              EXX                        ; Restore BC/DE/HL registers
+        ram:004c fb              EI                         ; Enable interrupts
+        ram:004d ed 4d           RETI                       ; Return from interrupt
                              LAB_ram_004f                                    XREF[1]:     ram:003d(j)
-        ram:004f cd eb 0a        CALL       FUN_ram_0aeb                                     undefined FUN_ram_0aeb()
-        ram:0052 3e 0a           LD         A,0xa
-        ram:0054 18 ee           JR         LAB_ram_0044
+                             ; Handle ON key interrupt
+        ram:004f cd eb 0a        CALL       FUN_ram_0aeb    ; Call ON key handler
+        ram:0052 3e 0a           LD         A,0xa           ; Load A with 0x0A
+        ram:0054 18 ee           JR         LAB_ram_0044    ; Jump back to acknowledge interrupt
                              LAB_ram_0056                                    XREF[1]:     ram:0040(j)
-        ram:0056 fd cb 12 46     BIT        0x0,(IY+0x12)
-        ram:005a c4 ac 00        CALL       NZ,FUN_ram_00ac                                  undefined FUN_ram_00ac()
-        ram:005d fd cb 12 56     BIT        0x2,(IY+0x12)
-        ram:0061 20 0d           JR         NZ,LAB_ram_0070
-        ram:0063 cd 1b 01        CALL       FUN_ram_011b                                     undefined FUN_ram_011b()
+                             ; Handle timer interrupt (200Hz)
+        ram:0056 fd cb 12 46     BIT        0x0,(IY+0x12)  ; Check system flag bit 0 at IY+0x12
+        ram:005a c4 ac 00        CALL       NZ,FUN_ram_00ac ; If set, call timer-related function
+        ram:005d fd cb 12 56     BIT        0x2,(IY+0x12)  ; Check system flag bit 2 at IY+0x12
+        ram:0061 20 0d           JR         NZ,LAB_ram_0070 ; If set, skip keypad handling
+        ram:0063 cd 1b 01        CALL       FUN_ram_011b    ; Call keypad scanning function
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined NMI_ISR()
+                             ; Non-Maskable Interrupt service routine
+                             ; NMI is triggered by certain hardware events
              undefined         A:1            <RETURN>
                              NMI_ISR                                         XREF[1]:     Entry Point(*)
-        ram:0066 fd cb 0c 56     BIT        0x2,(IY+0xc)
-        ram:006a c4 bf 3f        CALL       NZ,LAB_ram_3fbe+1
-        ram:006d cd ea 00        CALL       FUN_ram_00ea                                     undefined FUN_ram_00ea()
+        ram:0066 fd cb 0c 56     BIT        0x2,(IY+0xc)    ; Check system flag at IY+0xc
+        ram:006a c4 bf 3f        CALL       NZ,LAB_ram_3fbe+1 ; Call function if flag set
+        ram:006d cd ea 00        CALL       FUN_ram_00ea    ; Call another NMI handler
                              LAB_ram_0070                                    XREF[1]:     RST7:0061(j)
-        ram:0070 3e 09           LD         A,0x9
-        ram:0072 c3 44 00        JP         LAB_ram_0044
+        ram:0070 3e 09           LD         A,0x9           ; Load A with 0x09
+        ram:0072 c3 44 00        JP         LAB_ram_0044    ; Jump to acknowledge interrupt
         ram:0075 fd              ??         FDh
         ram:0076 cb              ??         CBh
         ram:0077 09              ??         09h
@@ -218,29 +261,31 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_00ac()
+                             ; Timer-related function called during 200Hz interrupts
+                             ; Appears to handle LCD display updates or blinking
              undefined         A:1            <RETURN>
                              FUN_ram_00ac                                    XREF[1]:     RST7:005a(c)
-        ram:00ac 21 80 80        LD         HL,0x8080
-        ram:00af 35              DEC        (HL=>DAT_ram_8080)
-        ram:00b0 c0              RET        NZ
-        ram:00b1 36 1c           LD         (HL=>DAT_ram_8080),0x1c
-        ram:00b3 21 81 80        LD         HL,0x8081
-        ram:00b6 cb 0e           RRC        (HL=>DAT_ram_8081)
-        ram:00b8 7e              LD         A,(HL=>DAT_ram_8081)
-        ram:00b9 21 0f fc        LD         HL,0xfc0f
-        ram:00bc 06 08           LD         B,0x8
-        ram:00be 11 10 00        LD         DE,0x10
+        ram:00ac 21 80 80        LD         HL,0x8080       ; Load HL with system RAM address 0x8080
+        ram:00af 35              DEC        (HL=>DAT_ram_8080) ; Decrement counter at 0x8080
+        ram:00b0 c0              RET        NZ             ; Return if not zero
+        ram:00b1 36 1c           LD         (HL=>DAT_ram_8080),0x1c ; Reset counter to 28 (decimal)
+        ram:00b3 21 81 80        LD         HL,0x8081       ; Load HL with system RAM address 0x8081
+        ram:00b6 cb 0e           RRC        (HL=>DAT_ram_8081) ; Rotate right through carry
+        ram:00b8 7e              LD         A,(HL=>DAT_ram_8081) ; Load A with rotated value
+        ram:00b9 21 0f fc        LD         HL,0xfc0f       ; Load HL with display buffer address 0xFC0F
+        ram:00bc 06 08           LD         B,0x8          ; Load B with 8 (loop counter)
+        ram:00be 11 10 00        LD         DE,0x10        ; Load DE with 16 (offset for next display row)
                              LAB_ram_00c1                                    XREF[1]:     ram:00cb(j)
-        ram:00c1 1f              RRA
-        ram:00c2 38 04           JR         C,LAB_ram_00c8
-        ram:00c4 cb 86           RES        0x0,(HL=>DAT_ram_fc0f)
-        ram:00c6 18 02           JR         LAB_ram_00ca
+        ram:00c1 1f              RRA                        ; Rotate A right through carry
+        ram:00c2 38 04           JR         C,LAB_ram_00c8  ; If carry set, set pixel
+        ram:00c4 cb 86           RES        0x0,(HL=>DAT_ram_fc0f) ; Clear bit 0 (pixel off)
+        ram:00c6 18 02           JR         LAB_ram_00ca    ; Skip to next
                              LAB_ram_00c8                                    XREF[1]:     ram:00c2(j)
-        ram:00c8 cb c6           SET        0x0,(HL=>DAT_ram_fc0f)
+        ram:00c8 cb c6           SET        0x0,(HL=>DAT_ram_fc0f) ; Set bit 0 (pixel on)
                              LAB_ram_00ca                                    XREF[1]:     ram:00c6(j)
-        ram:00ca 19              ADD        HL,DE
-        ram:00cb 10 f4           DJNZ       LAB_ram_00c1
-        ram:00cd c9              RET
+        ram:00ca 19              ADD        HL,DE          ; Add 16 to HL (next display row)
+        ram:00cb 10 f4           DJNZ       LAB_ram_00c1    ; Decrement B and loop if not zero
+        ram:00cd c9              RET                        ; Return
         ram:00ce 00              ??         00h
         ram:00cf fc              ??         FCh
         ram:00d0 04              ??         04h
@@ -316,136 +361,149 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_011b()
+                             ; Keypad scanning function called during timer interrupts
+                             ; Reads keypad state and handles key press/release events
              undefined         A:1            <RETURN>
                              FUN_ram_011b                                    XREF[1]:     RST7:0063(c)
-        ram:011b cd 68 01        CALL       FUN_ram_0168                                     undefined FUN_ram_0168()
-        ram:011e 38 3d           JR         C,LAB_ram_015d
-        ram:0120 21 02 80        LD         HL,0x8002
-        ram:0123 be              CP         (HL=>DAT_ram_8002)
-        ram:0124 21 04 80        LD         HL,0x8004
-        ram:0127 28 05           JR         Z,LAB_ram_012e
-        ram:0129 32 02 80        LD         (DAT_ram_8002),A
-        ram:012c 36 05           LD         (HL=>DAT_ram_8004),0x5
+        ram:011b cd 68 01        CALL       FUN_ram_0168    ; Call keypad reading function
+        ram:011e 38 3d           JR         C,LAB_ram_015d  ; If carry set (error?), handle error
+        ram:0120 21 02 80        LD         HL,0x8002       ; Load HL with system RAM address 0x8002
+        ram:0123 be              CP         (HL=>DAT_ram_8002) ; Compare A with previous keypad state
+        ram:0124 21 04 80        LD         HL,0x8004       ; Load HL with system RAM address 0x8004
+        ram:0127 28 05           JR         Z,LAB_ram_012e  ; If same as previous, skip
+        ram:0129 32 02 80        LD         (DAT_ram_8002),A ; Store new keypad state
+        ram:012c 36 05           LD         (HL=>DAT_ram_8004),0x5 ; Set debounce counter
                              LAB_ram_012e                                    XREF[1]:     ram:0127(j)
-        ram:012e b7              OR         A
-        ram:012f 20 03           JR         NZ,LAB_ram_0134
-        ram:0131 35              DEC        (HL=>DAT_ram_8004)
-        ram:0132 c0              RET        NZ
-        ram:0133 34              INC        (HL=>DAT_ram_8004)
+        ram:012e b7              OR         A              ; Test if any key pressed
+        ram:012f 20 03           JR         NZ,LAB_ram_0134 ; If key pressed, handle
+        ram:0131 35              DEC        (HL=>DAT_ram_8004) ; Decrement debounce counter
+        ram:0132 c0              RET        NZ             ; Return if still debouncing
+        ram:0133 34              INC        (HL=>DAT_ram_8004) ; Reset debounce counter
                              LAB_ram_0134                                    XREF[1]:     ram:012f(j)
-        ram:0134 21 01 80        LD         HL,0x8001
-        ram:0137 be              CP         (HL=>DAT_ram_8001)
-        ram:0138 20 12           JR         NZ,LAB_ram_014c
-        ram:013a b7              OR         A
-        ram:013b c8              RET        Z
-        ram:013c fe 20           CP         0x20
-        ram:013e 28 03           JR         Z,LAB_ram_0143
-        ram:0140 fe 05           CP         0x5
-        ram:0142 d0              RET        NC
+        ram:0134 21 01 80        LD         HL,0x8001       ; Load HL with system RAM address 0x8001
+        ram:0137 be              CP         (HL=>DAT_ram_8001) ; Compare with last processed key
+        ram:0138 20 12           JR         NZ,LAB_ram_014c ; If different key, handle new key
+        ram:013a b7              OR         A              ; Test if key still pressed
+        ram:013b c8              RET        Z              ; Return if no key pressed
+        ram:013c fe 20           CP         0x20           ; Check if SPACE key
+        ram:013e 28 03           JR         Z,LAB_ram_0143 ; If SPACE, handle repeat
+        ram:0140 fe 05           CP         0x5            ; Check if another key
+        ram:0142 d0              RET        NC             ; Return if not repeatable key
                              LAB_ram_0143                                    XREF[1]:     ram:013e(j)
-        ram:0143 21 03 80        LD         HL,0x8003
-        ram:0146 35              DEC        (HL=>DAT_ram_8003)
-        ram:0147 c0              RET        NZ
-        ram:0148 36 0e           LD         (HL=>DAT_ram_8003),0xe
-        ram:014a 18 65           JR         FUN_ram_01b1                                     undefined FUN_ram_01b1()
+        ram:0143 21 03 80        LD         HL,0x8003       ; Load HL with system RAM address 0x8003
+        ram:0146 35              DEC        (HL=>DAT_ram_8003) ; Decrement repeat counter
+        ram:0147 c0              RET        NZ             ; Return if not time for repeat
+        ram:0148 36 0e           LD         (HL=>DAT_ram_8003),0xe ; Reset repeat counter to 14
+        ram:014a 18 65           JR         FUN_ram_01b1    ; Jump to key processing function
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
                              LAB_ram_014c                                    XREF[1]:     ram:0138(j)
-        ram:014c cd b1 01        CALL       FUN_ram_01b1                                     undefined FUN_ram_01b1()
-        ram:014f b7              OR         A
-        ram:0150 28 04           JR         Z,LAB_ram_0156
-        ram:0152 fd cb 00 e6     SET        0x4,(IY+0x0)
+        ram:014c cd b1 01        CALL       FUN_ram_01b1    ; Call key processing function
+        ram:014f b7              OR         A              ; Test result
+        ram:0150 28 04           JR         Z,LAB_ram_0156 ; If zero, skip flag set
+        ram:0152 fd cb 00 e6     SET        0x4,(IY+0x0)   ; Set system flag bit 4
                              LAB_ram_0156                                    XREF[1]:     ram:0150(j)
-        ram:0156 77              LD         (HL=>DAT_ram_8001),A
-        ram:0157 3e 46           LD         A,0x46
-        ram:0159 32 03 80        LD         (DAT_ram_8003),A
-        ram:015c c9              RET
+        ram:0156 77              LD         (HL=>DAT_ram_8001),A ; Store processed key
+        ram:0157 3e 46           LD         A,0x46          ; Load A with 0x46
+        ram:0159 32 03 80        LD         (DAT_ram_8003),A ; Store initial repeat delay
+        ram:015c c9              RET                        ; Return
                              LAB_ram_015d                                    XREF[1]:     ram:011e(j)
-        ram:015d 3e ff           LD         A,0xff
-        ram:015f 32 02 80        LD         (DAT_ram_8002),A
-        ram:0162 3e 05           LD         A,0x5
-        ram:0164 32 04 80        LD         (DAT_ram_8004),A
-        ram:0167 c9              RET
+                             ; Error handling for keypad read failure
+        ram:015d 3e ff           LD         A,0xff          ; Load A with 0xFF (error state)
+        ram:015f 32 02 80        LD         (DAT_ram_8002),A ; Store error state
+        ram:0162 3e 05           LD         A,0x5           ; Load A with 0x5
+        ram:0164 32 04 80        LD         (DAT_ram_8004),A ; Store debounce value
+        ram:0167 c9              RET                        ; Return
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_0168()
+                             ; Keypad reading function - scans TI-85 keypad matrix
+                             ; Returns key code in A, or sets carry flag on error
              undefined         A:1            <RETURN>
                              FUN_ram_0168                                    XREF[1]:     FUN_ram_011b:011b(c)
-        ram:0168 97              SUB        A
-        ram:0169 cd a2 01        CALL       FUN_ram_01a2                                     undefined FUN_ram_01a2()
-        ram:016c ee ff           XOR        0xff
-        ram:016e c8              RET        Z
-        ram:016f 21 00 00        LD         HL,0x0
-        ram:0172 0e fe           LD         C,0xfe
-        ram:0174 16 01           LD         D,0x1
+        ram:0168 97              SUB        A               ; Clear A (A = 0)
+        ram:0169 cd a2 01        CALL       FUN_ram_01a2    ; Read keypad with mask 0x00
+        ram:016c ee ff           XOR        0xff           ; Invert bits (pressed keys = 1)
+        ram:016e c8              RET        Z              ; Return if no keys pressed (A=0)
+        ram:016f 21 00 00        LD         HL,0x0         ; Initialize HL = 0
+        ram:0172 0e fe           LD         C,0xfe         ; C = 0xFE (keypad scan mask)
+        ram:0174 16 01           LD         D,0x1          ; D = 1 (row counter)
                              LAB_ram_0176                                    XREF[1]:     ram:0195(j)
-        ram:0176 79              LD         A,C
-        ram:0177 cd a2 01        CALL       FUN_ram_01a2                                     undefined FUN_ram_01a2()
-        ram:017a 1e 00           LD         E,0x0
-        ram:017c 06 08           LD         B,0x8
+                             ; Scan each keypad row
+        ram:0176 79              LD         A,C            ; A = current scan mask
+        ram:0177 cd a2 01        CALL       FUN_ram_01a2    ; Read keypad with current mask
+        ram:017a 1e 00           LD         E,0x0          ; E = 0 (column counter)
+        ram:017c 06 08           LD         B,0x8          ; B = 8 (bits to check)
                              LAB_ram_017e                                    XREF[1]:     ram:0183(j)
-        ram:017e 17              RLA
-        ram:017f 38 02           JR         C,LAB_ram_0183
-        ram:0181 1c              INC        E
-        ram:0182 68              LD         L,B
+                             ; Check each bit in the row
+        ram:017e 17              RLA                        ; Rotate A left (check next bit)
+        ram:017f 38 02           JR         C,LAB_ram_0183  ; If bit set, key pressed
+        ram:0181 1c              INC        E              ; Increment column counter
+        ram:0182 68              LD         L,B            ; L = current bit position
                              LAB_ram_0183                                    XREF[1]:     ram:017f(j)
-        ram:0183 10 f9           DJNZ       LAB_ram_017e
-        ram:0185 7b              LD         A,E
-        ram:0186 b7              OR         A
-        ram:0187 28 09           JR         Z,LAB_ram_0192
-        ram:0189 fe 02           CP         0x2
-        ram:018b 30 13           JR         NC,LAB_ram_01a0
-        ram:018d 7c              LD         A,H
-        ram:018e b7              OR         A
-        ram:018f 20 0f           JR         NZ,LAB_ram_01a0
-        ram:0191 62              LD         H,D
+        ram:0183 10 f9           DJNZ       LAB_ram_017e    ; Loop for 8 bits
+        ram:0185 7b              LD         A,E            ; A = column number
+        ram:0186 b7              OR         A              ; Test if any key found
+        ram:0187 28 09           JR         Z,LAB_ram_0192 ; If no key in this row, continue
+        ram:0189 fe 02           CP         0x2            ; Check if more than 1 key pressed
+        ram:018b 30 13           JR         NC,LAB_ram_01a0 ; If multiple keys, error
+        ram:018d 7c              LD         A,H            ; A = row number
+        ram:018e b7              OR         A              ; Test if row already found
+        ram:018f 20 0f           JR         NZ,LAB_ram_01a0 ; If multiple rows, error
+        ram:0191 62              LD         H,D            ; H = current row number
                              LAB_ram_0192                                    XREF[1]:     ram:0187(j)
-        ram:0192 14              INC        D
-        ram:0193 cb 01           RLC        C
-        ram:0195 38 df           JR         C,LAB_ram_0176
-        ram:0197 7c              LD         A,H
-        ram:0198 b7              OR         A
-        ram:0199 c8              RET        Z
-        ram:019a 3d              DEC        A
-        ram:019b 17              RLA
-        ram:019c 17              RLA
-        ram:019d 17              RLA
-        ram:019e 85              ADD        A,L
-        ram:019f c9              RET
+        ram:0192 14              INC        D              ; Increment row counter
+        ram:0193 cb 01           RLC        C              ; Rotate scan mask left
+        ram:0195 38 df           JR         C,LAB_ram_0176 ; If carry, continue scanning
+        ram:0197 7c              LD         A,H            ; A = final row number
+        ram:0198 b7              OR         A              ; Test if any key found
+        ram:0199 c8              RET        Z              ; Return if no key pressed
+        ram:019a 3d              DEC        A              ; Adjust row number (0-based)
+        ram:019b 17              RLA                        ; Shift left
+        ram:019c 17              RLA                        ; Shift left again
+        ram:019d 17              RLA                        ; Shift left again (multiply by 8)
+        ram:019e 85              ADD        A,L            ; Add column number
+        ram:019f c9              RET                        ; Return key code
                              LAB_ram_01a0                                    XREF[2]:     ram:018b(j), ram:018f(j)
-        ram:01a0 37              SCF
-        ram:01a1 c9              RET
+                             ; Error: multiple keys pressed
+        ram:01a0 37              SCF                        ; Set carry flag (error)
+        ram:01a1 c9              RET                        ; Return with error
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_01a2()
+                             ; Low-level keypad I/O function
+                             ; Writes mask to port 1, reads back keypad state
+                             ; A = keypad mask on entry, A = keypad state on exit
              undefined         A:1            <RETURN>
                              FUN_ram_01a2                                    XREF[2]:     FUN_ram_0168:0169(c),
                                                                                           FUN_ram_0168:0177(c)
-        ram:01a2 d3 01           OUT        (DAT_io_0001),A
-        ram:01a4 00              NOP
+        ram:01a2 d3 01           OUT        (DAT_io_0001),A ; Write keypad mask to port 1
+        ram:01a4 00              NOP                        ; Delay for keypad settling
         ram:01a5 00              NOP
         ram:01a6 00              NOP
         ram:01a7 00              NOP
-        ram:01a8 db 01           IN         A,(DAT_io_0001)
-        ram:01aa 47              LD         B,A
-        ram:01ab 3e ff           LD         A,0xff
-        ram:01ad d3 01           OUT        (DAT_io_0001),A
-        ram:01af 78              LD         A,B
-        ram:01b0 c9              RET
+        ram:01a8 db 01           IN         A,(DAT_io_0001) ; Read keypad state from port 1
+        ram:01aa 47              LD         B,A             ; Save result in B
+        ram:01ab 3e ff           LD         A,0xff          ; Load A with 0xFF
+        ram:01ad d3 01           OUT        (DAT_io_0001),A ; Write 0xFF to port 1 (deselect all)
+        ram:01af 78              LD         A,B             ; Restore keypad state to A
+        ram:01b0 c9              RET                        ; Return keypad state
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_01b1()
+                             ; Key processing function - handles key press events
+                             ; Stores key code and sets system flags
              undefined         A:1            <RETURN>
                              FUN_ram_01b1                                    XREF[2]:     FUN_ram_011b:014a(c),
                                                                                           FUN_ram_011b:014c(c)
-        ram:01b1 32 00 80        LD         (DAT_ram_8000),A
-        ram:01b4 fd cb 00 de     SET        0x3,(IY+0x0)
-        ram:01b8 b7              OR         A
-        ram:01b9 c8              RET        Z
-        ram:01ba 32 06 80        LD         (DAT_ram_8006),A
-        ram:01bd c9              RET
+        ram:01b1 32 00 80        LD         (DAT_ram_8000),A ; Store key code at 0x8000
+        ram:01b4 fd cb 00 de     SET        0x3,(IY+0x0)   ; Set system flag bit 3 at IY+0x0
+        ram:01b8 b7              OR         A              ; Test if key code is zero
+        ram:01b9 c8              RET        Z              ; Return if no key
+        ram:01ba 32 06 80        LD         (DAT_ram_8006),A ; Store key code at 0x8006
+        ram:01bd c9              RET                        ; Return
         ram:01be 21              ??         21h    !
         ram:01bf 00              ??         00h
         ram:01c0 80              ??         80h
@@ -3057,36 +3115,39 @@
         ram:0ceb f7              ??         F7h
         ram:0cec c9              ??         C9h
                              SetStackPointer                                 XREF[1]:     ram:0004(j)
-        ram:0ced 06 00           LD         B,0x0
-        ram:0cef 31 9f fe        LD         SP,0xfe9f
+                             ; System initialization - sets stack, video mode, interrupts
+        ram:0ced 06 00           LD         B,0x0          ; B = 0 for stack clearing loop
+        ram:0cef 31 9f fe        LD         SP,0xfe9f       ; Initial stack pointer
                              ClearStackSetVidInterMode                       XREF[2]:     ram:0cf2(j), ram:0cfc(j)
-        ram:0cf2 10 fe           DJNZ       ClearStackSetVidInterMode                        Clear stack
-        ram:0cf4 dd 21 01 00     LD         IX,0x1
-        ram:0cf8 dd 39           ADD        IX,SP
-        ram:0cfa dd f9           LD         SP,IX
-        ram:0cfc 30 f4           JR         NC,ClearStackSetVidInterMode
-        ram:0cfe 31 ce fb        LD         SP,0xfbce
-        ram:0d01 3e 17           LD         A,0x17
-        ram:0d03 d3 04           OUT        (DAT_io_0004),A
-        ram:0d05 3e 7c           LD         A,0x7c
-        ram:0d07 d3 00           OUT        (0x0),A                                          Set video offset
-        ram:0d09 ed 56           IM                                                          Set Interrupt mode 1
-        ram:0d0b 3e c0           LD         A,0xc0
-        ram:0d0d d3 07           OUT        (DAT_io_0007),A                                  Set link register property
-        ram:0d0f 3e 0a           LD         A,0xa
-        ram:0d11 d3 02           OUT        (DAT_io_0002),A                                  set display contrast
+                             ; Clear stack and configure video/interrupt modes
+        ram:0cf2 10 fe           DJNZ       ClearStackSetVidInterMode ; Loop to clear stack memory
+        ram:0cf4 dd 21 01 00     LD         IX,0x1          ; IX = 1
+        ram:0cf8 dd 39           ADD        IX,SP           ; IX = SP + 1
+        ram:0cfa dd f9           LD         SP,IX           ; Adjust stack pointer
+        ram:0cfc 30 f4           JR         NC,ClearStackSetVidInterMode ; Continue if no carry
+        ram:0cfe 31 ce fb        LD         SP,0xfbce       ; Set final stack pointer to 0xFBCE
+        ram:0d01 3e 17           LD         A,0x17          ; Configure video buffer width and interrupts
+        ram:0d03 d3 04           OUT        (DAT_io_0004),A ; Port 4: 16-byte width, normal interrupts
+        ram:0d05 3e 7c           LD         A,0x7c          ; Video buffer offset for normal display
+        ram:0d07 d3 00           OUT        (0x0),A         ; Port 0: Set display buffer offset
+        ram:0d09 ed 56           IM         1               ; Set interrupt mode 1
+        ram:0d0b 3e c0           LD         A,0xc0          ; Link port configuration
+        ram:0d0d d3 07           OUT        (DAT_io_0007),A ; Port 7: Configure link port
+        ram:0d0f 3e 0a           LD         A,0xa           ; LCD contrast value
+        ram:0d11 d3 02           OUT        (DAT_io_0002),A ; Port 2: Set display contrast
                              InitializeDefaults                              XREF[1]:     FUN_ram_0aeb:0b04(j)
-        ram:0d13 97              SUB        A
-        ram:0d14 d3 03           OUT        (DAT_io_0003),A                                  Send Zero byte on port
-        ram:0d16 3e 01           LD         A,0x1
-        ram:0d18 d3 03           OUT        (DAT_io_0003),A                                  Send 0x01 byte on port
-        ram:0d1a fb              EI                                                          Enable interrupt
-        ram:0d1b 76              HALT                                                        Wait for interrupt
-        ram:0d1c cd 21 20        CALL       FUN_ram_2021                                     undefined FUN_ram_2021()
-        ram:0d1f cd fe 1f        CALL       FUN_ram_1ffe                                     undefined FUN_ram_1ffe()
-        ram:0d22 cd 8e 1f        CALL       FUN_ram_1f8e                                     undefined FUN_ram_1f8e()
-        ram:0d25 da 60 20        JP         C,LAB_ram_2060
-        ram:0d28 c3 56 20        JP         LAB_ram_2056
+                             ; Initialize system defaults and enable interrupts
+        ram:0d13 97              SUB        A               ; A = 0
+        ram:0d14 d3 03           OUT        (DAT_io_0003),A ; Port 3: Disable interrupts temporarily
+        ram:0d16 3e 01           LD         A,0x1           ; Enable ON key interrupts
+        ram:0d18 d3 03           OUT        (DAT_io_0003),A ; Port 3: Enable ON key interrupts
+        ram:0d1a fb              EI                         ; Enable interrupts globally
+        ram:0d1b 76              HALT                       ; Wait for first timer interrupt
+        ram:0d1c cd 21 20        CALL       FUN_ram_2021    ; Call system initialization functions
+        ram:0d1f cd fe 1f        CALL       FUN_ram_1ffe
+        ram:0d22 cd 8e 1f        CALL       FUN_ram_1f8e
+        ram:0d25 da 60 20        JP         C,LAB_ram_2060  ; Jump to error handler if carry set
+        ram:0d28 c3 56 20        JP         LAB_ram_2056    ; Jump to main program execution
         ram:0d2b cd              ??         CDh
         ram:0d2c 21              ??         21h    !
         ram:0d2d 20              ??         20h
