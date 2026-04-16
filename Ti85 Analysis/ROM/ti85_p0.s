@@ -47,11 +47,9 @@
              undefined         A:1            <RETURN>
                              RST1                                            XREF[1]:     Entry Point(*)
         ram:0008 c3 41 20        JP         FUN_ram_2041    ; Jump to FP addition function at 0x2041
-        ram:000b fd              ??         FDh            ; Unused bytes (padding)
-        ram:000c cb              ??         CBh
-        ram:000d 07              ??         07h
-        ram:000e 46              ??         46h    F
-        ram:000f c9              ??         C9h
+                             FUN_ram_000b                                    XREF[0]:     ; BIT 0,(IY+7)
+        ram:000b fd cb 07 46     BIT        0x0,(IY+0x7)   ; Check bit 0 of (IY+7)
+        ram:000f c9              RET                        ; Return with ZF set if bit clear, clear if set
                              **************************************************************
                              *                       THUNK FUNCTION                       *
                              **************************************************************
@@ -61,11 +59,9 @@
              undefined         A:1            <RETURN>
                              RST2                                            XREF[1]:     Entry Point(*)
         ram:0010 c3 c8 26        JP         FUN_ram_26c8    ; Jump to FP multiplication function at 0x26c8
-        ram:0013 fd              ??         FDh            ; Unused bytes (padding)
-        ram:0014 cb              ??         CBh
-        ram:0015 08              ??         08h
-        ram:0016 4e              ??         4Eh    N
-        ram:0017 c9              ??         C9h
+                             FUN_ram_0013                                    XREF[0]:     ; BIT 1,(IY+8)
+        ram:0013 fd cb 08 4e     BIT        0x1,(IY+0x8)   ; Check bit 1 of (IY+8)
+        ram:0017 c9              RET                        ; Return with ZF set if bit clear, clear if set
                              **************************************************************
                              *                       THUNK FUNCTION                       *
                              **************************************************************
@@ -94,11 +90,10 @@
              undefined         A:1            <RETURN>
                              RST4                                            XREF[1]:     Entry Point(*)
         ram:0020 c3 04 21        JP         FUN_ram_2104    ; Jump to FP operation at 0x2104
-        ram:0023 3a              ??         3Ah    :       ; Unused bytes (padding)
-        ram:0024 56              ??         56h    V
-        ram:0025 8a              ??         8Ah
-        ram:0026 b7              ??         B7h
-        ram:0027 c9              ??         C9h
+                             FUN_ram_0023                                    XREF[0]:     ; A=(8A56) OR (8A56) - check if system var is real
+        ram:0023 3a 56 8a        LD         A,(DAT_ram_8a56) ; Load A with system variable at 0x8A56
+        ram:0026 b7              OR         A               ; OR A with itself (test if zero)
+        ram:0027 c9              RET                        ; Return with ZF set if (8A56)=0, clear if non-zero
                              **************************************************************
                              *                       THUNK FUNCTION                       *
                              **************************************************************
@@ -197,66 +192,53 @@
                              LAB_ram_0070                                    XREF[1]:     RST7:0061(j)
         ram:0070 3e 09           LD         A,0x9           ; Load A with 0x09
         ram:0072 c3 44 00        JP         LAB_ram_0044    ; Jump to acknowledge interrupt
-        ram:0075 fd              ??         FDh
-        ram:0076 cb              ??         CBh
-        ram:0077 09              ??         09h
-        ram:0078 66              ??         66h    f
-        ram:0079 c9              ??         C9h
-        ram:007a fd              ??         FDh
-        ram:007b cb              ??         CBh
-        ram:007c 02              ??         02h
-        ram:007d 66              ??         66h    f
-        ram:007e c9              ??         C9h
-        ram:007f fd              ??         FDh
-        ram:0080 cb              ??         CBh
-        ram:0081 02              ??         02h
-        ram:0082 6e              ??         6Eh    n
-        ram:0083 c9              ??         C9h
-        ram:0084 fd              ??         FDh
-        ram:0085 cb              ??         CBh
-        ram:0086 02              ??         02h
-        ram:0087 76              ??         76h    v
-        ram:0088 c9              ??         C9h
-        ram:0089 fd              ??         FDh
-        ram:008a cb              ??         CBh
-        ram:008b 02              ??         02h
-        ram:008c 7e              ??         7Eh    ~
-        ram:008d c9              ??         C9h
+                             FUN_ram_0075                                    XREF[0]:     ; Has the ON key been pressed
+        ram:0075 fd cb 09 66     BIT        0x4,(IY+0x9)   ; Check if ON key pressed (bit 4 of IY+9)
+        ram:0079 c9              RET                        ; Return with ZF set if not pressed, clear if pressed
+                             FUN_ram_007a                                    XREF[0]:     ; Check if graph mode is Func
+        ram:007a fd cb 02 66     BIT        0x4,(IY+0x2)   ; Check Func mode (bit 4 of IY+2)
+        ram:007e c9              RET                        ; Return with ZF set if not Func, clear if Func
+                             FUN_ram_007f                                    XREF[0]:     ; Check if graph mode is Pol
+        ram:007f fd cb 02 6e     BIT        0x5,(IY+0x2)   ; Check Pol mode (bit 5 of IY+2)
+        ram:0083 c9              RET                        ; Return with ZF set if not Pol, clear if Pol
+                             FUN_ram_0084                                    XREF[0]:     ; Check if graph mode is param
+        ram:0084 fd cb 02 76     BIT        0x6,(IY+0x2)   ; Check Param mode (bit 6 of IY+2)
+        ram:0088 c9              RET                        ; Return with ZF set if not Param, clear if Param
+                             FUN_ram_0089                                    XREF[0]:     ; Check graph mode bit 7 (unknown mode)
+        ram:0089 fd cb 02 7e     BIT        0x7,(IY+0x2)   ; Check mode bit 7 of IY+2
+        ram:008d c9              RET                        ; Return with ZF set if bit clear, clear if set
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_008e()
              undefined         A:1            <RETURN>
-                             FUN_ram_008e                                    XREF[1]:     FUN_ram_0aeb:0bc6(c)
-        ram:008e e5              PUSH       HL
-        ram:008f b7              OR         A
-        ram:0090 ed 52           SBC        HL,DE
-        ram:0092 e1              POP        HL
-        ram:0093 c9              RET
-        ram:0094 3e              ??         3Eh    >
-        ram:0095 3a              ??         3Ah    :
-        ram:0096 cd              ??         CDh
-        ram:0097 c5              ??         C5h
-        ram:0098 3f              ??         3Fh    ?
-        ram:0099 c9              ??         C9h
-        ram:009a 3e              ??         3Eh    >
-        ram:009b 0a              ??         0Ah
-        ram:009c c5              ??         C5h
-        ram:009d 4f              ??         4Fh    O
-        ram:009e 97              ??         97h
-        ram:009f 06              ??         06h
-        ram:00a0 10              ??         10h
-        ram:00a1 29              ??         29h    )
-        ram:00a2 17              ??         17h
-        ram:00a3 b9              ??         B9h
-        ram:00a4 38              ??         38h    8
-        ram:00a5 02              ??         02h
-        ram:00a6 91              ??         91h
-        ram:00a7 2c              ??         2Ch    ,
-        ram:00a8 10              ??         10h
-        ram:00a9 f7              ??         F7h
-        ram:00aa c1              ??         C1h
-        ram:00ab c9              ??         C9h
+                             FUN_ram_008e                                    XREF[1]:     FUN_ram_0aeb:0bc6(c)     ; CP HL,DE
+        ram:008e e5              PUSH       HL             ; Save HL
+        ram:008f b7              OR         A              ; Clear carry flag
+        ram:0090 ed 52           SBC        HL,DE          ; HL = HL - DE (compare)
+        ram:0092 e1              POP        HL             ; Restore HL
+        ram:0093 c9              RET                        ; Return with flags set from comparison
+                             FUN_ram_0094                                    XREF[0]:     ; Display ":"
+        ram:0094 3e 3a           LD         A,0x3a          ; Load A with ASCII ':' (colon)
+        ram:0096 cd c5 3f        CALL       LAB_ram_3fc5    ; Call display character function
+        ram:0099 c9              RET                        ; Return
+                             FUN_ram_009a                                    XREF[0]:     ; Unpack HL to A - convert HL to decimal string
+        ram:009a 3e 0a           LD         A,0xa           ; Load A with 10 (decimal base)
+        ram:009c c5              PUSH       BC             ; Save BC
+        ram:009d 4f              LD         C,A            ; C = 10
+        ram:009e 97              SUB        A              ; A = 0
+        ram:009f 06 10           LD         B,0x10         ; B = 16 (bit counter)
+                             LAB_ram_00a1                                    XREF[1]:     ram:00a8(j)
+        ram:00a1 29              ADD        HL,HL          ; Shift HL left (multiply by 2)
+        ram:00a2 17              RLA                        ; Rotate A left through carry
+        ram:00a3 b9              CP         C              ; Compare A with 10
+        ram:00a4 38 02           JR         C,LAB_ram_00a8 ; If A < 10, skip
+        ram:00a6 91              SUB        C              ; A = A - 10
+        ram:00a7 2c              INC        L              ; Increment L (store digit?)
+                             LAB_ram_00a8                                    XREF[1]:     ram:00a4(j)
+        ram:00a8 10 f7           DJNZ       LAB_ram_00a1    ; Decrement B and loop if not zero
+        ram:00aa c1              POP        BC             ; Restore BC
+        ram:00ab c9              RET                        ; Return
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
@@ -320,43 +302,44 @@
                              undefined FUN_ram_00ea()
              undefined         A:1            <RETURN>
                              FUN_ram_00ea                                    XREF[1]:     NMI_ISR:006d(c)
-        ram:00ea 21 0a 80        LD         HL,0x800a
-        ram:00ed 7e              LD         A,(HL=>DAT_ram_800a)
-        ram:00ee b7              OR         A
-        ram:00ef 28 01           JR         Z,LAB_ram_00f2
-        ram:00f1 35              DEC        (HL=>DAT_ram_800a)
+                             ; Timer/Delay handler - manages timed events during interrupt service
+                             ; Called from NMI interrupt handler at 006d
+        ram:00ea 21 0a 80        LD         HL,0x800a       ; Load HL with delay counter at 0x800a
+        ram:00ed 7e              LD         A,(HL=>DAT_ram_800a) ; Load A with delay counter value
+        ram:00ee b7              OR         A               ; Test if counter is zero
+        ram:00ef 28 01           JR         Z,LAB_ram_00f2  ; If zero, skip decrement
+        ram:00f1 35              DEC        (HL=>DAT_ram_800a) ; Decrement delay counter
                              LAB_ram_00f2                                    XREF[1]:     ram:00ef(j)
-        ram:00f2 3a 4e 83        LD         A,(DAT_ram_834e)
-        ram:00f5 cb 57           BIT        0x2,A
-        ram:00f7 c8              RET        Z
-        ram:00f8 cb 5f           BIT        0x3,A
-        ram:00fa c8              RET        Z
-        ram:00fb 21 08 80        LD         HL,0x8008
-        ram:00fe 35              DEC        (HL=>DAT_ram_8008)
-        ram:00ff c0              RET        NZ
-        ram:0100 23              INC        HL
-        ram:0101 35              DEC        (HL=>DAT_ram_8009)
-        ram:0102 c0              RET        NZ
-        ram:0103 fd cb 08 9e     RES        0x3,(IY+0x8)
-        ram:0107 fd cb 08 e6     SET        0x4,(IY+0x8)
-        ram:010b c3 3d 0b        JP         LAB_ram_0b3d
-        ram:010e 3a              ??         3Ah    :
-        ram:010f 0a              ??         0Ah
-        ram:0110 80              ??         80h
-        ram:0111 b7              ??         B7h
-        ram:0112 c0              ??         C0h
-        ram:0113 76              ??         76h    v
-        ram:0114 c9              ??         C9h
+        ram:00f2 3a 4e 83        LD         A,(DAT_ram_834e) ; Load A with system mode flags from 0x834e
+        ram:00f5 cb 57           BIT        0x2,A           ; Test bit 2 (mode flag)
+        ram:00f7 c8              RET        Z               ; Return if bit 2 clear (mode not enabled)
+        ram:00f8 cb 5f           BIT        0x3,A           ; Test bit 3 (mode flag)
+        ram:00fa c8              RET        Z               ; Return if bit 3 clear (mode not enabled)
+        ram:00fb 21 08 80        LD         HL,0x8008       ; Load HL with timeout counter at 0x8008
+        ram:00fe 35              DEC        (HL=>DAT_ram_8008) ; Decrement first timeout counter
+        ram:00ff c0              RET        NZ              ; Return if not zero (timeout not reached)
+        ram:0100 23              INC        HL              ; Increment HL to 0x8009
+        ram:0101 35              DEC        (HL=>DAT_ram_8009) ; Decrement second timeout counter
+        ram:0102 c0              RET        NZ              ; Return if not zero (timeout not reached)
+        ram:0103 fd cb 08 9e     RES        0x3,(IY+0x8)    ; Clear bit 3 of system flag at IY+0x8
+        ram:0107 fd cb 08 e6     SET        0x4,(IY+0x8)    ; Set bit 4 of system flag at IY+0x8 (signal timeout event)
+        ram:010b c3 3d 0b        JP         LAB_ram_0b3d    ; Jump to timeout event handler at 0b3d
+                             FUN_ram_010e                                    XREF[0]:     ; APD (Auto Power Down)
+        ram:010e 3a 0a 80        LD         A,(DAT_ram_800a) ; Load A with APD counter from 0x800a
+        ram:0111 b7              OR         A               ; Test if counter is zero
+        ram:0112 c0              RET        NZ              ; Return if counter not zero (APD not triggered)
+        ram:0113 76              HALT                       ; Halt CPU (power down)
+        ram:0114 c9              RET                        ; Return (unreachable after HALT)
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_0115()
              undefined         A:1            <RETURN>
                              FUN_ram_0115                                    XREF[2]:     FUN_ram_0aeb:0b5f(c),
-                                                                                          FUN_ram_0aeb:0bf3(c)
-        ram:0115 21 09 80        LD         HL,0x8009
-        ram:0118 36 a1           LD         (HL=>DAT_ram_8009),0xa1
-        ram:011a c9              RET
+                                                                                          FUN_ram_0aeb:0bf3(c)     ; Update APD/Cursor blink counter
+        ram:0115 21 09 80        LD         HL,0x8009       ; Load HL with counter at 0x8009
+        ram:0118 36 a1           LD         (HL=>DAT_ram_8009),0xa1 ; Set counter to 0xA1 (161 decimal) for next APD/blink event
+        ram:011a c9              RET                        ; Return
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
