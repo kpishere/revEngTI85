@@ -3229,6 +3229,7 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_0d78()
+                             ; System function (RST6 thunk): Handle floating-point operations or validation
              undefined         A:1            <RETURN>
                              FUN_ram_0d78                                    XREF[1]:     RST6:0030(T), RST6:0030(j)
         ram:0d78 fd cb 0e b6     RES        0x6,(IY+0xe)
@@ -3239,12 +3240,12 @@
         ram:0d83 0e              ??         0Eh
         ram:0d84 f6              ??         F6h
                              LAB_ram_0d85                                    XREF[1]:     ram:0d7f(j)
-        ram:0d85 3a 90 80        LD         A,(DAT_ram_8090)
-        ram:0d88 b7              OR         A
-        ram:0d89 ca 58 1f        JP         Z,LAB_ram_1f58
-        ram:0d8c 3a 85 80        LD         A,(DAT_ram_8085)
-        ram:0d8f b7              OR         A
-        ram:0d90 ca 95 20        JP         Z,FUN_ram_2095
+        ram:0d85 3a 90 80        LD         A,(DAT_ram_8090)  ; Load OP2 data byte (check if initialized)
+        ram:0d88 b7              OR         A                 ; Check if zero
+        ram:0d89 ca 58 1f        JP         Z,LAB_ram_1f58    ; If zero, clear OP1 type bits
+        ram:0d8c 3a 85 80        LD         A,(DAT_ram_8085)  ; Load OP1 data byte (check if initialized)
+        ram:0d8f b7              OR         A                 ; Check if zero
+        ram:0d90 ca 95 20        JP         Z,FUN_ram_2095    ; If zero, handle uninitialized OP1
         ram:0d93 cd 82 26        CALL       FUN_ram_2682                                     undefined FUN_ram_2682()
         ram:0d96 30 45           JR         NC,LAB_ram_0ddd
         ram:0d98 19              ADD        HL,DE
@@ -3576,9 +3577,9 @@
                              LAB_ram_0f7c                                    XREF[3]:     FUN_ram_0d78:0e0f(j),
                                                                                           ram:0f43(j),
                                                                                           FUN_ram_0d78:0f59(j)
-        ram:0f7c 3a 82 80        LD         A,(DAT_ram_8082)
-        ram:0f7f e6 80           AND        0x80
-        ram:0f81 32 82 80        LD         (DAT_ram_8082),A
+        ram:0f7c 3a 82 80        LD         A,(DAT_ram_8082)  ; Load OP1 variable type
+        ram:0f7f e6 80           AND        0x80              ; Mask to keep only bit 7 (sign/type flag)
+        ram:0f81 32 82 80        LD         (DAT_ram_8082),A  ; Store back to OP1 type
         ram:0f84 21 8c 80        LD         HL,0x808c
         ram:0f87 7e              LD         A,(HL=>DAT_ram_808c)
         ram:0f88 36 00           LD         (HL=>DAT_ram_808c),0x0
@@ -7617,10 +7618,10 @@
         ram:1f56 95              ??         95h
         ram:1f57 20              ??         20h
                              LAB_ram_1f58                                    XREF[1]:     ram:0d89(j)
-        ram:1f58 21 82 80        LD         HL,0x8082
-        ram:1f5b 7e              LD         A,(HL=>DAT_ram_8082)
-        ram:1f5c e6 e0           AND        0xe0
-        ram:1f5e 77              LD         (HL=>DAT_ram_8082),A
+        ram:1f58 21 82 80        LD         HL,0x8082          ; Point to OP1 variable type
+        ram:1f5b 7e              LD         A,(HL=>DAT_ram_8082) ; Load OP1 type
+        ram:1f5c e6 e0           AND        0xe0               ; Mask to keep bits 5-7 (high type flags)
+        ram:1f5e 77              LD         (HL=>DAT_ram_8082),A ; Store back, clearing lower type bits
         ram:1f5f c9              RET
         ram:1f60 cd              ??         CDh
         ram:1f61 98              ??         98h
@@ -7632,16 +7633,17 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_1f66()
+                             ; Set bit 0 in OP1 and OP2 variable types, preserving high bits
              undefined         A:1            <RETURN>
                              FUN_ram_1f66                                    XREF[1]:     FUN_ram_2e87:2e8e(c)
-        ram:1f66 3a 82 80        LD         A,(DAT_ram_8082)
-        ram:1f69 e6 e0           AND        0xe0
-        ram:1f6b f6 01           OR         0x1
-        ram:1f6d 32 82 80        LD         (DAT_ram_8082),A
-        ram:1f70 3a 8d 80        LD         A,(DAT_ram_808d)
-        ram:1f73 e6 e0           AND        0xe0
-        ram:1f75 f6 01           OR         0x1
-        ram:1f77 32 8d 80        LD         (DAT_ram_808d),A
+        ram:1f66 3a 82 80        LD         A,(DAT_ram_8082)  ; Load OP1 variable type
+        ram:1f69 e6 e0           AND        0xe0              ; Mask high bits
+        ram:1f6b f6 01           OR         0x1               ; Set bit 0
+        ram:1f6d 32 82 80        LD         (DAT_ram_8082),A  ; Store back to OP1 type
+        ram:1f70 3a 8d 80        LD         A,(DAT_ram_808d)  ; Load OP2 variable type
+        ram:1f73 e6 e0           AND        0xe0              ; Mask high bits
+        ram:1f75 f6 01           OR         0x1               ; Set bit 0
+        ram:1f77 32 8d 80        LD         (DAT_ram_808d),A  ; Store back to OP2 type
         ram:1f7a c9              RET
         ram:1f7b cd              ??         CDh
         ram:1f7c 56              ??         56h    V
@@ -7666,79 +7668,68 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_1f8e()
+                             ; System state validation: Check if floating-point registers OP1 and OP2 are initialized
+                             ; Ensures OP1 and OP2 have valid data before proceeding with calculations
              undefined         A:1            <RETURN>
                              FUN_ram_1f8e                                    XREF[1]:     RST0:0d22(c)
-        ram:1f8e 3a 85 80        LD         A,(DAT_ram_8085)
-        ram:1f91 b7              OR         A
-        ram:1f92 cc a3 21        CALL       Z,FUN_ram_21a3                                   undefined FUN_ram_21a3()
-        ram:1f95 3a 90 80        LD         A,(DAT_ram_8090)
-        ram:1f98 b7              OR         A
-        ram:1f99 cc a8 21        CALL       Z,FUN_ram_21a8                                   undefined FUN_ram_21a8()
-        ram:1f9c 3a 82 80        LD         A,(DAT_ram_8082)
-        ram:1f9f b7              OR         A
-        ram:1fa0 3a 8d 80        LD         A,(DAT_ram_808d)
-        ram:1fa3 fa bd 1f        JP         M,LAB_ram_1fbd
-        ram:1fa6 e6 80           AND        0x80
-        ram:1fa8 c0              RET        NZ
-        ram:1fa9 cd 82 26        CALL       FUN_ram_2682                                     undefined FUN_ram_2682()
-        ram:1fac 21 90 80        LD         HL,0x8090
-        ram:1faf 11 85 80        LD         DE,0x8085
+        ram:1f8e 3a 85 80        LD         A,(DAT_ram_8085)  ; Load OP1 data byte (part of floating-point value)
+        ram:1f91 b7              OR         A                 ; Check if zero (uninitialized)
+        ram:1f92 cc a3 21        CALL       Z,FUN_ram_21a3    ; If zero, initialize OP1 register
+        ram:1f95 3a 90 80        LD         A,(DAT_ram_8090)  ; Load OP2 data byte (part of floating-point value)
+        ram:1f98 b7              OR         A                 ; Check if zero (uninitialized)
+        ram:1f99 cc a8 21        CALL       Z,FUN_ram_21a8    ; If zero, initialize OP2 register
+        ram:1f9c 3a 82 80        LD         A,(DAT_ram_8082)  ; Load OP1 variable type
+        ram:1f9f b7              OR         A                 ; Check if OP1 type is zero
+        ram:1fa0 3a 8d 80        LD         A,(DAT_ram_808d)  ; Load OP2 variable type
+        ram:1fa3 fa bd 1f        JP         M,LAB_ram_1fbd    ; If OP2 type negative (bit 7 set), handle special case
+        ram:1fa6 e6 80           AND        0x80              ; Check bit 7 of OP2 type
+        ram:1fa8 c0              RET        NZ                ; Return if set (special condition met)
+        ram:1fa9 cd 82 26        CALL       FUN_ram_2682       ; Call system function (possibly error handling)
+        ram:1fac 21 90 80        LD         HL,0x8090          ; Point to OP2 data area
+        ram:1faf 11 85 80        LD         DE,0x8085          ; Point to OP1 data area
                              LAB_ram_1fb2                                    XREF[1]:     ram:1fd0(j)
-        ram:1fb2 c0              RET        NZ
-        ram:1fb3 06 07           LD         B,0x7
+        ram:1fb2 c0              RET        NZ                ; Return if comparison failed
+        ram:1fb3 06 07           LD         B,0x7             ; Compare 7 bytes of data
                              LAB_ram_1fb5                                    XREF[1]:     ram:1fba(j)
         ram:1fb5 1a              LD         A,(DE=>DAT_ram_8085)
         ram:1fb6 be              CP         (HL=>DAT_ram_8090)
-        ram:1fb7 c0              RET        NZ
+        ram:1fb7 c0              RET        NZ                ; Return if bytes don't match
         ram:1fb8 23              INC        HL
         ram:1fb9 13              INC        DE
         ram:1fba 10 f9           DJNZ       LAB_ram_1fb5
-        ram:1fbc c9              RET
+        ram:1fbc c9              RET                          ; Return (OP1 and OP2 data match)
                              LAB_ram_1fbd                                    XREF[1]:     ram:1fa3(j)
-        ram:1fbd e6 80           AND        0x80
-        ram:1fbf 28 11           JR         Z,LAB_ram_1fd2
-        ram:1fc1 2a 8e 80        LD         HL,(DAT_ram_808e)
-        ram:1fc4 ed 5b 83 80     LD         DE,(DAT_ram_8083)
-        ram:1fc8 ed 52           SBC        HL,DE
-        ram:1fca 21 85 80        LD         HL,0x8085
-        ram:1fcd 11 90 80        LD         DE,0x8090
-        ram:1fd0 18 e0           JR         LAB_ram_1fb2
+        ram:1fbd e6 80           AND        0x80              ; Check bit 7 of OP2 type again
+        ram:1fbf 28 11           JR         Z,LAB_ram_1fd2    ; If not set, skip to decrement
+        ram:1fc1 2a 8e 80        LD         HL,(DAT_ram_808e)  ; Load word from OP2+3 (data word)
+        ram:1fc4 ed 5b 83 80     LD         DE,(DAT_ram_8083)  ; Load word from OP1+1 (data word)
+        ram:1fc8 ed 52           SBC        HL,DE             ; Subtract DE from HL
+        ram:1fca 21 85 80        LD         HL,0x8085          ; Point to OP1 data
+        ram:1fcd 11 90 80        LD         DE,0x8090          ; Point to OP2 data
+        ram:1fd0 18 e0           JR         LAB_ram_1fb2       ; Jump to compare 7 bytes
                              LAB_ram_1fd2                                    XREF[1]:     ram:1fbf(j)
-        ram:1fd2 d6 01           SUB        0x1
-        ram:1fd4 c9              RET
-        ram:1fd5 e5              ??         E5h
-        ram:1fd6 cd              ??         CDh
-        ram:1fd7 98              ??         98h
-        ram:1fd8 21              ??         21h    !
-        ram:1fd9 e1              ??         E1h
-        ram:1fda e5              ??         E5h
-        ram:1fdb cd              ??         CDh
-        ram:1fdc 11              ??         11h
-        ram:1fdd 21              ??         21h    !
-        ram:1fde e1              ??         E1h
-        ram:1fdf 2b              ??         2Bh    +
-        ram:1fe0 7c              ??         7Ch    |
-        ram:1fe1 b5              ??         B5h
-        ram:1fe2 20              ??         20h
-        ram:1fe3 f6              ??         F6h
-        ram:1fe4 c9              ??         C9h
-        ram:1fe5 cd              ??         CDh
-        ram:1fe6 11              ??         11h
-        ram:1fe7 21              ??         21h    !
-        ram:1fe8 23              ??         23h    #
-        ram:1fe9 c3              ??         C3h
-        ram:1fea 9d              ??         9Dh
-        ram:1feb 20              ??         20h
-        ram:1fec 21              ??         21h    !
-        ram:1fed 98              ??         98h
+        ram:1fd2 d6 01           SUB        0x1               ; Decrement A (OP2 type)
+        ram:1fd4 c9              RET                          ; Return
+        ram:1fd5 e5              PUSH       HL                ; Save HL
+        ram:1fd6 cd 98 21        CALL       FUN_ram_2198       ; Call system function
+        ram:1fd9 e1              POP        HL                ; Restore HL
+        ram:1fda e5              PUSH       HL                ; Save HL
+        ram:1fdb cd 11 21        CALL       FUN_ram_2111       ; Call system function
+        ram:1fde e1              POP        HL                ; Restore HL
+        ram:1fdf 2b              DEC        HL                ; Decrement HL
+        ram:1fe0 7c              LD         A,H               ; Load A with H
+        ram:1fe1 b5              OR         L                 ; OR with L
+        ram:1fe2 20 f6           JR         NZ,LAB_ram_1fd5   ; Loop if not zero
+        ram:1fe4 c9              RET                          ; Return
+        ram:1fe5 cd 11 21        CALL       FUN_ram_2111       ; Call system function
+        ram:1fe8 23              INC        HL                ; Increment HL
+        ram:1fe9 c3 9d 20        JP         LAB_ram_209d_10_bytesCpy    ; Jump to 10-byte copy routine
+        ram:1fec 21 98 80        LD         HL,0x8098          ; Source: OP3 register
         ram:1fee 80              ??         80h
-        ram:1fef 11              ??         11h
-        ram:1ff0 a3              ??         A3h
-        ram:1ff1 80              ??         80h
-        ram:1ff2 c3              ??         C3h
-        ram:1ff3 9b              ??         9Bh
-        ram:1ff4 20              ??         20h
-        ram:1ff5 21              ??         21h    !
+        ram:1fef 11 a3 80        LD         DE,0x80a3          ; Destination: OP4 register
+        ram:1ff0 a3 80           LD         DE,0x80a3          ; (continued)
+        ram:1ff2 c3 9b 20        JP         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP4 = OP3
+        ram:1ff5 21 82 80        LD         HL,0x8082          ; Source: OP1 register
         ram:1ff6 82              ??         82h
         ram:1ff7 80              ??         80h
         ram:1ff8 11              ??         11h
@@ -7788,38 +7779,22 @@
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_2021()
-                             ; System initialization: Initialize floating-point registers (OP1-OP6)
-                             ; Copies initial values from 0x8082 area to 0x8098 area in system RAM
-                             ; This sets up the calculator's floating-point register stack
+                             ; System initialization: Set up floating-point register stack
+                             ; Sequence: OP3=OP1, OP2=OP5, OP6=OP5, OP4=OP5, OP2=OP1, OP2=OP6, OP6=OP2, OP6=OP1, OP5=OP2, OP5=OP1
              undefined         A:1            <RETURN>
                              FUN_ram_2021                                    XREF[1]:     RST0:0d1c(c)
-        ram:2021 11 98 80        LD         DE,0x8098       ; Destination: OP1-OP6 register area start
-        ram:2024 21 82 80        LD         HL,0x8082       ; Source: Initial register values
-        ram:2027 18 72           JR         LAB_ram_209b_11_bytesCpy    ; Jump to memory copy routine
-        ram:2029 21              ??         21h    !
-        ram:202a ae              ??         AEh
-        ram:202b 80              ??         80h
-        ram:202c 11              ??         11h
-        ram:202d 8d              ??         8Dh
-        ram:202e 80              ??         80h
-        ram:202f 18              ??         18h
-        ram:2030 6a              ??         6Ah    j
-        ram:2031 21              ??         21h    !
-        ram:2032 ae              ??         AEh
-        ram:2033 80              ??         80h
-        ram:2034 11              ??         11h
-        ram:2035 b9              ??         B9h
-        ram:2036 80              ??         80h
-        ram:2037 18              ??         18h
-        ram:2038 62              ??         62h    b
-        ram:2039 21              ??         21h    !
-        ram:203a ae              ??         AEh
-        ram:203b 80              ??         80h
-        ram:203c 11              ??         11h
-        ram:203d a3              ??         A3h
-        ram:203e 80              ??         80h
-        ram:203f 18              ??         18h
-        ram:2040 5a              ??         5Ah    Z
+        ram:2021 11 98 80        LD         DE,0x8098          ; Destination: OP3 register
+        ram:2024 21 82 80        LD         HL,0x8082          ; Source: OP1 register (initial values)
+        ram:2027 18 72           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP3 = OP1
+        ram:2029 21 ae 80        LD         HL,0x80ae          ; Source: OP5 register
+        ram:202c 11 8d 80        LD         DE,0x808d          ; Destination: OP2 register
+        ram:202f 18 6a           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP2 = OP5 (but OP5 not set yet?)
+        ram:2031 21 ae 80        LD         HL,0x80ae          ; Source: OP5 register
+        ram:2034 11 b9 80        LD         DE,0x80b9          ; Destination: OP6 register
+        ram:2037 18 62           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP6 = OP5
+        ram:2039 21 ae 80        LD         HL,0x80ae          ; Source: OP5 register
+        ram:203c 11 a3 80        LD         DE,0x80a3          ; Destination: OP4 register
+        ram:203f 18 5a           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP4 = OP5
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
@@ -7828,81 +7803,40 @@
                              ; Used in floating-point addition (RST1) to prepare operands
              undefined         A:1            <RETURN>
                              FUN_ram_2041                                    XREF[1]:     RST1:0008(T), RST1:0008(j)
-        ram:2041 21 82 80        LD         HL,0x8082       ; Source: OP1 register
-        ram:2044 11 8d 80        LD         DE,0x808d       ; Destination: OP2 register
-        ram:2047 18 52           JR         LAB_ram_209b_11_bytesCpy    ; Jump to memory copy routine
-        ram:2049 21              ??         21h    !
-        ram:204a b9              ??         B9h
-        ram:204b 80              ??         80h
-        ram:204c 11              ??         11h
-        ram:204d 8d              ??         8Dh
-        ram:204e 80              ??         80h
-        ram:204f 18              ??         18h
-        ram:2050 4a              ??         4Ah    J
-        ram:2051 21              ??         21h    !
-        ram:2052 b9              ??         B9h
-        ram:2053 80              ??         80h
-        ram:2054 18              ??         18h
-        ram:2055 42              ??         42h    B
+        ram:2041 21 82 80        LD         HL,0x8082          ; Source: OP1 register
+        ram:2044 11 8d 80        LD         DE,0x808d          ; Destination: OP2 register
+        ram:2047 18 52           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP2 = OP1 (final)
+        ram:2049 21 b9 80        LD         HL,0x80b9          ; Source: OP6 register
+        ram:204c 11 8d 80        LD         DE,0x808d          ; Destination: OP2 register
+        ram:204f 18 4a           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP2 = OP6
+        ram:2051 21 b9 80        LD         HL,0x80b9          ; Source: OP6 register
+        ram:2054 18 42           JR         LAB_ram_2098       ; Jump to copy routine variant
                              LAB_ram_2056                                    XREF[1]:     ram:0d28(j)
         ram:2056 21 a3 80        LD         HL,0x80a3
         ram:2059 18 3d           JR         LAB_ram_2098
-        ram:205b 21              ??         21h    !
-        ram:205c ae              ??         AEh
-        ram:205d 80              ??         80h
-        ram:205e 18              ??         18h
-        ram:205f 38              ??         38h    8
+        ram:205b 21 ae 80        LD         HL,0x80ae          ; Source: OP5 register
+        ram:205e 18 38           JR         LAB_ram_2098       ; Jump to copy routine
                              LAB_ram_2060                                    XREF[1]:     ram:0d25(j)
         ram:2060 21 98 80        LD         HL,0x8098
         ram:2063 18 33           JR         LAB_ram_2098
-        ram:2065 21              ??         21h    !
-        ram:2066 a3              ??         A3h
-        ram:2067 80              ??         80h
-        ram:2068 11              ??         11h
-        ram:2069 ae              ??         AEh
-        ram:206a 80              ??         80h
-        ram:206b 18              ??         18h
-        ram:206c 2e              ??         2Eh    .
-        ram:206d 21              ??         21h    !
-        ram:206e 98              ??         98h
-        ram:206f 80              ??         80h
-        ram:2070 11              ??         11h
-        ram:2071 ae              ??         AEh
-        ram:2072 80              ??         80h
-        ram:2073 18              ??         18h
-        ram:2074 26              ??         26h    &
-        ram:2075 21              ??         21h    !
-        ram:2076 8d              ??         8Dh
-        ram:2077 80              ??         80h
-        ram:2078 11              ??         11h
-        ram:2079 ae              ??         AEh
-        ram:207a 80              ??         80h
-        ram:207b 18              ??         18h
-        ram:207c 1e              ??         1Eh
-        ram:207d 21              ??         21h    !
-        ram:207e 8d              ??         8Dh
-        ram:207f 80              ??         80h
-        ram:2080 11              ??         11h
-        ram:2081 b9              ??         B9h
-        ram:2082 80              ??         80h
-        ram:2083 18              ??         18h
-        ram:2084 16              ??         16h
-        ram:2085 21              ??         21h    !
-        ram:2086 82              ??         82h
-        ram:2087 80              ??         80h
-        ram:2088 11              ??         11h
-        ram:2089 b9              ??         B9h
-        ram:208a 80              ??         80h
-        ram:208b 18              ??         18h
-        ram:208c 0e              ??         0Eh
-        ram:208d 21              ??         21h    !
-        ram:208e 82              ??         82h
-        ram:208f 80              ??         80h
-        ram:2090 11              ??         11h
-        ram:2091 ae              ??         AEh
-        ram:2092 80              ??         80h
-        ram:2093 18              ??         18h
-        ram:2094 06              ??         06h
+        ram:2065 21 a3 80        LD         HL,0x80a3          ; Source: OP4 register
+        ram:2068 11 ae 80        LD         DE,0x80ae          ; Destination: OP5 register
+        ram:206b 18 2e           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP5 = OP4
+        ram:206d 21 98 80        LD         HL,0x8098          ; Source: OP3 register
+        ram:2070 11 ae 80        LD         DE,0x80ae          ; Destination: OP5 register
+        ram:2073 18 26           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP5 = OP3
+        ram:2075 21 8d 80        LD         HL,0x808d          ; Source: OP2 register
+        ram:2078 11 ae 80        LD         DE,0x80ae          ; Destination: OP5 register
+        ram:207b 18 1e           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP5 = OP2
+        ram:207d 21 8d 80        LD         HL,0x808d          ; Source: OP2 register
+        ram:2080 11 b9 80        LD         DE,0x80b9          ; Destination: OP6 register
+        ram:2083 18 16           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP6 = OP2
+        ram:2085 21 82 80        LD         HL,0x8082          ; Source: OP1 register
+        ram:2088 11 b9 80        LD         DE,0x80b9          ; Destination: OP6 register
+        ram:208b 18 0e           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP6 = OP1
+        ram:208d 21 82 80        LD         HL,0x8082          ; Source: OP1 register
+        ram:2090 11 ae 80        LD         DE,0x80ae          ; Destination: OP5 register
+        ram:2093 18 06           JR         LAB_ram_209b_11_bytesCpy    ; Copy 11 bytes: OP5 = OP1
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
