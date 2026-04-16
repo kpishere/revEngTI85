@@ -7,11 +7,11 @@ This document illustrates the main program flow and interrupt loops based on the
 ```mermaid
 flowchart TD
     A[Power On / Reset] --> B[RST0: Startup Handler]
-    B --> C[Initialize System (FUN_ram_1ee3)]
-    C --> D[Set up Floating-Point Registers (FUN_ram_2021)]
+    B --> C[Initialize System FUN_ram_1ee3]
+    C --> D[Set up Floating-Point Registers FUN_ram_2021]
     D --> E[Main Loop / Event Handling]
     E --> F{Interrupt or Event?}
-    F -->|Yes| G[Handle Interrupt (RST vectors)]
+    F -->|Yes| G[Handle Interrupt RST vectors]
     F -->|No| E
     G --> E
 ```
