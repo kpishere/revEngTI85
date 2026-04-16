@@ -579,6 +579,8 @@
         ram:022b 3e 06           LD         A,0x6
         ram:022d c3 c6 02        JP         LAB_ram_02c6
                              LAB_ram_0236                                    XREF[1]:     ram:021d(j)
+                             ; Dispatch based on A: values below 0xC2 branch to 0262,
+                             ; values >= 0xC7 go to 024a, and values in [0xC2,0xC6] use thunk dispatch.
         ram:0236 47              LD         B,A
         ram:0237 fd 36 10 00     LD         (IY+0x10),0x0
         ram:023b fe c2           CP         0xc2
@@ -587,481 +589,244 @@
         ram:0241 30 07           JR         NC,LAB_ram_024a
         ram:0243 cd 99 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:0240 28              ??         28h    (
-        ram:0241 0e              ??         0Eh
-        ram:0242 18              ??         18h
-        ram:0243 05              ??         05h
-        ram:0244 cd              ??         CDh
-        ram:0245 9f              ??         9Fh
-        ram:0246 3e              ??         3Eh    >
-        ram:0247 28              ??         28h    (
-        ram:0248 07              ??         07h
-        ram:0249 dd              ??         DDh
-        ram:024a 7e              ??         7Eh    ~
-        ram:024b 02              ??         02h
-        ram:024c e6              ??         E6h
-        ram:024d c0              ??         C0h
-        ram:024e 20              ??         20h
-        ram:024f 75              ??         75h    u
-        ram:0250 78              ??         78h    x
-        ram:0251 d6              ??         D6h
-        ram:0252 c1              ??         C1h
-        ram:0253 32              ??         32h    2
-        ram:0254 de              ??         DEh
-        ram:0255 81              ??         81h
-        ram:0256 3d              ??         3Dh    =
-        ram:0257 11              ??         11h
-        ram:0258 0e              ??         0Eh
-        ram:0259 82              ??         82h
-        ram:025a 18              ??         18h
-        ram:025b 03              ??         03h
-        ram:025c 11              ??         11h
-        ram:025d 69              ??         69h    i
-        ram:025e 06              ??         06h
-        ram:025f 6f              ??         6Fh    o
-        ram:0260 26              ??         26h    &
-        ram:0261 00              ??         00h
-        ram:0262 29              ??         29h    )
-        ram:0263 19              ??         19h
-        ram:0264 cd              ??         CDh
-        ram:0265 33              ??         33h    3
-        ram:0266 00              ??         00h
-        ram:0267 3e              ??         3Eh    >
-        ram:0268 01              ??         01h
-        ram:0269 d3              ??         D3h
-        ram:026a 05              ??         05h
-        ram:026b cd              ??         CDh
-        ram:026c 4d              ??         4Dh    M
-        ram:026d 04              ??         04h
-        ram:026e 7d              ??         7Dh    }
-        ram:026f b4              ??         B4h
-        ram:0270 20              ??         20h
-        ram:0271 12              ??         12h
-        ram:0272 78              ??         78h    x
-        ram:0273 fe              ??         FEh
-        ram:0274 c7              ??         C7h
-        ram:0275 38              ??         38h    8
-        ram:0276 80              ??         80h
-        ram:0277 3a              ??         3Ah    :
-        ram:0278 dd              ??         DDh
-        ram:0279 81              ??         81h
-        ram:027a fe              ??         FEh
-        ram:027b 02              ??         02h
-        ram:027c d2              ??         D2h
-        ram:027d f7              ??         F7h
-        ram:027e 01              ??         01h
-        ram:027f 78              ??         78h    x
-        ram:0280 d6              ??         D6h
-        ram:0281 05              ??         05h
-        ram:0282 18              ??         18h
-        ram:0283 ac              ??         ACh
-        ram:0284 78              ??         78h    x
-        ram:0285 fe              ??         FEh
-        ram:0286 c7              ??         C7h
-        ram:0287 38              ??         38h    8
-        ram:0288 2f              ??         2Fh    /
-        ram:0289 7c              ??         7Ch    |
-        ram:028a fe              ??         FEh
-        ram:028b ff              ??         FFh
-        ram:028c 28              ??         28h    (
-        ram:028d 2f              ??         2Fh    /
-        ram:028e 7e              ??         7Eh    ~
-        ram:028f e6              ??         E6h
-        ram:0290 07              ??         07h
-        ram:0291 fe              ??         FEh
-        ram:0292 01              ??         01h
-        ram:0293 28              ??         28h    (
-        ram:0294 12              ??         12h
-        ram:0295 fd              ??         FDh
-        ram:0296 cb              ??         CBh
-        ram:0297 11              ??         11h
-        ram:0298 7e              ??         7Eh    ~
-        ram:0299 20              ??         20h
-        ram:029a 60              ??         60h    `
-        ram:029b fe              ??         FEh
-        ram:029c 02              ??         02h
-        ram:029d 28              ??         28h    (
-        ram:029e 08              ??         08h
-        ram:029f fe              ??         FEh
-        ram:02a0 03              ??         03h
-        ram:02a1 20              ??         20h
-        ram:02a2 58              ??         58h    X
-        ram:02a3 cb              ??         CBh
-        ram:02a4 76              ??         76h    v
-        ram:02a5 28              ??         28h    (
-        ram:02a6 54              ??         54h    T
-        ram:02a7 e5              ??         E5h
-        ram:02a8 c5              ??         C5h
-        ram:02a9 3a              ??         3Ah    :
-        ram:02aa de              ??         DEh
-        ram:02ab 81              ??         81h
-        ram:02ac f5              ??         F5h
-        ram:02ad cd              ??         CDh
-        ram:02ae c5              ??         C5h
-        ram:02af 05              ??         05h
-        ram:02b0 f1              ??         F1h
-        ram:02b1 32              ??         32h    2
-        ram:02b2 de              ??         DEh
-        ram:02b3 81              ??         81h
-        ram:02b4 c1              ??         C1h
-        ram:02b5 e1              ??         E1h
-        ram:02b6 18              ??         18h
-        ram:02b7 43              ??         43h    C
-        ram:02b8 7c              ??         7Ch    |
-        ram:02b9 fe              ??         FEh
-        ram:02ba ff              ??         FFh
-        ram:02bb 20              ??         20h
-        ram:02bc 3e              ??         3Eh    >
-        ram:02bd 4d              ??         4Dh    M
-        ram:02be 3a              ??         3Ah    :
-        ram:02bf 8c              ??         8Ch
-        ram:02c0 81              ??         81h
-        ram:02c1 b7              ??         B7h
-        ram:02c2 c4              ??         C4h
-        ram:02c3 ab              ??         ABh
-        ram:02c4 3e              ??         3Eh    >
-        ram:02c5 78              ??         78h    x
-        ram:02c6 cd              ??         CDh
-        ram:02c7 a4              ??         A4h
-        ram:02c8 05              ??         05h
-        ram:02c9 fd              ??         FDh
-        ram:02ca cb              ??         CBh
-        ram:02cb 09              ??         09h
-        ram:02cc a6              ??         A6h
-        ram:02cd cd              ??         CDh
-        ram:02ce af              ??         AFh
-        ram:02cf 03              ??         03h
-        ram:02d0 38              ??         38h    8
-        ram:02d1 f4              ??         F4h
-        ram:02d2 fd              ??         FDh
-        ram:02d3 cb              ??         CBh
-        ram:02d4 0e              ??         0Eh
-        ram:02d5 7e              ??         7Eh    ~
-        ram:02d6 ca              ??         CAh
-        ram:02d7 fa              ??         FAh
-        ram:02d8 01              ??         01h
-        ram:02d9 2a              ??         2Ah    *
-        ram:02da 1b              ??         1Bh
-        ram:02db 8b              ??         8Bh
-        ram:02dc ed              ??         EDh
-        ram:02dd 5b              ??         5Bh    [
-        ram:02de 35              ??         35h    5
-        ram:02df 83              ??         83h
-        ram:02e0 cd              ??         CDh
-        ram:02e1 8e              ??         8Eh
-        ram:02e2 00              ??         00h
-        ram:02e3 30              ??         30h    0
-        ram:02e4 05              ??         05h
-        ram:02e5 4e              ??         4Eh    N
-        ram:02e6 97              ??         97h
-        ram:02e7 b9              ??         B9h
-        ram:02e8 20              ??         20h
-        ram:02e9 dc              ??         DCh
-        ram:02ea fd              ??         FDh
-        ram:02eb cb              ??         CBh
-        ram:02ec 0e              ??         0Eh
-        ram:02ed be              ??         BEh
-        ram:02ee 21              ??         21h    !
-        ram:02ef 4b              ??         4Bh    K
-        ram:02f0 83              ??         83h
-        ram:02f1 3a              ??         3Ah    :
-        ram:02f2 c2              ??         C2h
-        ram:02f3 81              ??         81h
-        ram:02f4 cb              ??         CBh
-        ram:02f5 a6              ??         A6h
-        ram:02f6 b6              ??         B6h
-        ram:02f7 77              ??         77h    w
-        ram:02f8 c3              ??         C3h
-        ram:02f9 fa              ??         FAh
-        ram:02fa 01              ??         01h
-        ram:02fb 7e              ??         7Eh    ~
-        ram:02fc e6              ??         E6h
-        ram:02fd 07              ??         07h
-        ram:02fe 20              ??         20h
-        ram:02ff 17              ??         17h
-        ram:0300 7e              ??         7Eh    ~
-        ram:0301 fd              ??         FDh
-        ram:0302 77              ??         77h    w
-        ram:0303 10              ??         10h
-        ram:0304 23              ??         23h    #
-        ram:0305 7e              ??         7Eh    ~
-        ram:0306 b7              ??         B7h
-        ram:0307 28              ??         28h    (
-        ram:0308 05              ??         05h
-        ram:0309 cd              ??         CDh
-        ram:030a d9              ??         D9h
-        ram:030b 03              ??         03h
-        ram:030c 18              ??         18h
-        ram:030d f6              ??         F6h
-        ram:030e fd              ??         FDh
-        ram:030f cb              ??         CBh
-        ram:0310 10              ??         10h
-        ram:0311 5e              ??         5Eh    ^
-        ram:0312 c4              ??         C4h
-        ram:0313 ee              ??         EEh
-        ram:0314 03              ??         03h
-        ram:0315 18              ??         18h
-        ram:0316 b6              ??         B6h
-        ram:0317 fe              ??         FEh
-        ram:0318 01              ??         01h
-        ram:0319 20              ??         20h
-        ram:031a 28              ??         28h    (
-        ram:031b cd              ??         CDh
-        ram:031c 37              ??         37h    7
-        ram:031d 03              ??         03h
-        ram:031e 3a              ??         3Ah    :
-        ram:031f 9a              ??         9Ah
-        ram:0320 81              ??         81h
-        ram:0321 fe              ??         FEh
-        ram:0322 98              ??         98h
-        ram:0323 20              ??         20h
-        ram:0324 0a              ??         0Ah
-        ram:0325 23              ??         23h    #
-        ram:0326 23              ??         23h    #
-        ram:0327 7e              ??         7Eh    ~
-        ram:0328 fe              ??         FEh
-        ram:0329 01              ??         01h
-        ram:032a c2              ??         C2h
-        ram:032b fa              ??         FAh
-        ram:032c 01              ??         01h
-        ram:032d 2b              ??         2Bh    +
-        ram:032e 2b              ??         2Bh    +
-        ram:032f cd              ??         CDh
-        ram:0330 a4              ??         A4h
-        ram:0331 04              ??         04h
-        ram:0332 78              ??         78h    x
-        ram:0333 0e              ??         0Eh
-        ram:0334 00              ??         00h
-        ram:0335 18              ??         18h
-        ram:0336 8f              ??         8Fh
-        ram:0337 cb              ??         CBh
-        ram:0338 76              ??         76h    v
-        ram:0339 c0              ??         C0h
-        ram:033a fd              ??         FDh
-        ram:033b cb              ??         CBh
-        ram:033c 11              ??         11h
-        ram:033d 7e              ??         7Eh    ~
-        ram:033e c8              ??         C8h
-        ram:033f e1              ??         E1h
-        ram:0340 c3              ??         C3h
-        ram:0341 fa              ??         FAh
-        ram:0342 01              ??         01h
-        ram:0343 fe              ??         FEh
-        ram:0344 02              ??         02h
-        ram:0345 20              ??         20h
-        ram:0346 2c              ??         2Ch    ,
-        ram:0347 cd              ??         CDh
-        ram:0348 37              ??         37h    7
-        ram:0349 03              ??         03h
-        ram:034a cb              ??         CBh
-        ram:034b 76              ??         76h    v
-        ram:034c fd              ??         FDh
-        ram:034d cb              ??         CBh
-        ram:034e 0d              ??         0Dh
-        ram:034f 5e              ??         5Eh    ^
-        ram:0350 20              ??         20h
-        ram:0351 0e              ??         0Eh
-        ram:0352 fd              ??         FDh
-        ram:0353 cb              ??         CBh
-        ram:0354 0d              ??         0Dh
-        ram:0355 66              ??         66h    f
-        ram:0356 20              ??         20h
-        ram:0357 18              ??         18h
-        ram:0358 e5              ??         E5h
-        ram:0359 21              ??         21h    !
-        ram:035a cb              ??         CBh
-        ram:035b 07              ??         07h
-        ram:035c cd              ??         CDh
-        ram:035d a4              ??         A4h
-        ram:035e 04              ??         04h
-        ram:035f e1              ??         E1h
-        ram:0360 fd              ??         FDh
-        ram:0361 cb              ??         CBh
-        ram:0362 11              ??         11h
-        ram:0363 4e              ??         4Eh    N
-        ram:0364 28              ??         28h    (
-        ram:0365 07              ??         07h
-        ram:0366 3e              ??         3Eh    >
-        ram:0367 07              ??         07h
-        ram:0368 0e              ??         0Eh
-        ram:0369 00              ??         00h
-        ram:036a cd              ??         CDh
-        ram:036b a4              ??         A4h
-        ram:036c 05              ??         05h
-        ram:036d cd              ??         CDh
-        ram:036e a5              ??         A5h
-        ram:036f 3e              ??         3Eh    >
-        ram:0370 c3              ??         C3h
-        ram:0371 fa              ??         FAh
-        ram:0372 01              ??         01h
-        ram:0373 fe              ??         FEh
-        ram:0374 03              ??         03h
-        ram:0375 20              ??         20h
-        ram:0376 36              ??         36h    6
-        ram:0377 23              ??         23h    #
-        ram:0378 7e              ??         7Eh    ~
-        ram:0379 32              ??         32h    2
-        ram:037a 05              ??         05h
-        ram:037b 80              ??         80h
-        ram:037c fe              ??         FEh
-        ram:037d cc              ??         CCh
-        ram:037e 38              ??         38h    8
-        ram:037f 28              ??         28h    (
-        ram:0380 f5              ??         F5h
-        ram:0381 cd              ??         CDh
-        ram:0382 9f              ??         9Fh
-        ram:0383 3e              ??         3Eh    >
-        ram:0384 28              ??         28h    (
-        ram:0385 0a              ??         0Ah
-        ram:0386 dd              ??         DDh
-        ram:0387 6e              ??         6Eh    n
-        ram:0388 00              ??         00h
-        ram:0389 dd              ??         DDh
-        ram:038a 66              ??         66h    f
-        ram:038b 01              ??         01h
-        ram:038c cb              ??         CBh
-        ram:038d 66              ??         66h    f
-        ram:038e 28              ??         28h    (
-        ram:038f 03              ??         03h
-        ram:0390 cd              ??         CDh
-        ram:0391 99              ??         99h
-        ram:0392 3e              ??         3Eh    >
-        ram:0393 dd              ??         DDh
-        ram:0394 7e              ??         7Eh    ~
-        ram:0395 02              ??         02h
-        ram:0396 32              ??         32h    2
-        ram:0397 7c              ??         7Ch    |
-        ram:0398 82              ??         82h
-        ram:0399 fd              ??         FDh
-        ram:039a cb              ??         CBh
-        ram:039b 11              ??         11h
-        ram:039c f6              ??         F6h
-        ram:039d 21              ??         21h    !
-        ram:039e 32              ??         32h    2
-        ram:039f 08              ??         08h
-        ram:03a0 cd              ??         CDh
-        ram:03a1 a4              ??         A4h
-        ram:03a2 04              ??         04h
-        ram:03a3 fd              ??         FDh
-        ram:03a4 cb              ??         CBh
-        ram:03a5 11              ??         11h
-        ram:03a6 b6              ??         B6h
-        ram:03a7 f1              ??         F1h
-        ram:03a8 0e              ??         0Eh
-        ram:03a9 00              ??         00h
-        ram:03aa c3              ??         C3h
-        ram:03ab c6              ??         C6h
-        ram:03ac 02              ??         02h
-        ram:03ad 23              ??         23h    #
-        ram:03ae e9              ??         E9h
-        ram:03af 2a              ??         2Ah    *
-        ram:03b0 aa              ??         AAh
-        ram:03b1 81              ??         81h
-        ram:03b2 7c              ??         7Ch    |
-        ram:03b3 bd              ??         BDh
-        ram:03b4 28              ??         28h    (
-        ram:03b5 11              ??         11h
-        ram:03b6 6c              ??         6Ch    l
-        ram:03b7 26              ??         26h    &
-        ram:03b8 00              ??         00h
-        ram:03b9 11              ??         11h
-        ram:03ba ac              ??         ACh
-        ram:03bb 81              ??         81h
-        ram:03bc 19              ??         19h
-        ram:03bd 4e              ??         4Eh    N
-        ram:03be 3c              ??         3Ch    <
-        ram:03bf e6              ??         E6h
-        ram:03c0 0f              ??         0Fh
-        ram:03c1 32              ??         32h    2
-        ram:03c2 ab              ??         ABh
-        ram:03c3 81              ??         81h
-        ram:03c4 97              ??         97h
-        ram:03c5 37              ??         37h    7
-        ram:03c6 c9              ??         C9h
-        ram:03c7 21              ??         21h    !
-        ram:03c8 56              ??         56h    V
-        ram:03c9 83              ??         83h
-        ram:03ca cb              ??         CBh
-        ram:03cb 6e              ??         6Eh    n
-        ram:03cc c8              ??         C8h
-        ram:03cd cb              ??         CBh
-        ram:03ce ae              ??         AEh
-        ram:03cf 0e              ??         0Eh
-        ram:03d0 20              ??         20h
-        ram:03d1 cb              ??         CBh
-        ram:03d2 76              ??         76h    v
-        ram:03d3 28              ??         28h    (
-        ram:03d4 ef              ??         EFh
-        ram:03d5 0e              ??         0Eh
-        ram:03d6 28              ??         28h    (
-        ram:03d7 18              ??         18h
-        ram:03d8 eb              ??         EBh
-        ram:03d9 e5              ??         E5h
-        ram:03da ed              ??         EDh
-        ram:03db 5b              ??         5Bh    [
-        ram:03dc aa              ??         AAh
-        ram:03dd 81              ??         81h
-        ram:03de 16              ??         16h
-        ram:03df 00              ??         00h
-        ram:03e0 21              ??         21h    !
-        ram:03e1 ac              ??         ACh
-        ram:03e2 81              ??         81h
-        ram:03e3 19              ??         19h
-        ram:03e4 77              ??         77h    w
-        ram:03e5 7b              ??         7Bh    {
-        ram:03e6 3c              ??         3Ch    <
-        ram:03e7 e6              ??         E6h
-        ram:03e8 0f              ??         0Fh
-        ram:03e9 32              ??         32h    2
-        ram:03ea aa              ??         AAh
-        ram:03eb 81              ??         81h
-        ram:03ec e1              ??         E1h
-        ram:03ed c9              ??         C9h
-        ram:03ee e5              ??         E5h
-        ram:03ef cd              ??         CDh
-        ram:03f0 b1              ??         B1h
-        ram:03f1 3e              ??         3Eh    >
-        ram:03f2 3e              ??         3Eh    >
-        ram:03f3 05              ??         05h
-        ram:03f4 28              ??         28h    (
-        ram:03f5 e4              ??         E4h
-        ram:03f6 2b              ??         2Bh    +
-        ram:03f7 be              ??         BEh
-        ram:03f8 20              ??         20h
-        ram:03f9 e0              ??         E0h
-        ram:03fa e1              ??         E1h
-        ram:03fb c9              ??         C9h
-        ram:03fc f5              ??         F5h
-        ram:03fd e5              ??         E5h
-        ram:03fe 21              ??         21h    !
-        ram:03ff 8d              ??         8Dh
-        ram:0400 81              ??         81h
-        ram:0401 11              ??         11h
-        ram:0402 9b              ??         9Bh
-        ram:0403 81              ??         81h
-        ram:0404 01              ??         01h
-        ram:0405 0e              ??         0Eh
-        ram:0406 00              ??         00h
-        ram:0407 ed              ??         EDh
-        ram:0408 b0              ??         B0h
-        ram:0409 3a              ??         3Ah    :
-        ram:040a 53              ??         53h    S
-        ram:040b 83              ??         83h
-        ram:040c 12              ??         12h
-        ram:040d 21              ??         21h    !
-        ram:040e e1              ??         E1h
-        ram:040f 81              ??         81h
-        ram:0410 11              ??         11h
-        ram:0411 ff              ??         FFh
-        ram:0412 81              ??         81h
-        ram:0413 01              ??         01h
-        ram:0414 0f              ??         0Fh
-        ram:0415 00              ??         00h
-        ram:0416 ed              ??         EDh
-        ram:0417 b0              ??         B0h
-        ram:0418 e1              ??         E1h
-        ram:0419 f1              ??         F1h
-        ram:041a c9              ??         C9h
+                             ; Thunk-based dispatch for commands in the 0xC2-0xC6 range.
+        ram:0240 28 0e        JR         Z,LAB_ram_0250
+        ram:0242 18 05        JR         LAB_ram_0249
+        ram:0244 cd 9f 3e     CALL       thunk_FUN_ram_335f
+        ram:0247 28 07        JR         Z,LAB_ram_0250
+        ram:0249 dd 7e 02     LD A,(IX+0x02)                ; load command subtype from IX+2
+        ram:024c e6 c0        AND 0xc0                       ; mask off low bits, keep high mode bits
+        ram:024e 20 75        JR         NZ,LAB_ram_02c5             ; branch if this is a special-mode request
+        ram:0250 78           LD A,B                        ; otherwise resume normal index flow                        ; value from previous dispatch path
+        ram:0251 d6 c1        SUB 0xc1                      ; normalize the value to a zero-based command index
+        ram:0253 32 de 81     LD (DAT_ram_0x81de),A         ; save index to RAM for the called routine
+        ram:0256 3d           DEC A                        ; prepare A for a table lookup or offset calculation
+        ram:0257 11 0e 82     LD DE,0x820e
+        ram:025a 18 03        JR         LAB_ram_025f
+        ram:025c 11 69 06     LD DE,0x0669
+        ram:025f 6f           LD L,A
+        ram:0260 26 00        LD H,0x00
+        ram:0262 29           ADD HL,HL
+        ram:0263 19           ADD HL,DE
+        ram:0264 cd 33 00     CALL       LAB_ram_0033
+        ram:0267 3e 01        LD A,0x01
+        ram:0269 d3 05        OUT        (DAT_io_0x05),A
+        ram:026b cd 4d 04     CALL       LAB_ram_044d
+        ram:026e 7d           LD A,L
+        ram:026f b4           OR H
+        ram:0270 20 12        JR         NZ,LAB_ram_0284
+        ram:0272 78           LD A,B
+        ram:0273 fe c7        CP 0xc7
+        ram:0275 38 80        JR         C,LAB_ram_01f7
+        ram:0277 3a dd 81     LD A,(DAT_ram_0x81dd)
+        ram:027a fe 02        CP 0x02
+        ram:027c d2 f7 01     JP         NC,LAB_ram_01f7
+        ram:027f 78           LD A,B
+        ram:0280 d6 05        SUB 0x05
+        ram:0282 18 ac        JR         LAB_ram_0230
+        ram:0284 78           LD A,B
+        ram:0285 fe c7        CP 0xc7
+        ram:0287 38 2f        JR         C,LAB_ram_02b8
+        ram:0289 7c           LD A,H
+        ram:028a fe ff        CP 0xff
+        ram:028c 28 2f        JR         Z,LAB_ram_02bd
+        ram:028e 7e           LD A,(HL)
+        ram:028f e6 07        AND 0x07
+        ram:0291 fe 01        CP 0x01
+        ram:0293 28 12        JR         Z,LAB_ram_02a7
+        ram:0295 fd cb 11 7e  BIT 7,(IY+0x11)
+        ram:0299 20 60        JR         NZ,LAB_ram_02fb
+        ram:029b fe 02        CP 0x02
+        ram:029d 28 08        JR         Z,LAB_ram_02a7
+        ram:029f fe 03        CP 0x03
+        ram:02a1 20 58        JR         NZ,LAB_ram_02fb
+        ram:02a3 cb 76        BIT 6,(HL)
+        ram:02a5 28 54        JR         Z,LAB_ram_02fb
+                             ; On nonzero bit 6, preserve HL/BC and perform a deeper lookup
+        ram:02a7 e5           PUSH HL
+        ram:02a8 c5           PUSH BC
+        ram:02a9 3a de 81     LD A,(DAT_ram_0x81de)
+        ram:02ac f5           PUSH AF
+        ram:02ad cd c5 05     CALL       LAB_ram_05c5
+        ram:02b0 f1           POP AF
+        ram:02b1 32 de 81     LD (DAT_ram_0x81de),A
+        ram:02b4 c1           POP BC
+        ram:02b5 e1           POP HL
+        ram:02b6 18 43        JR         LAB_ram_02fb
+        ram:02b8 7c           LD A,H
+        ram:02b9 fe ff        CP 0xff
+        ram:02bb 20 3e        JR         NZ,LAB_ram_02fb
+                             ; If H == 0xFF this is a fallback case: use L as a small index
+        ram:02bd 4d           LD C,L
+        ram:02be 3a 8c 81     LD A,(DAT_ram_0x818c)
+        ram:02c1 b7           OR A
+        ram:02c2 c4 ab 3e     CALL       NZ,thunk_FUN_ram_335f
+        ram:02c5 78           LD A,B
+        ram:02c6 cd a4 05     CALL       LAB_ram_05a4
+                             ; Special-mode request path handles high-bit command variants, then increments status bits
+        ram:02c9 fd cb 09 a6  RES 4,(IY+0x09)
+        ram:02cd cd af 03     CALL       LAB_ram_03af
+        ram:02d0 38 f4        JR         C,LAB_ram_02c6
+        ram:02d2 fd cb 0e 7e  BIT 7,(IY+0x0e)
+        ram:02d6 ca fa 01     JP         Z,LAB_ram_01fa
+                             ; If bit 7 at IY+0x0e is clear, return to the main dispatcher; otherwise continue the table walk
+        ram:02d9 2a 1b 8b     LD HL,(0x8b1b)                   ; load table base pointer from 0x8B1B
+        ram:02dc ed 5b 35 83  LD DE,(DAT_ram_0x8335)         ; load target table pointer from 0x8335
+        ram:02e0 cd 8e 00     CALL       LAB_ram_008e                  ; compute an index or perform a pointer lookup
+        ram:02e3 30 05        JR         NC,LAB_ram_02ea
+        ram:02e5 4e           LD C,(HL)
+        ram:02e6 97           SUB A
+        ram:02e7 b9           CP C
+        ram:02e8 20 dc        JR         NZ,LAB_ram_02c6
+        ram:02ea fd cb 0e be  RES 7,(IY+0x0e)
+        ram:02ee 21 4b 83     LD HL,0x834b
+        ram:02f1 3a c2 81     LD A,(DAT_ram_0x81c2)
+        ram:02f4 cb a6        RES 4,(HL)                     ; clear a status bit in the computed table entry
+        ram:02f6 b6           OR (HL)                        ; set Z if the entry byte is zero
+        ram:02f7 77           LD (HL),A                      ; store current A into the table or command state
+        ram:02f8 c3 fa 01     JP         LAB_ram_01fa               ; return to the higher-level dispatcher
+        ram:02fb 7e           LD A,(HL)                      ; inspect the current table entry byte
+        ram:02fc e6 07        AND 0x07                       ; test the lowest 3 bits for a special marker
+        ram:02fe 20 17        JR         NZ,LAB_ram_0317           ; nonzero marker means continue to the next handling phase
+        ram:0300 7e           LD A,(HL)                      ; read the current table byte for storage
+        ram:0301 fd 77 10     LD (IY+0x10),A               ; save it to IY+0x10 for later bit testing
+        ram:0304 23           INC HL                         ; advance the table pointer
+        ram:0305 7e           LD A,(HL)
+        ram:0306 b7           OR A
+        ram:0307 28 05        JR         Z,LAB_ram_030e
+        ram:0309 cd d9 03     CALL       LAB_ram_03d9            ; helper handles the stored byte or branch table
+        ram:030c 18 f6        JR         LAB_ram_0304
+        ram:030e fd cb 10 5e  BIT 3,(IY+0x10)                ; test the previously saved byte's bit 3
+        ram:0312 c4 ee 03     CALL       NZ,LAB_ram_03ee        ; conditional helper for the current table entry
+        ram:0315 18 b6        JR         LAB_ram_02cd             ; if helper returns, go back to the special-mode handler
+        ram:0317 fe 01        CP 0x01                        ; compare entry value against 1
+        ram:0319 20 28        JR         NZ,LAB_ram_0343
+        ram:031b cd 37 03     CALL       LAB_ram_0337
+        ram:031e 3a 9a 81     LD A,(DAT_ram_0x819a)
+        ram:0321 fe 98        CP 0x98
+        ram:0323 20 0a        JR         NZ,LAB_ram_032f
+        ram:0325 23           INC HL
+        ram:0326 23           INC HL
+        ram:0327 7e           LD A,(HL)
+        ram:0328 fe 01        CP 0x01
+        ram:032a c2 fa 01     JP         NZ,LAB_ram_01fa            ; return if the condition for this entry failed
+        ram:032d 2b           DEC HL                        ; rewind HL to the original entry pair
+        ram:032e 2b           DEC HL
+        ram:032f cd a4 04     CALL       LAB_ram_04a4            ; perform pointer arithmetic or value translation
+        ram:0332 78           LD A,B                        ; restore B for the next handler path
+        ram:0333 0e 00        LD C,0x00                      ; clear C for the next call
+        ram:0335 18 8f        JR         LAB_ram_02c6             ; return to the special-mode dispatch loop
+        ram:0337 cb 76        BIT 6,(HL)
+        ram:0339 c0           RET NZ
+        ram:033a fd cb 11 7e  BIT 7,(IY+0x11)
+        ram:033e c8           RET Z
+        ram:033f e1           POP HL
+        ram:0340 c3 fa 01     JP         LAB_ram_01fa
+        ram:0343 fe 02        CP 0x02                        ; alternate branch for low command values
+        ram:0345 20 2c        JR         NZ,LAB_ram_0373          ; skip to the other handling mode if not equal
+        ram:0347 cd 37 03     CALL       LAB_ram_0337             ; validate or process the current HL entry
+        ram:034a cb 76        BIT 6,(HL)
+        ram:034c fd cb 0d 5e  BIT 3,(IY+0x0d)
+        ram:0350 20 0e        JR         NZ,LAB_ram_0360          ; if current bit test failed, skip the update path
+        ram:0352 fd cb 0d 66  BIT 4,(IY+0x0d)                ; test another status bit in the IY state word
+        ram:0356 20 18        JR         NZ,LAB_ram_0370          ; if that bit is set, use the fallback path
+        ram:0358 e5           PUSH HL                      ; preserve current pointer across subcall
+        ram:0359 21 cb 07     LD HL,0x07cb                  ; load constant table offset
+        ram:035c cd a4 04     CALL       LAB_ram_04a4            ; compute another pointer or index
+        ram:035f e1           POP HL                       ; restore the original table pointer
+        ram:0360 fd cb 11 4e  BIT 1,(IY+0x11)
+        ram:0364 28 07        JR         Z,LAB_ram_036d
+        ram:0366 3e 07        LD A,0x07                     ; prepare function code 7 for thunk dispatch
+        ram:0368 0e 00        LD C,0x00                     ; argument or category = 0
+        ram:036a cd a4 05     CALL       LAB_ram_05a4            ; compute or normalize the thunk parameters
+        ram:036d cd a5 3e     CALL       thunk_FUN_ram_335f    ; dispatch to the thunk handler for this path
+        ram:0370 c3 fa 01     JP         LAB_ram_01fa
+        ram:0373 fe 03        CP 0x03
+        ram:0375 20 36        JR         NZ,LAB_ram_03ad
+        ram:0377 23           INC HL
+        ram:0378 7e           LD A,(HL)
+        ram:0379 32 05 80     LD (DAT_ram_0x8005),A
+        ram:037c fe cc        CP 0xcc
+        ram:037e 38 28        JR         C,LAB_ram_03a8
+        ram:0380 f5           PUSH AF
+        ram:0381 cd 9f 3e     CALL       thunk_FUN_ram_335f
+        ram:0384 28 0a        JR         Z,LAB_ram_0390
+        ram:0386 dd 6e 00     LD L,(IX+0x00)
+        ram:0389 dd 66 01     LD H,(IX+0x01)
+        ram:038c cb 66        BIT 4,(HL)
+        ram:038e 28 03        JR         Z,LAB_ram_0393
+        ram:0390 cd 99 3e     CALL       thunk_FUN_ram_335f
+        ram:0393 dd 7e 02     LD A,(IX+0x02)
+        ram:0396 32 7c 82     LD (0x827c),A
+        ram:0399 fd cb 11 f6  SET 6,(IY+0x11)
+        ram:039d 21 32 08     LD HL,0x0832
+        ram:03a0 cd a4 04     CALL       LAB_ram_04a4
+        ram:03a3 fd cb 11 b6  RES 6,(IY+0x11)
+        ram:03a7 f1           POP AF
+        ram:03a8 0e 00        LD C,0x00
+        ram:03aa c3 c6 02     JP         LAB_ram_02c6
+        ram:03ad 23           INC HL
+        ram:03ae e9           JP (HL)
+        ram:03af 2a aa 81     LD HL,(0x81aa)
+        ram:03b2 7c           LD A,H
+        ram:03b3 bd           CP L
+        ram:03b4 28 11        JR         Z,LAB_ram_03c7
+        ram:03b6 6c           LD L,H
+        ram:03b7 26 00        LD H,0x00
+        ram:03b9 11 ac 81     LD DE,0x81ac
+        ram:03bc 19           ADD HL,DE
+        ram:03bd 4e           LD C,(HL)
+        ram:03be 3c           INC A
+        ram:03bf e6 0f        AND 0x0f
+        ram:03c1 32 ab 81     LD (DAT_ram_0x81ab),A
+        ram:03c4 97           SUB A
+        ram:03c5 37           SCF
+        ram:03c6 c9           RET
+        ram:03c7 21 56 83     LD HL,0x8356
+        ram:03ca cb 6e        BIT 5,(HL)
+        ram:03cc c8           RET Z
+        ram:03cd cb ae        RES 5,(HL)
+        ram:03cf 0e 20        LD C,0x20
+        ram:03d1 cb 76        BIT 6,(HL)
+        ram:03d3 28 ef        JR         Z,LAB_ram_03c4
+        ram:03d5 0e 28        LD C,0x28
+        ram:03d7 18 eb        JR         LAB_ram_03c4
+        ram:03d9 e5           PUSH HL
+        ram:03da ed 5b aa 81  LD DE,(0x81aa)
+        ram:03de 16 00        LD D,0x00
+        ram:03e0 21 ac 81     LD HL,0x81ac
+        ram:03e3 19           ADD HL,DE
+        ram:03e4 77           LD (HL),A
+        ram:03e5 7b           LD A,E
+        ram:03e6 3c           INC A
+        ram:03e7 e6 0f        AND 0x0f
+        ram:03e9 32 aa 81     LD (DAT_ram_0x81aa),A
+        ram:03ec e1           POP HL
+        ram:03ed c9           RET
+        ram:03ee e5           PUSH HL
+        ram:03ef cd b1 3e     CALL       thunk_FUN_ram_335f
+        ram:03f2 3e 05        LD A,0x05
+        ram:03f4 28 e4        JR         Z,LAB_ram_03da
+        ram:03f6 2b           DEC HL
+        ram:03f7 be           CP (HL)
+        ram:03f8 20 e0        JR         NZ,LAB_ram_03da
+        ram:03fa e1           POP HL
+        ram:03fb c9           RET
+        ram:03fc f5           PUSH AF
+        ram:03fd e5           PUSH HL
+        ram:03fe 21 8d 81     LD HL,0x818d
+        ram:0401 11 9b 81     LD DE,0x819b
+        ram:0404 01 0e 00     LD BC,0x000e
+        ram:0407 ed b0        LDIR
+        ram:0409 3a 53 83     LD A,(0x8353)
+        ram:040c 12           LD (DE),A
+        ram:040d 21 e1 81     LD HL,0x81e1
+        ram:0410 11 ff 81     LD DE,0x81ff
+        ram:0413 01 0f 00     LD BC,0x000f
+        ram:0416 ed b0        LDIR
+        ram:0418 e1           POP HL
+        ram:0419 f1           POP AF
+        ram:041a c9           RET                             
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
