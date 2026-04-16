@@ -1,0 +1,3 @@
+[submodule "ti85emu"]
+	path = ti85emu
+	url = https://github.com/milankowww/ti85emu.git
