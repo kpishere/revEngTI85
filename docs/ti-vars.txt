@@ -1,0 +1,363 @@
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+ TI-VARS.TXT      A Programmer's Guide to the TI-85 variables     Version 0.2
+                       Copyright (c) 1999 Dines Justesen
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+The first version of this document only included information about how to
+use variables on the TI-85, which was new information at the time. Since then
+several things related to the original contents has been added, and the it is
+now more a guide to the TI-85 "system".
+
+A lot of the information in this document is new in this version, and some of
+it has not been written down in a document like this before. This means that
+eventhough I believe the information in this document is accurate, some
+errors might be present. Also some of the material might not be explained
+well enough for other people to understand it. If you find any errors, has
+ideas for improvements or addition please email me at the address listed
+below. Comments are very welcome.
+
+As always, feel free to distribute this document in unmodified form. The
+latests version of this document can always be found at my homepage.
+
+Dines Justesen
+email: c958362@student.dtu.dk
+www  : http://www.student.dtu.dk/~c958362/
+
+Memory map
+----------                                           (0000) ________________
+A memory map of the TI85 is shown to the left. ROM         | ROM page 0     |
+page X, is one of the ROM pages, which one can be    (4000)|________________|
+selected by writing the number of the page to one          | ROM page x     |
+of the ports (see TI-PORTS.TXT for information on    (8000)|________________|
+this, TI-ROM.TXT contains information about the            | System memory  |
+of the ROM). The system memory holds all kinds of    (8C01)|________________|
+information used by the system. Some parts is              | User memory    |
+described later in this text, for a more complete          |     |          |
+overview of the data look at TI-RAM.TXT.                   |     V          |
+                                                           | Free memory    |
+The VAT is used to find variables stored in the user       |     ^          |
+memory, how this is done is explained later in this        |     |          |
+file.                                                (FA6F)|    VAT         |
+                                                     (FC00)|________________|
+The last part of the RAM is the memory mapped              | Display        |
+display.                                             (FFFF)|________________|
+
+The number format
+-----------------
+The TI-85 uses 10 bytes floating point values to store all numbers. When
+complex values are used, they are stored in rectangular coordinates. The real
+part of the number is placed first in memory and the imaginary part after
+that.
+
+The format of the numbers as follows:
+
+    1 byte sign and vartype
+    2 bytes exponent
+    7 bytes digits
+
+When the TI-85 uses the numbers for calculations an extra byte migth be used
+for storing the digits to avoid round off errors.
+
+The MSB of the sign and vartype byte is used to store the sign, 1 means that
+the number is negative, 0 means a positive number. The 5 LSB's is used to
+store the type of the variable, and it is set to the correct value for all
+elements of the variable. The type is not the type of the variable, but the
+type of element. So for lists the type is 0 while it is 1 for cplx lists.
+
+bit 6 of the sign and vartype is used by the system, but the exact function
+has not been found. The bit is probably used by the system to indicate if
+altering this variable will change the current graph. This way the system can
+find out if the data in the graph memory is valid or a new graph has to
+calculated. The last bit might be used to indicate temporary data.
+
+The exponent of the number is calculated using the following formular:
+
+    [1st]+100*([2nd]-FC)
+
+So the exponent E-1 is written FFFB since FF+100*(FB-FC)=-1.
+
+The digits is stored in packed BCD, which is one BCD code in each nibble. So
+the digits for 2,3454767623456 would be stored as
+
+    23 45 47 67 62 34 56
+
+Below is a small list of examples of whole numbers.
+
+-2534  : 8003FC25340000000000
+0.0078 : 00FFF978000000000000
+(-1,3) : 8100FC10000000000000
+         0100FC30000000000000
+
+If a number has the first two digits set to zero, the system will assume that
+the number is zero.
+
+Variables
+---------
+The information on which type a variable is is stored in the lower 5 bits of
+a byte. The values used are shown below.
+
+    00    Real
+    01    Cplx
+    02    Vectr
+    03    Vectr complex
+    04    List
+    05    List  complex
+    06    Matrx
+    07    Matrx complex
+    08    Const
+    09    Const complex
+    0A    Equ
+    0B    Range
+    0C    Strng
+    0D-10 GDB
+    11    Pict
+    12    Prgm
+    13    Range
+
+The upper bits are used by the system, and can have different values, so they
+should be masked before the type is used.
+
+Below is a description of how the data for some of the variables is stored
+in the memory.
+
+Real:
+    One floating point value (10 bytes)
+
+Cplx:
+    Two floating point values, first the real part then the imaginary part.
+    Complex numbers are always stored in rectangular coordinates. (20 bytes)
+    When a complex value is stored in the registers, it is stored in two
+    register (first the real part then the imaginary). This is usually written
+    as OP1/OP2, which means real part in OP1 and imaginary part in OP2.
+    Complex numbers can be stored in OP1/OP2, OP3/OP4 or OP5/OP6.
+
+Vectr/Vectr complex/List/List complex:
+    The first two bytes is the number of elements in the variable (stored
+    LSB first). After the length the values are stored one after the other
+    as reals/cplxs.
+
+Matrx/Matrx complex:
+    The first byte is the number of columns then one byte which holds the
+    number of rows. After that the elements are stores as reals/cplx. The
+    first number is (1,1) the next (1,2) and the last is the value in the
+    lower rigth corner eg.
+    [[1,0][2,3]] =
+
+    02                    ;Number of cols
+    02                    ;Number of rows
+    0000FC10000000000000  ;Real 1.0
+    0000FC00000000000000  ;Real 0.0
+    0000FC20000000000000  ;Real 2.0
+    0000FC30000000000000  ;Real 3.0
+
+Strings, Equtions, Programs, Pictures:
+    The first two bytes of these vartypes is the length in bytes of the
+    variable (stored LSB first). These two bytes are followed by the data.
+
+The VAT
+-------
+The information on where the variables are placed and what they are called is
+placed in a downwards grawing stack called the VAT (Variable Allocation
+Table).  The stacks starts an (FA6F) and a pointer to the end is stored at
+8BE5.
+
+The format of the variable headers is :
+    type of variable (1 byte)
+    position of variable in memory (2 bytes, MSB first)
+    length of name of variable (1 byte)
+    name of variable backwards (x bytes)
+
+(Remember this is stored backwards)
+
+The type of variable is one of the values listed above, but since a whole byte
+is used to stored the informations the 3 MSB is unused. The 3 MSB is used by
+the system, and might therefore be set to any value. Bit 6 probably indicates
+whether the current var affects the graph, and bit 7 might have something to
+do with temporary variables.
+
+The format of the data pointed to can be found in the list of variable above.
+
+When variable names are used outside of the VAT the following format is used:
+    type of variable (1 byte)
+    length of name of variable (1 byte)
+    name of variable (x byte)
+
+The data is normally stored using 10 bytes so that it can be stored in the
+same places as floating point numbers. Outside of the VAT the variable
+information is not stored backwards. All this means that the normal string
+routines can be used for the name, and that the routines to copy floating
+point values also are able to copy variable information.
+
+The OP registers
+----------------
+The registers is 6 buffers each 11 bytes long, which are placed in the system
+memory. They are used to pass information to the functions in the ROM and for
+floating point math. Since the registers is used the same way as OP1-OP6 on
+the TI83 they are called by the same name here.
+
+OP1 - OP6 is 11 byte registers used by the system to do varius things, among
+them finding and creating variables. The registers are often used to pass
+information to other functions. When the register are used to pass information
+about a variable to a function the 11 bytes are used as shown below.
+
+          1 byte  type of variable
+          1 byte  length of name
+          8 bytes name
+          1 byte  unused
+
+The name can be padded with anything.
+
+When the registers are used to hold floating point values, the 11 bytes are
+used as shown below.
+
+          1 byte sign and var type
+          2 bytes code for exponent
+          7 bytes storing the number
+          1 byte unused
+
+This is the format of floating point values, except the last byte which is
+used in floating point operations by the system.
+
+When the system is using complex values the registers are used in pairs, one
+register holds the real part of the number the other register holds the
+imaginary part. All complex values most have the LSB of the first byte set.
+
+
+FP Stack
+--------
+The FP stack is placed after the last variable in the user memory and ends at t
+he end of the user memory. The stack contains reals (10 bytes) or cplx
+(20 bytes), and it is probably used by the system for temporary storage and
+to pass values to some functions.
+
+All functions which pushes values to the stack checks if the needed memory is
+avaible or not, if it is not available the error handler is called, and the
+executing program is terminated.
+
+Handling the keypad
+-------------------
+The TIOS uses several different functions to handle input from the user, some
+of them might be interesting to assembly program. The following section gives
+an overview of how this system works.
+
+The interrupt routine normally handles the actual reading of the status of
+each of the keys on the keypad. When ever a key is pressed the number of it
+is stored in a 1 byte buffer. Since the ON key has special meaning this key
+is treated a bit special. There is a special bit in the RAM which indicates
+whether it has been pressed or not, and it is normally not treated as a key
+by the build in routines.
+
+Once the number of the key has been stored in the buffer it can be read using
+the GET_KEY function, which is often used in assembly programs.  This is an
+easy way to get user input, but it does not provide any translation of the
+number.
+
+Since the system always needs some translation of the number, almost all
+system routines uses KEY_HAND to get user input. KEY_HAND uses GET_KEY to get
+the number of the key, but it does various translations of the key presses.
+This function automatically handles the status of the 2nd and alpha status,
+and will use this when translating the key number to a scan code. The
+function also takes care of contrast handling, APD, and will use "low power" mode
+when waiting for a key. KEY_HAND returns when ever it has something to return,
+but it will not return if keys like 2nd and alpha are pressed. The value
+returned by the function is the scan code of the key, which also is the token
+for the function which needs to be performed. (A BASIC version of this
+function which returns the number of the key as a floating point value also
+exists).
+
+Eventhough KEY_HAND takes care of several takes which are allways needed, most
+of the system routines needs more than this. Since inputting strings of text
+are often used by the system a special function which handles this in all
+these situations is also included. This function will given a buffer to store
+the string in let the user input the string and edit this.
+
+The buffer is controlled by four pointers in the system part of the RAM which
+points to the beginning, end, current location, and end of input for the
+buffer. Using these values the function can determine where the cursor should
+be placed how long inputs are permitted etc.
+
+Lots of standard functions are handled automaticaly by this routine, which makes
+it quite complex. First of all, all the editing features seem to be included,
+but the function also handles certain special keypresses. These special key
+presses are things like QUIT, go to a menu etc.
+
+To give the function which uses this input routine more control over what is
+happening a set of "handlers" are used. The handles are 6 pointers to
+functions which are called in special cases. By changing the values of these
+pointers the calling function can setup its own handlers, which does what it
+needs in these special cases. Currently the only the function of the first of
+these handlers are known, the input handler.
+
+The input handler is called every time a key is pressed to allow the calling
+function to handle special keys before these are handled by the input function.
+This routine can for example end the input if enter is detected, switch to
+another buffer if a cursor key is pressed etc.
+
+For each of the normal "applications" on the TI-85 the ROM includes a function
+which will initialize these handlers to their standard values. Some
+applications has more than one set, which one is used depends on which part
+of the application the user is currently using. What application is currently
+being used can easily be detected using the location byte in the ROM.
+
+It is worth mentioning how the inputting routine is used in a few of the
+calculators applications. The ROM always includes a program called '!' or '#'
+which contains the latest input. When inputing is taking place on the
+homescreen this variable is used to store the current input. The TI-OS does
+this by resizing the variable so it takes up all the available space in the
+user mem, leaving 0 bytes free. When this is done not all memory locations
+are updated which in same cases can cause some confusion, but most pointers
+should be correct. (It is also worth noticing that this condition is also what
+has been called "split stack memory management", but since the memory is infact
+used in teh same way as before this is not an accurate term.) After the variable
+has been resized the buffer pointers are initilized to use this variable as
+the input buffer, and the input function is called. When the user presses
+enter, or in any other way ends the input, the variable is resized so it is
+just big enough to hold all the data (based on the buffer pointers).  In the
+same way when editing y1 before graphing it is resized and used as input
+buffer. This means that while you are typeing everything is store in the
+variable. 
+
+The above is on overview of how inputting takes place in the TIOS, it is by no
+means complete, and a lot more than this is know about it. For more
+information contact Dines Justesen.
+
+Using variables
+---------------
+Two different kinds of variables exists on the TI85, the normal variables
+which has been mention previously and system variables. The normal variables
+are stored in user memory and they can all be located using the VAT. The
+system variables are not present in the VAT, they are store in the system
+memory and special restrictions may apply to them.
+
+Using the normal variables in assembly programs is a fairly easy task, and
+since several example programs are available this will not be discussed here.
+Using the system vars is different, and how to do it is not as well known.
+
+The system variables are things like Xmin and they are stored in atleast two
+different places in the system memory. The first one contains range variables
+which is the variables used when plotting function, the other one is
+statistical variables. The addresses of some of these can be found in 
+TI-RAM.TXT.
+
+Accessing these variables can be done in two ways, either by finding the
+addresse of them and the manually copy the values to/from that location, or
+by using system routines. When using the first method one can call the system
+function with the second byte of the token for that function and it will then
+return the address. For the second method system functions which, based on
+input in one of the OPs, takes care of this exists in the ROM.
+
+Not much is known about the use of system variables on the TI-85, all of the
+above and more has been documented on other calcualtors. Everything which has
+been found so far on the TI-85 indicates that this calculator works the same
+way. For more information contact Dines Justesen.
+
+Menus
+-----
+Both full screen menus and the normal menus has been studied on the TI85, and
+a lot is known about them. Most of the information need on this subject can
+be found in TI-ROM.TXT and TI-RAM.TXT, or in source code and other files
+available on the internet. Future versions of this document will contain more
+information on this.
+

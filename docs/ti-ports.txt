@@ -1,0 +1,225 @@
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+  TI-PORTS.TXT     A Programmer's Guide to the TI-85 Ports     Version 1.1
+                Copyright (c) 1999 Dan Eble & Dines Justesen
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+This document tries to explain what each of the ports on the TI-85 does and.
+If you have any questions, corrections or additions plase contact
+Dines Justesen (c958362@student.dtu.dk). The latest version of this document
+can be found at http://www.student.dtu.dk/~c958362.
+
+Feel free to distribute this document in unmodified form.
+
+Bitmap Terminology
+------------------
+1   Set bit
+0   Clear bit
+.   Used bit (1 or 0)
+X   Unused bit
+?   Bit of unknown use
+
+All numbers are in hexadecimal, except where noted with (d).
+
+-----------------------------------------------------------------------------
+Port 0 : Video Buffer Offset                                     Write Only
+-----------------------------------------------------------------------------
+Write
+-----
+X?......  00-3F: LCD shows memory at 100h*(C0+this value)
+          Example: using a value of 3C, the LCD shows the normal memory, FC00
+          Note: The ROM uses 7C, although it appears to give the same result.
+
+-----------------------------------------------------------------------------
+ Port 1 : Keypad
+-----------------------------------------------------------------------------
+Write
+-----
+X.......  00-7F: prevents set of keys from being read
+Bit 6 = 1: masks out { F5 F4 F3 F2 F1 2nd EXIT MORE }
+Bit 5 = 1: masks out { STO> , x! LN LOG GRAPH ALPHA }
+Bit 4 = 1: masks out { 0 1 4 7 EE SIN STAT x-VAR }
+Bit 3 = 1: masks out { . 2 5 8 { COS PRGM DEL }
+Bit 2 = 1: masks out { (-) 3 6 9 ) TAN CUSTOM }
+Bit 1 = 1: masks out { ENTER + - * / ^ CLEAR }
+Bit 0 = 1: masks out { DOWN LEFT RIGHT UP }
+
+Read
+----
+........
+Bit 7 = 0: key pressed is one of { ALPHA x-VAR DEL MORE }
+Bit 6 = 0: key pressed is one of { GRAPH STAT PRGM CUSTOM CLEAR EXIT }
+Bit 5 = 0: key pressed is one of { LOG SIN COS TAN ^ 2nd }
+Bit 4 = 0: key pressed is one of { LN EE ( ) / F1 }
+Bit 3 = 0: key pressed is one of { UP x! 7 8 9 * F2 }
+Bit 2 = 0: key pressed is one of { RIGHT , 4 5 6 - F3 }
+Bit 1 = 0: key pressed is one of { LEFT STO> 1 2 3 + F4 }
+Bit 0 = 0: key pressed is one of { DOWN 0 . (-) ENTER F5}
+
+-----------------------------------------------------------------------------
+ Port 2 : Contrast                                                Write Only
+-----------------------------------------------------------------------------
+Write
+-----
+XX......  00-1F: sets contrast to value
+
+-----------------------------------------------------------------------------
+ Port 3 : ON Status, LCD Power
+-----------------------------------------------------------------------------
+Write
+-----
+XXX?....
+Bit 3 = 1: turn LCD on
+        0: turn LCD off
+Bit 2 = 1: do not mask timer interrupts (200Hz)
+        0: mask timer interrupts
+Bit 1 = 1: set bit 1 LCD status (on)
+        0: clear bit 1 LCD status (off)
+Bit 0 = 1: do not mask ON key interrupts
+        0: mask ON key interrupts
+
+Note: Do not exit a program with bits 0 and 1 clear.  The TI-85
+freezes.
+
+Read
+----
+0000....
+Bit 3 = 1: ON not pressed 
+        0: ON pressed now
+Bit 2 = 1: Timer interrupt happened
+        0: timer interrupts hasn't happened
+Bit 1 = 1: LCD is on
+        0: LCD is off
+Bit 0 = 1: ON interrupt has happened
+        0: ON interrupt hasn't happened
+
+-----------------------------------------------------------------------------
+ Port 4 : Video Buffer Width, Interrupt Control                   Write Only
+-----------------------------------------------------------------------------
+Write
+-----
+XXX....?
+Bits 4 and 3 = Video Buffer Width
+               00: 10-byte wide buffer
+               01: 12-byte wide buffer
+               10: 16-byte wide buffer (normal)
+               11: 20-byte wide buffer
+Bits 2 and 1 = Interrupt speed (11 = normal 00=fastest)
+               00: black screen and frozen calculator
+               01: dark screen, top half of screen is doubled in lower half,
+                   and interrupts go faster
+               10: slightly darker than normal screen, top 1/4 of screen is
+                   doubled in bottom 1/4, slightly faster interrupts
+               11: normal
+Bit 0 = 1: freeze	\_ don't know what this does
+        0: function	/
+
+-----------------------------------------------------------------------------
+ Port 5 : Memory Page
+-----------------------------------------------------------------------------
+Write
+-----
+XXXXX...  0-7: sets memory page (accessed from 4000 to 7FFF) to value
+
+Read
+----
+00000...
+Returns current memory page (0-7)
+
+-----------------------------------------------------------------------------
+ Port 6 : Power Mode
+-----------------------------------------------------------------------------
+Write
+-----
+???????.
+Bit 0 = 1: normal power
+        0: low power
+
+Note: I don't know much about this port.  To put the processor in low-power
+      mode, first turn off the LCD (port 3), then write 40h to this port.
+      To put the processor back in normal-power mode, write 41h to this port,
+      then turn the LCD back on.
+
+Read
+----
+???????.  returns value written
+
+-----------------------------------------------------------------------------
+ Port 7 : Link Port
+-----------------------------------------------------------------------------
+This port is used to communicate with other calculators, computers and CBL
+equipment. 
+
+The port consist of two parts, the Port Configuration Register (PCR) and the
+Port Data Register (PDR). PCR controls whether the PDR is used as input or as
+an output (PCRx controls PDRx). PDR is used to send and receive data.
+
+Bit  Function
+--------------------------------------------------------------------
+ 7   PCR3
+ 6   PCR2
+ 5   PCR1
+ 4   PCR0
+ 3   PDR3
+ 2   PDR2
+ 1   PDR1
+ 0   PDR0
+
+PDR bit 0 and 2 is used to control/read the voltage on the tip, while bit 1
+and 3 is used for the middle. The base is always used for ground.
+
+Each of the the data lines have the same circuit attached (shown below).
+
+Normally PCR is set to C0 by the ROM, which sets          Vdd
+PDR0/1 as inputs and PDR2/3 as outputs. Doing this        ---
+means that the voltage at the tip and the middel           |
+can be read as PDR1/0. PDR2/3 is then used to control      < 10 KOhms
+the output (a one gives an output of app. 0V).             >
+                                                           |
+When two calculators are connected together the            V Diode
+output will be high if neither of them has their           |
+transistor on, otherwise it will be low (wired or)    out--O---------- PDR0/1
+                                                           |
+                                                           < 470 Ohms
+                                                           >
+                                                           |
+                                                      NPN  \__/\/\____ PDR2/3
+                                                           /  33 KOhms
+                                                           |
+                                                         __|___
+                                                          Gnd
+
+Write:
+------
+........
+When writing to the link port the upper nibble sets the PCR, while the lower
+sets the PDR. The state of the tip and the middle can be set using the
+following values.
+
+Value  Function
+----------------------------------------------------
+C0     White wire is positive. Red wire is positive.
+D4     White wire is positive. Red wire is grounded.
+E8     White wire is grounded. Red wire is positive.
+FC     Whits wire is grounded. Red wire is grounded.
+
+The above values are the values used by the ROM. FC is normally not used by
+the TI-OS, but it might be used to indicate an error. Other values can be
+used, but these gives the best results.
+
+Read:
+-----
+........
+When the a byte is read from the link port, the upper nibble contains the last
+value written to the PCR. Assuming that these are set to 1100b (e.g. one of the
+above mentioned values where written to PCR), the contence of the PDR can be
+interpreted as follows.
+
+Bit  State Function
+------------------------------------------------------------------------
+2+3        Last value written
+1    1     White wire is positive.
+     0     White wire is grounded.
+0    1     Red wire is positive. 
+     0     Red wire is grounded.

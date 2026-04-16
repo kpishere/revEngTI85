@@ -1,0 +1,120 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXFileReference section */
+		0FDE32B92F90609300E0F42D /* icons.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = icons.h; path = ../../ti85emu/src/icons.h; sourceTree = "<group>"; };
+		0FDE32BA2F90609300E0F42D /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../ti85emu/src/main.c; sourceTree = "<group>"; };
+		0FDE32BB2F90609300E0F42D /* ti85.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = ti85.c; path = ../../ti85emu/src/ti85.c; sourceTree = "<group>"; };
+		0FDE32BC2F90609300E0F42D /* Makefile.am */ = {isa = PBXFileReference; lastKnownFileType = text; name = Makefile.am; path = ../../ti85emu/src/Makefile.am; sourceTree = "<group>"; };
+		0FDE32BD2F90609300E0F42D /* gtk.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = gtk.c; path = ../../ti85emu/src/gtk.c; sourceTree = "<group>"; };
+		0FDE32BF2F90609300E0F42D /* Codes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Codes.h; sourceTree = "<group>"; };
+		0FDE32C02F90609300E0F42D /* CodesCB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodesCB.h; sourceTree = "<group>"; };
+		0FDE32C12F90609300E0F42D /* CodesED.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodesED.h; sourceTree = "<group>"; };
+		0FDE32C22F90609300E0F42D /* CodesXCB.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodesXCB.h; sourceTree = "<group>"; };
+		0FDE32C32F90609300E0F42D /* CodesXX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodesXX.h; sourceTree = "<group>"; };
+		0FDE32C42F90609300E0F42D /* Makefile.am */ = {isa = PBXFileReference; lastKnownFileType = text; path = Makefile.am; sourceTree = "<group>"; };
+		0FDE32C52F90609300E0F42D /* Makefile.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = Makefile.in; sourceTree = "<group>"; };
+		0FDE32C62F90609300E0F42D /* Tables.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Tables.h; sourceTree = "<group>"; };
+		0FDE32C72F90609300E0F42D /* Z80.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = Z80.c; sourceTree = "<group>"; };
+		0FDE32C82F90609300E0F42D /* Z80.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Z80.h; sourceTree = "<group>"; };
+		0FDE32C92F90609300E0F42D /* ti85.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ti85.h; path = ../../ti85emu/src/ti85.h; sourceTree = "<group>"; };
+		0FDE32CA2F90609300E0F42D /* fltk.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = fltk.c; path = ../../ti85emu/src/fltk.c; sourceTree = "<group>"; };
+		0FDE32CB2F90609300E0F42D /* Makefile.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = Makefile.in; path = ../../ti85emu/src/Makefile.in; sourceTree = "<group>"; };
+		0FDE32CC2F90609300E0F42D /* fltk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = fltk.h; path = ../../ti85emu/src/fltk.h; sourceTree = "<group>"; };
+		0FDE32CD2F90704B00E0F42D /* ti85_p0.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p0.s; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0FDE32B22F90606300E0F42D = {
+			isa = PBXGroup;
+			children = (
+				0FDE32CD2F90704B00E0F42D /* ti85_p0.s */,
+				0FDE32CA2F90609300E0F42D /* fltk.c */,
+				0FDE32CC2F90609300E0F42D /* fltk.h */,
+				0FDE32BD2F90609300E0F42D /* gtk.c */,
+				0FDE32B92F90609300E0F42D /* icons.h */,
+				0FDE32BA2F90609300E0F42D /* main.c */,
+				0FDE32BC2F90609300E0F42D /* Makefile.am */,
+				0FDE32CB2F90609300E0F42D /* Makefile.in */,
+				0FDE32BE2F90609300E0F42D /* MSX */,
+				0FDE32BB2F90609300E0F42D /* ti85.c */,
+				0FDE32C92F90609300E0F42D /* ti85.h */,
+			);
+			sourceTree = "<group>";
+		};
+		0FDE32BE2F90609300E0F42D /* MSX */ = {
+			isa = PBXGroup;
+			children = (
+				0FDE32BF2F90609300E0F42D /* Codes.h */,
+				0FDE32C02F90609300E0F42D /* CodesCB.h */,
+				0FDE32C12F90609300E0F42D /* CodesED.h */,
+				0FDE32C22F90609300E0F42D /* CodesXCB.h */,
+				0FDE32C32F90609300E0F42D /* CodesXX.h */,
+				0FDE32C42F90609300E0F42D /* Makefile.am */,
+				0FDE32C52F90609300E0F42D /* Makefile.in */,
+				0FDE32C62F90609300E0F42D /* Tables.h */,
+				0FDE32C72F90609300E0F42D /* Z80.c */,
+				0FDE32C82F90609300E0F42D /* Z80.h */,
+			);
+			name = MSX;
+			path = ../../ti85emu/src/MSX;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		0FDE32B32F90606300E0F42D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1240;
+			};
+			buildConfigurationList = 0FDE32B62F90606300E0F42D /* Build configuration list for PBXProject "Ti85 Analysis" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0FDE32B22F90606300E0F42D;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		0FDE32B72F90606300E0F42D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		0FDE32B82F90606300E0F42D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0FDE32B62F90606300E0F42D /* Build configuration list for PBXProject "Ti85 Analysis" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FDE32B72F90606300E0F42D /* Debug */,
+				0FDE32B82F90606300E0F42D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0FDE32B32F90606300E0F42D /* Project object */;
+}
