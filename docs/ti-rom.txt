@@ -1,0 +1,2054 @@
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+  TI-ROM.TXT      A Programmer's Guide to TI-85 ROM Calls      Version 1.1
+            Copyright (c) 1999 Dan Eble, Rob Taylor & Dines Justesen
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+This is a list of routines found in the TI-85 ROM. If you have any questions,
+corrections or additions please contact Dines Justesen
+(c958362@student.dtu.dk). The latest version of this document can be found at
+http://www.student.dtu.dk/~c958362.
+
+Feel free to distribute this document in unmodified form.
+
+Some of the functions in this document have not been tested in an assembly 
+language program. If you use one of these functions please mail me the 
+result. Be sure to include your ROM version, the address you are calling
+and what the routine is supposed to do. 
+
+Format of this document
+-----------------------
+
+Each of the functions in this document has a header like the one shown below.
+
++-Name of function described -------+-------+-------+-------+-------+-------+
+| Address called    | 3.0A  |  4.0  |  5.0  |  6.0  |  8.0  |  9.0  |  10.0 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
+The Name field holds the name of the function, and the next fields hold the
+address to call for the different ROM versions. Sometimes some of the fields
+are empty, this means the address of the function has not been found for that
+ROM version. If you find it please mail me the information.
+
+For most of the functions there will be an explanation of the function rigth
+below the header. The explanation will normally tell you how to call this
+function, what it does, and which registers it uses. Some of the functions
+found in the ROM are so simple, that an explanation is not necessary, for
+these functions the name will tell you what it does.
+
+Some functions do not return to the original address.  When this is the case,
+a "J" will be placed in the name field of the header.
+
+Some functions will just call another function, which does the actual work,
+the adress of the function called will be given in the "adress called" field
+of the header. The adresses given here are all for ROM version 3.0A.
+
+If an adress is marked with a *, it has not been tested in an assembly
+program.
+
+(nnnn)    denotes a memory address, nnnn, in page 0 of the ROM.
+(xnnnn)   denotes a memory address, nnnn, in page x of the ROM.
+->        denotes a pointer rather than a normal value
+LD r2,r1  the register (or memory location) r1 is copied to r2
+r1 <-> r2 the registers (or memory lacations) r1 and r2 are exchanged
+set n,rr  in an input field, indicates that bit n of register (or memory
+          location) rr is to be set before the call.
+          in a result field or the name field of the header, indicates that
+          bit n of rr is set as a result of the call.
+res n,rr  in an input field, indicates that bit n of register (or memory
+          location) rr is to be clear before the call.
+          in a result field or the name field of the header, indicates that
+          bit n of rr is clear as a result of the call.
+bit n,rr  in a name field, indicates that bit n of register (or memory
+          location) rr is test and the flags are set accordingly.
+
+All numbers are in hexadecimal except where noted with (d).
+
+In the last part of ROM page 0 there is a table of 6-byte structures for
+calling functions on other ROM pages. All you have to do is call the proper
+address in this range, and it will automatically switch pages, call the
+procedure, and return you to the proper page. In this document, wherever
+there is a call address in this table, the actual address of the function
+in ROM version 3.0A will be given in parenthesis as a 5-digit hexadecimal
+number.  The first digit represents the page number the routine is on, and
+the last four are the address.
+
+In ROM version 3.0A this table is located from 33E8 to 3FF3. To find the
+address in other ROM versions (except 9.0 and 10.0) just add the offset found
+in the table below.
+
+4.0: add 3 bytes to all calls between 33E8 and 3FF3 (result: 33EB to 3FF6)
+6.0: add 3 bytes
+8.0: add 7 bytes (result: 33EF to 3FFA)
+
+The address of a function in rom version 10.0 can be found by adding 1B to
+the address in ROM version 9.0
+
+Misc ROM functions
+------------------
+
+The list below contains misc functions in the ROM. Functions which deal with
+the FP Stack, the FP registers, memory allocation, FP math and menus has been
+moved to separate lists later in this document. Not all of these functions
+includes adresses for other ROM versions than 3.0A.
+
++- Name ------------+-------+-------+-------+-------+-------+-------+-------+
+|                   | 3.0A  |  4.0  |  5.0  |  6.0  |  8.0  |  9.0  |  10.0 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Startup ---------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  0000 |  0000 |  0000 |  0000 |  0000 |  0000*|  0000*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: This is the place where the processor starts executing instructions,
+        after the batteries have been taken out. This function calls 0CE5 which
+        does the actual initializing.
+
++- LD OP2,OP1 ------+-------+-------+-------+-------+-------+-------+-------+
+| Call 208E         |  0008 |  0008*|  0008*|  0008*|  0008*|  0008*|  0008*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- BIT 0,(IY+7) ----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  000B |  000B*|  000B*|  000B*|  000B*|  000B*|  000B*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Search by name --+-------+-------+-------+-------+-------+-------+-------+
+| Call 2715         |  0010 |  0010*|  0010*|  0010*|  0010*|  0010*|  0010*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  (8082) = Variable type to find
+        (8083) = Length of variable name (1-8)
+        (8084) = Actual name of variable (8 bytes long, padded with anything)
+Result: Success: CF clear
+                 A = (8082) = Type of the variable found
+                 C = 0
+                 DE = Address of variable
+                 HL = Address of VAT entry for variable
+        Failure: CF set
+
++- BIT 1,(IY+8) ----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  0013 |  0013*|  0013*|  0013*|  0013*|  0013*|  0013*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- PUSH OP1 or OP1/OP2 on FP Stack -+-------+-------+-------+-------+-------+
+| Call 2ED4         |  0018*|  0018*|  0018*|  0018*|  0018*|  0018*|  0018*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Do not use graph memory -+-------+-------+-------+-------+-------+-------+
+|                   |  001B |  001B*|  001B*|  001B*|  001B*|  001B*|  001B*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: Sets bit 0 of (8340) or (IY+03). When this bit is set the
+        graph memory is not used to update the screen.
+
++- LD OP1,(HL) -----+-------+-------+-------+-------+-------+-------+-------+
+| Call 2151         |  0020 |  0020*|  0020*|  0020*|  0020*|  0020*|  0020*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- A=(8A56) OR (8A56) ------+-------+-------+-------+-------+-------+-------+
+|                   |  0023 |  0023*|  0023*|  0023*|  0023*|  0023*|  0023*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+(Might be check if some system var is real, 8A55 -> VAT info ???)
+
++- OP1 = OP1*OP2 ---+-------+-------+-------+-------+-------+-------+-------+
+| Call 0E52         |  0028*|  0028*|  0028*|  0028*|  0028*|  0028*|  0028*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Note: this function does not use the extra digits of the registers.
+
++- (8A56)= A = 0 ---+-------+-------+-------+-------+-------+-------+-------+
+|                   |  002B |  002B*|  002B*|  002B*|  002B*|  002B*|  002B*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+(might be set type of some system var to real, 8A55 -> VAT info ???)
+
++- OP1 = OP1+OP2 ---+-------+-------+-------+-------+-------+-------+-------+
+| Call 0D6F         |  0030 |  0030*|  0030*|  0030*|  0030*|  0030*|  0030*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Note: this function does not use the extra digits of the registers.
+
++- LD HL,(HL) ------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  0033 |  0033*|  0033*|  0033*|  0033*|  0033*|  0033*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> data word
+Result: HL = data word
+        A = L
+
++- General Interrupt Handler -------+-------+-------+-------+-------+-------+
+|                   |  0038 |  0038*|  0038*|  0038*|  0038*|  0038*|  0038*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Handles interrupts created by system peripherals.
+
++- Has the ON key been pressed -----+-------+-------+-------+-------+-------+
+|                   |  0075 |  0075*|  0075*|  0075*|  0075*|  0075*|  0075*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: ZF clear: ON has been pressed
+        ZF set: ON has not been pressed 
+        
++- Check if graph mode is Func -----+-------+-------+-------+-------+-------+
+|                   |  007A |  007A*|  007A*|  007A*|  007A*|  007A*|  007A*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: ZF clear: Func mode
+        ZF set: not Func mode
+
++- Check if graph mode is Pol ------+-------+-------+-------+-------+-------+
+|                   |  007F |  007F*|  007F*|  007F*|  007F*|  007F*|  007F*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: ZF clear: Pol mode
+        ZF set: not Pol mode
+
++- Check if graph mode is param ----+-------+-------+-------+-------+-------+
+|                   |  0084 |  0084*|  0084*|  0084*|  0084*|  0084*|  0084*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: ZF clear: Param mode
+        ZF set: not Param mode
+
++- Check if graph mode is DifEq ----+-------+-------+-------+-------+-------+
+|                   |  0089 |  0089*|  0089*|  0089*|  0089*|  0089*|  0089*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: ZF clear: DifEq mode
+        ZF set: not DifEq mode
+
++- CP HL,DE --------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  008E |  008E*|  008E*|  008E*|  008E*|  008E*|  008E*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: Flags are modified (no registers destroyed)
+
++- Display ":" -----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  0094 |  0094*|  0094*|  0094*|  0094*|  0094*|  0094*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  (800C) = row
+	(800D) = column
+        set 3,(IY+05): display white on black
+        res 3,(IY+05): display black on white
+        set 1,(IY+0D): alter text memory
+        res 1,(IY+0D): don't alter text memory
+Result: A = ":"
+	":" is printed on screen.
+
++- Unpack HL to A --+-------+-------+-------+-------+-------+-------+-------+
+|                   |  009A |  009A*|  009A*|  009A*|  009A*|  009A*|  009A*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+This is called from (16BC0) and used to convert HL to a decimal string.
+
++- Divide HL by A --+-------+-------+-------+-------+-------+-------+-------+
+|                   |  009C*|  009C*|  009C*|  009C*|  009C*|  009C*|  009C*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Update busy counter -----+-------+-------+-------+-------+-------+-------+
+|                   |  00AC*|  00AC*|  00AC*|  00AC*|  00AC*|  00AC*|  00AC*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  none
+Result: Decreases counter and draws new bitmap if needed.
+        (8080) counter. Set to 0Ch when it reaces 0
+        (8081) bit map.
+        Called by interrupt handler.
+
++- APD  ------------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  010E*|  010E*|  010E*|  010E*|  010E*|  010E*|  010E*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  none
+Result: If enough time has elapsed the calculator is halted.
+
++- (8009) = 0A1, hl=8009 ---+-------+-------+-------+-------+-------+-------+
+|                   |  0115*|  0115*|  0115*|  0115*|  0115*|  0115*|  0115*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Used to update APD/Cursor blink counter.
+
++- More than one key pressed -------+-------+-------+-------+-------+-------+
+|                   |  015D*|  015D*|  015D*|  015D*|  015D*|  015D*|  015D*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: (8002)=FFh \ More than one key pressed
+        (8004)=5h  /
+
++- SCF -------------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  01A0*|  01A0*|  01A0*|  01A0*|  01A0*|  01A0*|  01A0*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Set carry flag
+
++- Read keypad port +-------+-------+-------+-------+-------+-------+-------+
+|                   |  01A2 |  01A2*|  01A2*|  01A2*|  01A2*|  01A2*|  01A2*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  A = key group mask
+Result: A = B = key press data
+
++- Store keystroke -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  01B1 |  01B1*|  01B1*|  01B1*|  01B1*|  01B1*|  01B1*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  A = scancode (see CALL 01BE for scancode list)
+Result: (8000) = scancode
+        (8006) = scancode if scancode is not 0
+        set 3,(IY+00)
+
++- Read keystroke --+-------+-------+-------+-------+-------+-------+-------+
+|                   |  01BE |  01BE*|  01BE*|  01BE*|  01BE*|  01BE*|  01BE*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: A = scancode of key that is currently pressed
+        HL = 8000
+        res 3,(IY+00)
+
+Note: The scancode of the last key pressed is stored at (8006), regardless
+      of whether it has been released or not.
+
+Scancode Table:
+00 no key       16 TAN          28 x-VAR
+01 down         17 CUSTOM       29 ON (The ON handler gets to this first)
+02 left         19 .            2A STO
+03 right        1A 2            2B ,
+04 up           1B 5            2C xý
+09 Enter        1C 8            2D LN
+0A +            1D (            2E LOG
+0B -            1E COS          2F GRAPH
+0C *            1F PRGM         30 ALPHA
+0D /            20 DEL          31 F5
+0E ^            21 0            32 F4
+0F CLEAR        22 1            33 F3
+11 (-)          23 4            34 F2
+12 3            24 7            35 F1
+13 6            25 EE           36 2nd
+14 9            26 SIN          37 EXIT
+15 )            27 STAT         38 MORE
+
++- Update alpha flag 1 -----+-------+-------+-------+-------+-------+-------+
+|                   |  01CB*|  01CB*|  01CB*|  01CB*|  01CB*|  01CB*|  01CB*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: Calls 01DA if alpha mode is locked. Used by keyboard handler to
+        update alpha/ALPHA flag.
+
++- Update alpha flag 2 -----+-------+-------+-------+-------+-------+-------+
+|                   |  01D6*|  01D6*|  01D6*|  01D6*|  01D6*|  01D6*|  01D6*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+ 
+Input: none
+Result: Resets bit 6 of iy+12 and calls 01DA if bit 7 of iy+12=0. Used
+        to update alpha/ALPHA flag by keyboard handler.
+
++- Update alpha flag 3 -----+-------+-------+-------+-------+-------+-------+
+|                   |  01DA*|  01DA*|  01DA*|  01DA*|  01DA*|  01DA*|  01DA*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: If bit 7 of iy+12=0 then bit 4 is reset
+        Used to turn off Alpha cursor when keypressed and alpha not locked
+
++- Error handler 1 -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  03D9*| 03D9* | 03D9* |  03D9*|  03D9*|  03D9*|  03D9*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: A value to write in buffer
+
+Result: The value in A is writen to the next place in the circular buffer
+        starting at 81AC. (The buffer is 10h bytes)
+
++- Backup handlers and ? ---+-------+-------+-------+-------+-------+-------+
+|                   |  041B*| 041B* |  041B*|  041B*|  041B*|  041B*|  041B*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: Copies 14 bytes from (818D) to (819B) and
+               15 bytes from (81E1) to (81FF)        
+
++- Update pointers -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  0476*| 0476* |  0476*|  0476*|  0476*|  0476*|  0476*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: (8BE5)=(8BE3)  Update pointer to VAT
+        (8BE1)=(8BDF)  Update pointer to end of user mem
+        (8338)=(81BC)  ???
+
+        Updates end of VAT and end of used memory
+
++- Error handler ---+-------+-------+-------+-------+-------+-------+-------+
+|                   |  0A87 |  0A87*|  0A87*|  0A87*|  0A87*|  0A87*|  0A87*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : A holds number of error which has occured
+Result : The standard error screen is displayed with the number of the
+         error and a string telling what it means. This functions uses a lot
+         of memory adresses to determine what happens besides this.
+
+Note: A08 - A85 is a long list of functions which load a value in a and
+      call this function. A list of the calls is shown below.
+
+ERROR    ADR
+-------------
+14	 0A59
+15	 0A5D
+0F	 0A45 *
+22	 0A85
+81	 0A08
+82	 0A0C
+83	 0A10
+84	 0A14
+85	 0A18
+86	 0A61
+87	 0A1C
+88       0A20
+89	 0A24
+8A	 0A28
+8B	 0A2C
+8C	 0A30
+8D	 0A34
+8E	 0A38
+8F	 0A3C
+90	 0A49
+91	 0A4D
+92	 0A51
+93	 0A55
+97	 0A65
+98	 0A69
+99	 0A6D
+9C	 0A71
+9D	 0A75
+9E	 0A79
+A0	 0A7D
+A1	 0A81
+
+* This function will only generate an error if bit 2 of iy+13 is 1.
+
++- Check sum memory between 8BF7 and FA6F --+-------+-------+-------+-------+
+|                   |  0CAD |  0CAD*|  0CAD*|  0CAD*|  0CAD*|  0CAD*|  0CAD*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Result: Check sum memory between 8BF7 and FA6F
+        HL = check sum
+        IX = FA70
+        BC = 0
+        DE = -HL
+
+Note: The functions are not the same in ROM version 3.0A and 9.0/10.0. IX is
+      not destroyed in ROM version 9.0 and 10.0.
+
++- Copy length-indexed string to OP1 -------+-------+-------+-------+-------+
+|                   |  0CD4*|  0CD8*|  0CD8*|  0CD8*|  0CDB*|  0CDC*|  0CDC*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Note: starts from 2nd byte of OP1
+Input:  IX -> string
+Result: string is copied
+        B = 0
+        IX = end of original string + 1
+        HL = end of string at 8083 + 1
+
++- Initialize calculator ---+-------+-------+-------+-------+-------+-------+
+|                   |  0CE5*|  0CE9*|  0CE9*|  0CE9*|  0CEC*|  0CED*|  0CED*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+
+Result: This function is called when the calc is first started up after a
+        battery change. This function initializes all ports to standard
+        values. When this is done it disables all interupts except the On key
+        and then halts. After this several functions are called, none of
+        these have been examined.
+
++- HL = HL*10 ------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  1F80 |  1F84*|  1F84*|  1F84*|  1F88 |  1F33*|  1F4D*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Zero B bytes at (HL) ----+-------+-------+-------+-------+-------+-------+
+|                   |  2205 |  2209*|  2209*|  2209*|  220D*|  21B8*|  21D2*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  B = number of bytes to zero
+	HL -> memory to zero
+Result: 0 is stored into every byte
+
++- A=C/16 ----------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  220B |  220F*|  220F*|  220F*|  2213*|  21BE*|  21D8*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: A = high nibble of C  ("RRA" four times and "AND 15")
+Note: CALL 220C can be used to do A = A / 16 (A = A >> 4).
+
++- A=C*16 ----------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  2213 |  2217*|  2217*|  2217*|  221B*|  21C6*|  21E0*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: A = 16 * C  ("ADD A,A" 4 times)
+Note: CALL 2214 can be used to do A = 16 * A (A = A << 4).
+
++- Get constant into OP1 ---+-------+-------+-------+-------+-------+-------+
+|                   |  24CE*|  24D2*|  24D2*|  24D2*|  24E0*|  248B*|  24A5*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : A holds the number of constant to get (max 6)
+
+Result : OP1 holds the constant.
+
+The constants are the following:
+#        Value             Name
+--------------------------------
+0: 57.29577951308232       180/Pi
+1:  1.570796326794897      Pi/2
+2:  0.7853981633974483     Pi/4
+3:  0.4342944816032518     Log e
+4:  3.141592653589800      Pi
+5:  0.01745329251994330    Pi/180
+6:  2.302585092994046      ln 10
+
++- Get constant into OP2 ---+-------+-------+-------+-------+-------+-------+
+|                   |  24D3*|  24D7*|  24D7*|  24D7*|  24DB*|  2486*|  24A0*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : A holds the number of constant to get (max 6)
+
+Result : OP2 holds the constant.
+
+The constants are the following:
+#        Value             Name
+--------------------------------
+0: 57.29577951308232       180/Pi
+1:  1.570796326794897      Pi/2
+2:  0.7853981633974483     Pi/4
+3:  0.4342944816032518     Log e
+4:  3.141592653589800      Pi
+5:  0.01745329251994330    Pi/180
+6:  2.302585092994046      ln 10
+
++- SUB '0$' FROM '0',(8084) +-------+-------+-------+-------+-------+-------+
+|                   |  2642 |  2646*|  2646*|  2646*|  264A |  25F5*|  260F*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- HL = H*L --------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  264E*|  265E*|  2652*|  2652*|  2656*|  2601*|  261B*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : H and L hold values to be multiplied
+Result : HL = H * L (B=0). Overflow can not occur.
+
++- (8629)=HL=(8BE1) +-------+-------+-------+-------+-------+-------+-------+
+|                   |  26A6*|  26AA*|  26AA*|  26AA*|  26AE*|  2659*|  2673*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- CP OP1 to xStat or yStat +-------+-------+-------+-------+-------+-------+
+|                   |  26B5 |  26B9*|  26B9*|  26B9*|  26BD |  2668*|  2682*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Note: OP1 is altered (stored in OP2)
+Result: z flag set if equal to either
+
++- Find var and update graph status +-------+-------+-------+-------+-------+
+|                   |  26BE |  26C2*|  26C2*|  26C2*|  26C6 |  2671*|  268B*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Find variable in OP1, check if it has bit 6 set in attribute, if set then
+set 0,(IY+03) (do not use graph mem to update screen). Probably used when
+the calc is going to modify the variable (if bit 6 is set the variable affects
+the currently displayed graphs)
+
+Input: (8083) = Length of variable name (1-8)
+       (8084) = Actual name of variable (8 bytes long padded with anything)
+Result: Succes: CF clear
+                A = (8082) = type of variable found
+                if A has bit 6 set. set 0,(IY+03)
+                C=0
+                DE = Address of variable
+                HL = Address of VAT entry
+        Failure: CF set
+
++- BIT 0,(IY+0) ----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  26C5 |  26C9*|  26C9*|  26C9*|  26CD |  2678*|  2692*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- SET 0,(IY+0) ----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  26CA*|  26CE*|  26CE*|  26CE*|  26D2*|  267D*|  2697*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Test 0,(IY+7) ---+-------+-------+-------+-------+-------+-------+-------+
+|                   |  26E9*|  26ED*|  26ED*|  26ED*|  26F1*|  269C*|  26B6*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : none
+Result : If bit 0 of iy+7 is 0 then display an error.
+
++- Has ON been pressed -----+-------+-------+-------+-------+-------+-------+
+|                   |  26F0*|  26F4*|  26F4*|  26F4*|  26F8*|  26A3*|  26BD*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : none
+Result : If ON has been pressed then the error handler is called (error 86).
+
++- BIT 5,(IY+9) ----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  26F7*|  26FB*|  26FB*|  26FB*|  26FF*|  26AA*|  26C4*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- RES 0,(IY+0) ----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  26FC*|  2700*|  2700*|  2700*|  2704*|  26AF*|  26C9*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Negate BC -------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  300C |  3010*|  3010*|  3010*|  3014*|  2FBF*|  2FD9*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: BC
+Result: HL = BC = -BC
+        A = 0
+
++- Self test -------+-------+-------+-------+-------+-------+-------+-------+
+|                   |  301C |  3020*|  3020*|  3020*|  3024*|  2FCF*|  2FE9*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Runs the selftest seen by pressing [MODE][APLHA][S].
+Note: This function resets the calc
+
++- Meassure ASCIIZ string length ---+-------+-------+-------+-------+-------+
+|                   |  307C*|  3080*|  3080*|  3080*|  3084*|  302F*|  3049*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> string
+Result: BC = string length
+
++- Copy ASCIIZ string ------+-------+-------+-------+-------+-------+-------+
+|                   |  308F*|  3093*|  3093*|  3093*|  3097*|  3042*|  305C*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> source string
+        DE -> destination string
+Result: HL and DE -> to the null bytes at the ends of their strings
+        A = 0
+
++- Concatenate ASCIIZ strings ------+-------+-------+-------+-------+-------+
+|                   |  3097*|  309B*|  309B*|  309B*|  309F*|  304A*|  3064*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: HL -> source string
+       DE -> destination string
+Result: Increments DE until (DE) = 0, then CALLs 308F to copy the string.
+
++- Compare length-indexed string ---+-------+-------+-------+-------+-------+
+|                   |  309E |  30A2*|  30A2*|  30A2*|  30A6*|  3051*|  306B*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> first string
+        DE -> second string
+Result: Equal: ZF set
+        Different: ZF clear
+                   CF clear: first string is greater
+                   CF set:   second string is greater
+
++- Test bit in bitstream ---+-------+-------+-------+-------+-------+-------+
+|                   |  30C4*|  30C8*|  30C8*|  30C8*|  30CC*|  3077*|  3091*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  A = Bits 7-3: byte offset from HL (00-1F)
+            Bits 2-0: bit to test (0-7)
+        HL -> first byte in bitstream
+Result: A = 2^(bit tested)
+        HL -> byte tested
+        DE = bit tested
+
++- Call ROM function -------+-------+-------+-------+-------+-------+-------+
+|                   |  33AC*|  33AF*|  33AF*|  33AF*|  33B3*|  335F*|  337A*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: All registers set as required by the function
+       which has to be called. On top of the stack a pointer
+       to a word and a byte. The word is the adr to be called
+       and the byte is the rom page to use. The next word on
+       the stack is the return adr.
+
+Result: The ROM page is changed to the chosen one and the
+        specified function is called. After the called
+        function has ended the return adr is called. to use
+        this do some thing like this
+        Push Continue    ;Push return adr
+        CALL 33ACh       ;Call function
+        .dw Function_adr ;Adr to call
+        .db Rom_page     ;rompage to use
+        Continue:        ;Return adr
+        [more code]
+
++- Return from ROM function +-------+-------+-------+-------+-------+-------+
+|                   |  33D1*|  33D4*|  33D4*|  33D4*|  33D8*|  3384*|  339F*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Called on return from a function called by 33AC.
+This functions restores the rom page and Jumps to
+your function.
+
+Do not call this function!
+
++- Jump to ROM function ----+-------+-------+-------+-------+-------+-------+
+|                   |  33D9*|  33DC*|  33DC*|  33DC*|  33E0*|  338C*|  33A7*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: Register as required by function
+       First word after call 33D9 is called
+       when rom page is changed. The next byte
+       is the rom page to use.
+Result: The function is called.
+
++- Random ----------+-------+-------+-------+-------+-------+-------+-------+
+| Call 37A67        |  39E8*|  39EB*|  39EB*|  39EB*|  39EF*|  39A7*|  39C2*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: OP1 is set to a random number
+Note : Mots register seems to be random on return from this function       
+
++- Print length-indexed string -----+-------+-------+-------+-------+-------+
+| Call 16BF7        |  3B9E |  3BA1 |  3BA1*|  3BA1 |  3BA5 |  3B5D*|  3B78*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> length-indexed string
+        (800C) = row
+        (800D) = column
+        set 3,(IY+05): display white on black
+        res 3,(IY+05): display black on white
+        set 1,(IY+0D): alter text memory
+        res 1,(IY+0D): don't alter text memory
+Result: The string is printed on the screen.
+
++- Print menu char -+-------+-------+-------+-------+-------+-------+-------+
+| Call 16FF1        |  3BDA |  3BDD |  3BDD*|  3BDD |  3BE1 |  3B99*|  3BB4*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  A = character to print
+        (8333) = x coordinate
+        (8334) = y coordinate
+        res 1,(IY+05): print only 6 rows of the character
+        set 1,(IY+05): print entire 7 rows of the character
+        res 3,(IY+05): print character over current screen
+        set 3,(IY+05): XOR character with current screen
+Result: The character is printed on the screen and the x coordinate is
+        updated.
+        DE is destroyed.
+
++- ASCIIZ Print menu -------+-------+-------+-------+-------+-------+-------+
+| Call 170A7        |  3BE0 |  3BE3 |  3BE3 |  3BE3 |  3BE7 |  3B9F*|  3BBA*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> null-terminated string
+        (8333) = x coordinate
+        (8334) = y coordinate
+        res 1,(IY+05): print only 6 rows of the character
+        set 1,(IY+05): print entire 7 rows of the character
+        res 3,(IY+05): print character over current screen
+        set 3,(IY+05): XOR character with current screen
+Result: The string is printed on the screen and the x coordinate is updated.
+
++- Save text mode parameters in secondary area -----+-------+-------+-------+
+| Jp 1710F          |  3BE6*|  3BE9 |  3BE9 |  3BE9 |  3BED |  3BAB*|  3BC6*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: (8187) = (800C)	        ; cursor row
+        (8188) = (800D)         ; cursor column
+        (8189) = (8B2F)		; screen scroll start
+        (818A) = (8358)
+        (818B) = (834B) AND 10h
+
++- Move top right corner of LCD to bitmap at (8078) +-------+-------+-------+
+| Call 171A1        |  3BFE |  3C01 |  3C01 |  3C01 |  3C05 |  3BC3*|  3BDE*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  none        
+Result: 8 bytes are moved from the top right corner of the LCD to (8078).
+        Bit 1 of (IY+12h) is set to indecate that the contents of the buffer
+        is valid.
+Note: The bytes are only copied if there are not valid data in the buffer
+      before the function is called.
+
++- Move bitmap at (8078) to top right corner of LCD +-------+-------+-------+
+| Call 171C8        |  3C04 |  3C07 |  3C07 |  3C07 |  3C0B |  3BC9*|  3BE3*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  none      
+Result: 8 bytes are moved from (8078) to the top right corner of the LCD.
+        Bit 1 of (IY+12h) is cleared to indicate that the data in the buffer
+        is no longer valid.
+Note: The bytes are only copied if there are not valid data in the buffer
+      before the function is called.
+
++- Print length-indexed menu string +-------+-------+-------+-------+-------+
+| Call 170BA        |  3C22 |  3C25 |  3C07 |  3C25 |  3C29 |  3BE1*|  3BFC*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> string
+        B = string length
+        (8333) = x coordinate
+        (8334) = y coordinate
+        res 1,(IY+05): print only 6 rows of the character
+        set 1,(IY+05): print entire 7 rows of the character
+        res 3,(IY+05): print character over current screen
+        set 3,(IY+05): XOR character with current screen
+Result: The string is printed on the screen and the x coordinate is updated.
+
++- LD OP1 with 'yStat' -----+-------+-------+-------+-------+-------+-------+
+| Call 46CDF        |  3C28 |  3C2B |  3C2B |  3C2B |  3C2F |  3BE7*|  3C02*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- CP OP1 with OP2? +-------+-------+-------+-------+-------+-------+-------+
+| Call 67CE7        |  3C2E |  3C21 |  3C21 |  3C21 |  3C35 |  3BED*|  3C08*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- LD OP1 with 'xStat' -----+-------+-------+-------+-------+-------+-------+
+| Call 46CE3        |  3C34 |  3C37 |  3C37 |  3C37 |  3C3B |  3BF3*|  3C0E*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Copy graph memory (8641) to LCD memory (FC00) ---+-------+-------+-------+
+| Call 46825        |  3C88 |  3C8B |  3C8B |  3C8B |  3C8F |  3C5F*|  3C7A*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  (8B30) = 7 : copy 7 lines
+               > 7 : copy 8 lines
+               < 7 : copy 6 lines
+Result: A = (8B30)
+        BC = 0
+        HL and DE are modified
+        set 2, (IY+2)
+
++- Point HL to absolute address of text cursor -----+-------+-------+-------+
+| Call 16FDB        |  3CA0 |  3CA3 |  3CA3 |  3CA3 |  3CA7 |  3C77*|  3C92*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: HL = absolute address of text cursor (in primary text memory (80DF))
+
++- Store text parameters and screen in buffer 2 ----+-------+-------+-------+
+| Call 170FA        |  3D8A*|  3D8D*|  3D8D*|  3D8D*|  3D91*|  3D61*|  3D7C*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: 168 bytes are moved from 80DF to 8A6B.  ; text buffer
+        (8187) = (800C)	        ; cursor row
+        (8188) = (800D)         ; cursor column
+        (8189) = (8B2F)		; screen scroll start
+        (818A) = (8358)
+        (818B) = (834B) AND 16
+
++- Scroll screen up +-------+-------+-------+-------+-------+-------+-------+
+| Call 16E10        |  3D90 |  3D93 |  3D93 |  3D93 |  3D97 |  3D67*|  3D82*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  (8B2F) = first row to scroll (0-7)
+        (8B30) = last row to scroll (1-8)
+        set 1,(IY+0D): scroll the text memory
+        res 1,(IY+0D): don't scroll the text memory
+Result: Text is scrolled and a blank line is inserted at the end.
+
++- Display heading--+-------+-------+-------+-------+-------+-------+-------+
+| Call 65376        |  3DA8*|  3DAB*|  3DAB*|  3DAB*|  3DAF*|  3D7F*|  3D9A*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> ASCIIZ string
+Result: String is printed at (0,0) (via 3E68) and the rest of the top row of
+        the screen is cleared.
+        DE = 0
+
++- Display menu indexed by A -------+-------+-------+-------+-------+-------+
+| Call 146B8        |  3DAE |  3DB1 |  3DB1 |  3DB1 |  3DB5 |  3D85*|  3DA0*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  A = menu to display
+Result: The menu is printed on the bottom line of the screen.
+
+Menu Numbers
+ÄÄÄÄÄÄÄÄÄÄÄÄ
+00 CHAR
+01 CHAR MISC
+02 CHAR GREEK
+03 CHAR INTL
+04 MATH
+05 MATH NUM
+06 MATH PROB
+07 MATH ANGLE
+08 MATH HYP
+09 MATH MISC
+0A PRGM EDIT MATH
+0B CALC
+0C BASE
+0D BASE B-F
+0E BASE TYPE
+0F BASE CONV
+10 BASE BOOL
+11 BASE BIT
+12 LIST
+13 LIST OPS
+14 PRGM EDIT LIST
+15 TEST
+16 CPLX
+17 STRNG
+18 CONS
+19 CONS BLTIN
+1A CONS USER
+1B PRGM EDIT CONS
+1C VECTR
+1D VECTR NAMES
+1E VECTR MATH
+1F VECTR OPS
+20 PRGM EDIT VECTR
+21 MATRX
+22 MATRX EDIT
+23 MATRX NAMES
+24 MATRX MATH
+25 MATRX OPS
+26 MATRX CPLX and VECTR CPLX
+27 PRGM EDIT MATRX
+28 PRGM
+29 PRGM NAMES
+2A PRGM EDIT (name selection)
+2B PRGM EDIT (editor)
+2C PRGM EDIT I/O
+2D PRGM EDIT CTL
+2E PRGM EDIT GRAPH
+2F PRGM EDIT GRAPH VARS
+30 PRGM EDIT GRAPH RANGE
+31 PRGM EDIT GRAPH ZOOM
+32 PRGM EDIT GRAPH MATH
+33 PRGM EDIT GRAPH DRAW
+34 STAT
+35 STAT (without VARS)
+36 LIST NAMES and STAT EDIT (name selection)
+37 STAT CALC
+38 STAT EDIT (editor)
+39 STAT VARS
+3A STAT DRAW
+3B PRGM EDIT STAT
+3C PRGM EDIT STAT CALC
+3D PRGM EDIT STAT DRAW
+3E VARS
+3F PAGEUP/PAGEDN (found in many places)
+40 MEM DELET
+41 GRAPH (func)
+42 GRAPH ZOOM (all modes)
+43 GRAPH MATH (func)
+44 GRAPH DRAW (func)
+45 GRAPH (pol)
+46 GRAPH MATH (pol)
+47 GRAPH DRAW (pol)
+48 GRAPH (param)
+49 GRAPH MATH (param)
+4A GRAPH (difeq)
+4B GRAPH DRAW (param, difeq)
+4C GRAPH AXES (difeq)
+4D nothing
+4E POLY
+4F POLY SOLVE
+50 GOTO/QUIT (error)
+51 QUIT (error)
+52 SIMULT
+53 SIMULT SOLVE
+54 y(x)=
+55 r(é)=
+56 E(t)=
+57 Q'(t)=
+58 VECTR EDIT and LIST EDIT
+59 ? SOLVE
+5A LIST NAMES
+5B CONS EDIT
+5C LINK
+5D LINK SEND (choose type)
+5E LINK SEND ... (choose items)
+5F LINK SEND BACKUP
+60 LINK RECV backup
+61 LINK RECV duplicate
+62 ? EXIT
+63 ? SKIP/EXIT
+64 SOLVER (equation names)
+65 SOLVER
+66 SOLVER GRAPH
+67 SOLVER ZOOM
+68 ? (grpah|edit|zoom|trace|    )
+69 GRAPH STPIC or RCPIC (PIC names)
+6A GRAPH STGDB or RCGDB (GDB names)
+6B MEM
+6C MEM RESET (choose type)
+6D MEM RESET ... (yes|no)
+6E CONV
+6F CONV LNGTH
+70 CONV AREA
+71 CONV VOL
+72 CONV TIME
+73 CONV TEMP
+74 CONV MASS
+75 CONV FORCE
+76 CONV PRESS
+77 CONV ENRGY
+78 CONV POWER
+79 CONV SPEED
+7A CATALOG
+7B CUSTOM
+7C TOLER
+
++- Clear screen window -----+-------+-------+-------+-------+-------+-------+
+| Call 16F3D        |  3DB4*|  3DB7*|  3DB7*|  3DB7*|  3DBB*|  3D8B*|  3DA6*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  (8B2F) = top row of window
+        (8B30) = bottom row of window
+        set 1,(IY+0D): alter text memory
+        res 1,(IY+0D): don't alter text memory
+Result: The screen window is cleared, the cursor is set to the top left
+        corner of the window, and the top 7 bits of (IY+12h) are cleared.
+
++- Clear to end of line ----+-------+-------+-------+-------+-------+-------+
+| 16F8E             |  3DEA*|  3DED*|  3DED*|  3DED*|  3DF1*|  3DC1*|  3DDC*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: (800C), (800D) = cursor coordinates
+Result: Spaces are printed from the cursor to the end of the line.
+        The cursor position does not change.
+
++- Print character without translation -----+-------+-------+-------+-------+
+| Call 16A57        |  3DF6 |  3DF9 |  3DF9 |  3DF9 |  3DFD |  3DCD*|  3DE8*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  A = character to print
+        (800C) = row
+        (800D) = column
+        set 3,(IY+05): display white on black
+        res 3,(IY+05): display black on white
+        set 1,(IY+0D): alter text memory
+        res 1,(IY+0D): don't alter text memory
+Result: The character is printed on the screen.  Control characters are not
+        translated.
+
++- Clear LCD -------+-------+-------+-------+-------+-------+-------+-------+
+| Call 16F03        |  3DFC |  3DFF |  3DFF |  3DFF |  3E03 |  3DD3*|  3DEE*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: The LCD is cleared (FC00-FFFF is zeroed).
+        Nothing happens to the text memory at 80DF.
+        Nothing happens to the graphics memory at 8641.
+        HL = 8358
+        DE = BC = 0000
+
++- Print HL as decimal number ------+-------+-------+-------+-------+-------+
+| Call 16BBA        |  3E02 |  3E05 |  3E05 |  3E05 |  3E09 |  3DD9*|  3DE4*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL = number to print
+        (800C) = row
+        (800D) = column
+        set 3,(IY+05): display white on black
+        res 3,(IY+05): display black on white
+        set 1,(IY+0D): alter text memory
+        res 1,(IY+0D): don't alter text memory
+
+Result: The five-digit number (right justified, blank padded) is displayed
+        on the screen. OP1 destroyed.
+
++- Test calculator -+-------+-------+-------+-------+-------+-------+-------+
+| Call 37C7A        |  3E08*|  3E0B*|  3E0B*|  3E0B*|  3E0F*|  3DDF*|  3DFA*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : none
+Result: This function does the memory test, display test and
+        keyboard test seen in the selftest. When function is
+        terminated it calls 0BD5 (ROM version 3.0A) to reset the calc.
+        WARNING THIS FUNCTION WILL RESET THE CALC !!!
+
++- Print *** FAIL --+-------+-------+-------+-------+-------+-------+-------+
+| Call 37D69        |  3E0E*|  3E11*|  3E11*|  3E11*|  3E15*|  3DE5*|  3E00*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> string to print in front of "FAIL"
+Result: The string at HL is printed on the screen followed by "FAIL"
+        The memory is cleared and the defaults are set.
+
++- CP OP2 with 'yStat' -----+-------+-------+-------+-------+-------+-------+
+| Call 67CDF        |  3E1A |  3E1D |  3E1D*|  3E1D |  3E21 |  3DF1*|  3E0C*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- CP OP2 with 'xStat' -----+-------+-------+-------+-------+-------+-------+
+| Call 67CE4        |  3E20 |  3E23 |  3E23*|  3E23 |  3E27 |  3DF7*|  3E12*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+
++- Clear text screen -------+-------+-------+-------+-------+-------+-------+
+| Call 16F27        |  3E5C |  3E5F |  3E5F |  3E5F |  3E63 |  3E39*|  3E54*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  set 1,(IY+0D): fill text memory (80DF) with spaces
+        res 1,(IY+0D): clear the LCD without altering the text memory
+Result: The screen is cleared.
+
++- Print ASCIIZ string -----+-------+-------+-------+-------+-------+-------+
+| Call 16BDE        |  3E68 |  3E6B |  3E6B |  3E6B |  3E6F |  3E45*|  3E60*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> null-terminated string
+        (800C) = row
+        (800D) = column
+        set 3,(IY+05): display white on black
+        res 3,(IY+05): display black on white
+        set 1,(IY+0D): alter text memory
+        res 1,(IY+0D): don't alter text memory
+Result: The string is printed on the screen.
+
++- Set cursor row to top of scrolling window -------+-------+-------+-------+
+| Call 16FD0        |  3E6E*|  3E71*|  3E71*|  3E71*|  3E75*|  3E4B*|  3E66*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: (800C) = (8B2F)     ; screen scroll start
+        (800D) = 00
+
++- Set random number seed to factory default -------+-------+-------+-------+
+| Call 37B2A        |  3E86 |  3E89 |  3E89 |  3E89 |  3E8D |  3E63*|  3E7E*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: Same as storing 0 into the "rand" variable.
+
++- Turn off "busy" indicator -------+-------+-------+-------+-------+-------+
+| Call 170E2        |  3EA4 |  3EA7 |  3EA7 |  3EA7 |  3EAB |  3E7B*|  3E96*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: The "busy" indicator is turned off.
+        res 0,(IY+12h)
+
++- Keyboard handler +-------+-------+-------+-------+-------+-------+-------+
+| Call 3564D        |  3EB0 |  3EB3 |  3EB3 |  3EB3 |  3EB7 |  3E87*|  3EA2*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: Handles keyboard input as seen on the home screen (adjust contrast,
+        use alpha/ALPHA ...). Returnes the current key in a and the
+        translated in (hl).
+
++- Turn on "busy" indicator +-------+-------+-------+-------+-------+-------+
+| Call 170CA        |  3EBC |  3EBF |  3EBF |  3EBF |  3EC3 |  3E93*|  3EAE*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: The "busy" indicator is turned on.
+        set 0,(IY+12h)
+
++- Print character with translation +-------+-------+-------+-------+-------+
+| Call 16B30        |  3FEE |  3FF1 |  3FF1 |  3FF1 |  3FF5 |  3FC5*|  3FE0*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  A = character to print
+        (800C) = row
+        (800D) = column
+        set 3,(IY+05): display white on black
+        res 3,(IY+05): display black on white
+        set 1,(IY+0D): alter text memory
+        res 1,(IY+0D): don't alter text memory
+Result: The character is printed on the screen.  Control characters are
+        translated.
+
+ROM calls on other pages
+------------------------
+
++- Insert byte on display --+-------+-------+-------+-------+-------+-------+
+|                   | 37D55*|       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : A holds value to be insert on the screen.
+Result : All bytes in the display mem is moved one byte up. and
+         the value in a is written the the new free byte. when this
+         is done the functions waits for a keypress if the keyboard
+         handler returns zero it jumps to 37D0C.
+
++- Write A ten times to (HL) -------+-------+-------+-------+-------+-------+
+|                   | 37D4E*|       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : HL holds adr to write to.
+Result : A is written ten times from (HL) to (HL+10).
+
++- Set up 85 for menu at (HL) ------+-------+-------+-------+-------+-------+
+|                   | 14704*| 14704*|       | 14704*| 14704*| 14805*| 14805 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  HL -> Data for a menu
+        3,(IY+$11) (res=current menu, set=raised menu)
+Result: The 85 is set up to display it, but does not now.
+
++- Display previously set up menu --+-------+-------+-------+-------+-------+
+|                   | 146ED*| 146ED*|       | 146ED*| 146ED*| 147EE*| 147EE |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Everything that is output from the one above. (IE, just call it right
+        after the other.)
+Result: The 85 displays the menu.
+
++- Send byte -------+-------+-------+-------+-------+-------+-------+-------+
+|                   | 5643B*|       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: A holds byte to send
+Result: The byte is send using the link port. Destorys BC,DE,HL.
+Note: This function calls the error handler in case of an error
+
++- Send byte -------+-------+-------+-------+-------+-------+-------+-------+
+|                   | 56559*|       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: none
+Result: A holds byte received. Destroys BC,DE,HL.
+Note: This function calls the error handler in case of an error
+
+FP Stack
+--------
+
+The FP Stack is an upwards growing stack which is placed at the end of the
+used memory. The stack is mostly used for temporary storage of real or
+complex numbers, but it can also be used to store other types of data.
+
+FP(x)       denotes element number x on the FP Stack (FP(1) is the element at
+            the top).
+r1/r2       denotes a complex real stored in register pair (or memory
+            location) r1 (real part) and r2 (imaginary part).
+r1 or r1/r2 The real value in r1 is used if the value is real, otherwise the
+            complex value in r1/r2 is used. The type is determined by the sign
+            byte.
+(x,y)       a complex number (stored as to floating point numbers)
+
+All addresses are for ROM version 3.0A, since none of these functions have been
+located in other ROM versions yet.
+
+Push OP1  2E97
+Push OP2  2E92
+Push OP3  2E8D
+Push OP4  2E88
+Push OP5  2E83
+Push OP6  2E7E
+Push (HL) 2E9A
+
+Push OP1 or OP1/OP2  2ED4 or 0018
+Push OP3 or OP3/OP4  2EBC
+Push OP5 or OP5/OP6  2EAE
+Push (HL) or (HL)/(HL+11) 2EE1
+
+FP(1) <-> OP1/OP2  2EF3
+FP(1) <-> OP1      2F08
+
+Pop OP1  2E41
+Pop OP2  2E3C
+Pop OP3  2E37
+Pop OP4  2E32
+Pop OP5  2E2D
+Pop OP6  2E28
+Pop (DE) 2E44
+
+Pop OP1/OP2      2E49
+Pop (DE)/(DE+11) 2E4C
+
+Pop OP1 or OP1/OP2 2E1C
+Pop OP3 or OP3/OP4 2E0C
+Pop OP5 or OP5/OP6 2DFC
+
+LD OP1,FP(1)           2F71
+LD OP1,FP(2)           2F90
+LD OP1,FP(3)           2F9F
+LD OP1,FP(4)           2F42
+LD OP1,FP(5)           2F4C
+LD OP1,FP(6)           2F21
+LD OP1,FP(12)          2F14
+
+LD OP2,FP(1)           2F6C
+LD OP2,FP(2)           2F88
+LD OP2,FP(3)           2F9A
+LD OP2,FP(5)           2F2B
+
+LD OP1/OP2,FP(2)/FP(1) 2F8D
+LD OP1/OP2,FP(4)/FP(3) 2F3F
+LD OP1/OP2,FP(6)/FP(5) 2F1E
+
+LD OP3,FP(1)           2F67
+LD OP3,FP(2)           2F83
+LD OP3,FP(3)           2F51
+
+LD OP4,FP(1)           2F62
+
+LD OP3/OP4,FP(2)/FP(1) 2F80
+
+LD OP5,FP(1)           2F58
+
+LD OP6,FP(1)           2F5D
+LD OP6,FP(4)           2F35
+
+LD (DE),FP(1)          2F74
+LD (DE),FP(2)          2F93
+LD (DE),FP(3)          2FA2
+LD (DE),FP(4)          2F45
+LD (DE),FP(5)          2F2E
+LD (DE),FP(6)          2F24
+LD (DE),FP(12)         2F17
+
+LD FP(1),OP1           2FB8
+LD FP(1),OP2           2FAE
+LD FP(1),OP3           2FA9
+LD FP(1),OP6           2FB3
+LD FP(1),(DE)          2FBB
+
+LD FP(2),OP1           2FD0
+LD FP(2),OP5           2FC8
+LD FP(2),(DE)          2FD3
+
+LD FP(2)/FP(1),OP1/OP2 2FCD
+
+LD FP(3),OP1           2FE9
+LD FP(3),OP2           2FDA
+LD FP(3),OP3           2FDF
+LD FP(3),OP6           2FE4
+LD FP(3),(DE)          2FEC
+
+LD FP(4),OP1           2FFB
+LD FP(4),OP5           2FF3
+LD FP(4),(DE)          2FFE
+
+LD FP(4)/FP(3),OP1/OP2 2FF8
+
+Other functions using the stack.
+--------------------------------
+
++- Point to FP(1) --+-------+-------+-------+-------+-------+-------+-------+
+|                   |  3014 |       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  Nothing
+Result: HL = Pointer to first real number on FP stack
+        DE = FFF6 = -10(d)
+
+
++- Allocate HL bytes on FP Stack ---+-------+-------+-------+-------+-------+
+|                   |  2E72 |       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : HL holds number of reals to get
+Result : Finds if you can allocate HL reals, and adds the needed number of
+         bytes to (8BE1)
+
++- Deallocate HL bytes on FP Stack -+-------+-------+-------+-------+-------+
+|                   |  2E64 |       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : HL holds number of reals to subtract.
+Result : The length of HL reals is subtracted from the end of used mem.
+
++- Delete 1 real from FP Stack -----+-------+-------+-------+-------+-------+
+|                   |  2E59 |       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input :  none
+Result : The length of a real is subtracted from the end of used mem.
+
++- Delete 1 cplx from FP Stack -----+-------+-------+-------+-------+-------+
+|                   |  2E56 |       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input :  none
+Result : The length of a complex real is subtracted from the end of used mem.
+
+Registers
+---------
+
+This section contains functions which work on the registers. Math functions
+and functions which use the registers to allocate/deallocate memory have been
+placed in seperate sections.
+
+--- Zero register -----------------------------------------------------------
+Set OP1 to all zeroes              21F0
+Set OP2 to all zeroes              21F5
+Set OP3 to all zeroes              21FA
+
+Set namefield of OP1 to all zeroes 21EB
+
+--- Load register with a FP number ------------------------------------------
+LD OP1,0.0       21E5
+LD OP1,1.0       218B
+LD OP1,2.0       21A3
+LD OP1,3.0       2197
+LD OP1,4.0       2190
+
+LD OP1/OP2,(0,0) 1FAD
+
+LD OP2,0.0       21E0
+LD OP2,1.0       21B3
+LD OP2,2.0       21A8
+LD OP2,3.0       2183
+LD OP2,4.0       217C
+LD OP2,5.0       2175
+LD OP2,8.0       216E
+
+LD OP3,0.0       21DB
+LD OP3,1.0       2169
+LD OP3,2.0       219E
+
+LD OP4,0.0       21D6
+LD OP4,1.0       2164
+
+LD (DE),0.0      1F74
+LD (DE),1.0      1F7A
+
+OP1 0.0 then copies OP1 hl times to (de) 2022
+
+--- Copy first 10 bytes of register -----------------------------------------
+LD (DE),OP1              215E
+LD OP1,(HL)              2151
+LD (DE),OP2              2158
+LD (DE)/(DE+10d),OP1/OP2 2032
+
+--- Copy first seven bytes of name ------------------------------------------
+LD OP2,OP3  211C
+LD OP1,OP5  2124
+LD OP1,OP3  212C
+LD OP3,(HL) 213C
+
+--- Copy name ---------------------------------------------------------------
+LD OP4,OP2   20FF
+LD OP4,OP1   2107
+LD (DE),OP4  210F
+LD OP1,OP2   2114
+LD OP1,OP3   2134
+
+--- Copy one register to another --------------------------------------------
+LD OP2,OP1   208E
+LD OP3,OP1   206E
+LD OP4,OP1   2042
+LD OP5,OP1   20DA
+LD OP6,OP1   20D2
+
+LD OP1,OP2   20E2
+LD OP3,OP2   2141
+LD OP4,OP2   204B
+LD OP5,OP2   20C2
+LD OP6,OP2   20CA
+
+LD OP1,OP2   1FA2 (sets type to of OP1 to real)
+
+LD OP1,OP3   20AD
+LD OP2,OP3   2066
+LD OP4,OP3   2039
+LD OP5,OP3   20BA
+
+LD OP1,OP4   20A3
+LD OP2,OP4   2054
+LD OP3,OP4   205D
+LD OP5,OP4   20B2
+LD OP6,OP4   2149
+
+LD OP1,OP5   20A8
+LD OP2,OP5   2076
+LD OP4,OP5   2086
+LD OP6,OP5   207E
+
+
+LD OP2,OP6   2096
+LD OP1,OP6   209E
+
+LD (DE),(HL) 20E8
+
+
+--- Add digits of registers (does not use exponent or sign) -----------------
+OP2=OP2+OP4  22EF
+OP2=OP2+OP1  22F7
+OP1=OP1+OP2  22FF
+OP2=OP2+OP2* 2307
+OP1=OP1+OP2* 230C
+OP1=OP1+OP3  2315
+* these functions do not use the extra digits of the register
+
+--- Subtract digits of registers (does not use exponent or sign) ------------
+OP2=OP2-OP1   2375
+OP1=OP1-OP2   237D
+OP3=OP3-OP1   2382
+OP1=OP1-OP3   238A
+OP4=OP4-(HL)* 23C1  HL points to the 2nd last byte of the wanted register or
+                    the last byte of a floating point number
+OP2=OP2-OP3*  23C7
+OP3=OP3-OP2*  23D0
+* these functions do not use the extra digits of the register
+
+--- Exchange two registers --------------------------------------------------
+OP1<->OP2 2407
+OP1<->OP3 23FD
+OP1<->OP4 2402
+OP1<->OP5 23E6
+OP1<->OP6 23EB
+
+OP2<->OP4 23F0
+OP2<->OP5 23F5
+OP2<->OP6 23D9
+
+OP5<->OP6 23DE
+
+--- Compare two registers ---------------------------------------------------
+CP OP1,OP2     1FDB
+CP OP4,OP3     1FC8
+CP |OP1|,|OP2| 1FD5 (OP1=|OP1|, OP2=|OP2|
+
+--- Get sign of register into A ---------------------------------------------
+Get sign of OP2 (unused bits masked out) 25AF
+Get sign of OP1 (unused bits masked out) 25B5
+Get sign of OP2 (sign cleared in mem)    25BB
+Get sign of OP1 (sign cleared in mem)    25C0
+
+--- Is Register = 0.0 -------------------------------------------------------
+OP1         241E
+OP2         2423
+OP1 and OP2 2419
+
+--- Subtract value from exponent of register --------------------------------
+OP1-FBFF 26DF
+OP1-FC0C 26E4
+OP1-FC01 26D5
+OP1-OP2  26CF
+
+--- Do something with exponent of OP1 ---------------------------------------
+Increase exponent, jump to error handler on error 25DD
+Decrease first byte of exponent                   25D5
+
+--- Misc functions useing the registers -------------------------------------
+OP2=OP2+OP3 uses sign of OP5                                     234C
+OP2=OP2+OP3 uses sign of OP5, ONLY ADDS LAST 4 BYTES IF POSITIVE 235C
+Compare exponent of OP1 with FC. Also return exponent in HL      263B
+Convert real value in OP1 to complex in OP1/OP2                  1FB0
+OP1=OP1/10                                                       2219
+insert 00 at 2nd byte of OP1                                     221F
+insert 00 at 1st byte of OP1                                     2224
+insert 00 at 1st bytes of OP1's name field                       222D
+insert 00 at 2nd last byte of OP3                                224A
+insert 00 at 2nd last byte of OP1                                224F
+insert 01 at 1st byte of OP1                                     2255
+insert 00 at last byte of OP3 moving the other bytes up          225C
+insert 00 at last byte of OP1 moving the other bytes up          2261
+Is OP1 digits = 0                                                247C
+Is OP1 digits = 1                                                2478
+
+Variables
+---------
+
+The section has been divided into three parts. The first part lists functions
+in the ROM which deals with the allocation and deallocation of memory. After
+that functions which deal with variables are listed. This part also contains
+functions which operate on the VAT. The last part contains a list of
+functions which are used to update pointers in system memory when memory is
+allocated or deallocated.
+
+Memory (de)allocation
+
++- Get amount of free memory -------+-------+-------+-------+-------+-------+
+|                   |  2701 |  2705 |  2705 |  2705 |  2709 |  26B4 |  26CE |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : Nothing
+Result: HL = Amount of free memory
+
++- Search by name --+-------+-------+-------+-------+-------+-------+-------+
+| Call 0010         | 2715  |  2719 |  2719 |  2719 |  271D |  26C8 |  26E2 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input:  (8083) = Length of variable name (1-8)
+        (8084) = Actual name of variable (8 bytes long, padded with anything)
+Result: Success: CF clear
+                 A = (8082) = Type of the variable found
+                 C = 0
+                 DE = Address of variable
+                 HL = Address of VAT entry for variable
+        Failure: CF set
+
++- Allocate HL bytes at DE ?? --------------+-------+-------+-------+-------+
+|                   |  2847*|  284B*|  284B*|  284B*|  284F*|  27FA*|  2814*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+The bytes are allocated and the sytem pointers and VAT is updated.
+
++- Insert HL bytes at DE ?? +---------------+-------+-------+-------+-------+
+|                   |  2851*|  2855*|  2855*|  2855*|  2859*|  2804*|  281E*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : HL = Number of bytes to insert
+        DE = Pointer to place to insert bytes
+Result : BC = Number of byte to allocate
+         HL = New end of memory
+         DE = Pointer to place to insert bytes
+
++- Find if you can get a block of memory ---+-------+-------+-------+-------+
+|                   |  28EA |  28EE |  28EE |  28EE |  28F2 |  289D |  28B7 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : HL = Length to allocate
+Result : DE = Length to allocate
+         HL = Amount extra you have
+         Carry cleared if you can get it otherwise it is set
+
++- Allocate memory -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  299B |  299F |  299F |  299F |  29A3 |  294E |  2968 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: OP1 hols variable name and name length, A holds type of variable,
+       HL = # of reals (10 bytes) to allocate.
+Result: HL = pointer to VAT entry
+        DE = pointer to data space
+Note: This function does not set the length byte. The 2 bytes needed for the
+      length byte is added to the # of bytes needed. This function calls the
+      error handler in case of an error.
+
++- Allocate memory -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  29A7 |  29AB |  29AB |  29AB |  29AF |  295A |  2974 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: OP1 hols variable name and name length, A holds type of variable,
+       HL = # of bytes to allocate
+Result: HL = pointer to VAT entry
+        DE = pointer to data space
+Note: This function does not set the length byte. The two bytes need for the
+      length field of some var types is not added to the # of bytes needed.
+      To have these bytes added call 6 bytes before (29A1 for 3.0A). This
+      function calls the error handler in case of an error.
+
++- Store Var1 in Var2 ?? ---+-------+-------+-------+-------+-------+-------+
+|                   |  2A9B*|  2A9F*|  2A9F*|  2A9F*|  2AA3*|  2A4E*|  2A68*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+The size of Var2 is adjusted to the same size as Var1 and the data is copied.
+Var1 : variable information in OP1 and pointer to data in (80D2)
+Var2 : variable information in OP2 and pointer to data in (80D0)
+Used by the TIOS to copy the last accessed var to ANS.
+
++- Resize variable -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  2AB0 |  2AB4 |  2AB4 |  2AB4 |  2AB8 |  2A63 |  2A7D |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : HL = current size of variable. DE = new size of variable.
+        (80D0) and (80D2) -> variable. OP1 holds variable info.
+Result : The variables size is adjusted to the new size.
+
++- Delete DE bytes at HL ? -+-------+-------+-------+-------+-------+-------+
+|                   |  2C42*|  2C46*|  2C46*|  2C46*|  2C4A*|  2BF5*|  2C0F*|
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : DE = Number of bytes to insert HL = Start adr
+Result : All bytes from HL is moved De bytes up in memory if there is room
+         for it.
+
++- Delete variable -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  2C58 |  2C5C |  2C5C |  2C5C |  2C60 |  2C0B |  2C25 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: HL -> VAT entry
+       DE -> Variable data
+
+Result: The VAT entry and the data space is deleted.
+
++- Get actual length of data -------+-------+-------+-------+-------+-------+
+|                   |  2D88 |  2D8C |  2D8C |  2D8C |  2D90 |  2D3B |  2D55 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: A = type of variable
+       HL= Address of variable data
+       BC= Length word of data
+Result: HL = Address of data
+        DE = Length of data in bytes
+
++- Get actual length of data -------+-------+-------+-------+-------+-------+
+|                   |  2D8C |  2D90 |  2D90 |  2D90 |  2D94 |  2D3F |  2D59 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: A = type of variable
+       HL= Address of variable data
+       BC= Length word of data <-- kun for 88 ikke 8c
+Result: HL = Address of data
+        DE = Length of data in bytes
+
++- Find if you can get a block of memory ---+-------+-------+-------+-------+
+|                   |  3005 |  3009 |  3009 |  3009 |  300D |  2FB8 |  2FD2 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : HL = Length to allocate
+Result : DE = Length to allocate
+         HL = Amount extra you have
+         Carry cleared if you can get it otherwise the error handler is
+         called.
+
+To allocate memory for a variable several different functions can be used. The
+list below contains rutines which allocate memory for a specific type of
+variable. The name and the length of the name should always be placed in OP1
+before any of these functions are called.
+
++- Allocate variable -------+-------+-------+-------+-------+-------+-------+
+| Real (0)          |  29D3 |  29D7 |  29D7 |  29D7 |  29DB |  2986 |  29A0 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Cplx (1)          |  29E1 |  29E5 |  29E5 |  29E5 |  29E9 |  2994 |  29AE |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Vect (2)       *1 |  29E8 |  29EC |  29EC |  29EC |  29F0 |  299B |  29B5 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Vect cplx (3)  *1 |  2A10 |  2A14 |  2A14 |  2A14 |  2A18 |  29C3 |  29DD |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| List (4)       *2 |  2A21 |  2A25 |  2A25 |  2A25 |  2A29 |  29D4 |  29EE |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| List cplx (5)  *2 |  2A3E |  2A42 |  2A42 |  2A42 |  2A46 |  29F1 |  2A0B |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Matrix (6)     *3 |  2A49 |  2A4D |  2A4D |  2A4D |  2A51 |  29FC |  2A16 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Matrix cplx (7)*3 |  2A56 |  2A5A |  2A5A |  2A5A |  2A5E |  2A09 |  2A23 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Const (8)         |  29D9 |  29DD |  29DD |  29DD |  29E1 |  298C |  29A6 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Const cplx (9)    |  29DD |  29E1 |  29E1 |  29E1 |  29E5 |  2990 |  29AA |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Equ (A)        *4 |  2A77 |  2A7B |  2A7B |  2A7B |  2A7F |  2A2A |  2A44 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| String (C)     *4 |  2A64 |  2A68 |  2A68 |  2A68 |  2A6C |  2A17 |  2A31 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| GDB (D)           |  2A87 |  2A8B |  2A8B |  2A8B |  2A8F |  2A3A |  2A54 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| GDB (E)           |  2A8B |  2A8F |  2A8F |  2A8F |  2A93 |  2A3E |  2A58 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| GDB (F)           |  2A8F |  2A93 |  2A93 |  2A93 |  2A97 |  2A42 |  2A5C |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| GDB (10)          |  2A93 |  2A97 |  2A97 |  2A97 |  2A9B |  2A46 |  2A60 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Pict (11)         |  2A80 |  2A84 |  2A84 |  3A84 |  2A88 |  2A33 |  2A4D |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Prgm (12)         |  2A97 |  2A9B |  2A9B |  2A9B |  2A9F |  2A4A |  2A64 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+*1 = Number of elements in L
+*2 = Number of elements in HL
+*3 = Number of rows/cols in H/L
+*4 = Number of chars in HL
+
+There are several ways to call the rutine to allocate memory, one of them is
+to call the functions above. Another way is calling the rutines yourself.
+For lists, vectors, matrices call 299B with the number of real elements in hl
+and the type in a. (for complex values call with number of elements *2).
+Another possible way of calling it is to call 29A7 with the number of bytes
+in hl and the type in a. Besides this you can fill out the var type field in
+OP1, put the length in hl and call 29AA. All of the above calls assume that
+the var name and length of the name are placed into OP1.
+
+The system uses the following routines to allocate memory for system
+variables.
+
+Set OP1 name to length 1 token 2E   265A
+Set OP1 name to length 1 token 21   2676
+Set OP1 name to length 1 token 23   267B
+Set OP1 name to length 1 token 40   2680
+Set OP1 name to length 1 token 2A   2685
+Set OP1 name to length 1 token C1   268A
+Set OP1 name to length 1 token 72   2690
+Set OP1 name to length 1 token 78   2695
+Set OP1 name to length 1 token 79   269C
+Set OP1 name to length 1 token 74   26A1
+
+Set OP1 to the following            265F
+         type 4 (list)
+         length of name 5
+         name "PRegC"
+
++- Is var real/cplx (E) ----+-------+-------+-------+-------+-------+-------+
+|                   |  266B |  266F |  266F |  266F |  2673 |  261E |  2638 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input  : none
+Result : Returns type of var in OP1 if it is a real or complex, else it calls
+         the error handler.
+
++- Is OP1 cplx -----+-------+-------+-------+-------+-------+-------+-------+
+|                   |  1F8C |  1F90 |  1F90 |  1F90 |  1F94 |  1F3F |  1F59 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input  : none
+Result : If Z flag set then the variable in OP1 is a cplx floating point
+         value (var type 1).
+
++- Get var type of OP1 -----+-------+-------+-------+-------+-------+-------+
+|                   |  1F94 |  1F98 |  1F98 |  1F98 |  1F9C |  1F47 |  1F61 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input  : none
+Result : A holds the type of variable (with the 3 MSB cleared)
+
++- ??? ---------------------+-------+-------+-------+-------+-------+-------+
+|                   |  26AD*|       |       |       |       |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input: Variable info in OP1
+Result: Bit 7 of type byte set if name starts with '0$'
+
+The rutines below can be used to read/write values to/from the VAT. The
+functions are called push and pop because they use the VAT like a stack, so
+when a value is popped from the stack, the pointer to the end of the VAT is
+updated. When a value is pushed, memory is allocated and the error handler is
+called if there is not enough free mem.
+
++- Pop byte from VAT -------+-------+-------+-------+-------+-------+-------+
+|                   |  2DF5 |  2DF9 |  2DF9 |  2DF9 |  2DFD |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : none
+Result : The value is popped to A.
+
++- Push byte to VAT +-------+-------+-------+-------+-------+-------+-------+
+|                   |  2DE4 |  2DE8 |  2DE8 |  2DE8 |  2DEC |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : none
+Result : The value in A is pushed to end of VAT.
+
++- Pop word from VAT -------+-------+-------+-------+-------+-------+-------+
+|                   |  2DDB |  2DDF |  2DDF |  2DDF |  2DE3 |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : none
+Result : The value is popped into BC
+
++- Push word from VAT ------+-------+-------+-------+-------+-------+-------+
+|                   |  2DCB |  2DCF |  2DCF |  2DCF |  2DD3 |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+Input : none
+Result : The value in BC is pushed to to end of VAT.
+
+When memory is allocated or deallocated, the system uses the following
+rutines to update system pointers.
+
++- Updata sys adr1 -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  2ADF |  2AD3 |  2AD3 |  2AD3 |  2AE7 |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+If (8A5F) is greater then DE then decrease (8A5F),(8A61),(8A62) by BC.
+(used to update system pointer when memory is deallocated)
+
++- Updata sys adr2 -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  2B00 |  2B04 |  2B04 |  2B04 |  2B08 |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+If the data at the addresses are greater than DE then decrease by BC.
+(used to update system pointer when memory is deallocated)
+(80C6),(80C8),(80CA),(80CC),(80CE),(80D0),(80D2),(80D4),(85E3),(85E7),(85EB),
+(8629),(862B),(8632),(8634),(863F),(8B27),(8B96),(8B98)
+
++- Updata sys adr3 -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  2D7B |  2D7F |  2D7F |  2D7F |  2D83 |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+If (8B94) is less than DE then BC is added.
+
++- Updata sys adr4 -+-------+-------+-------+-------+-------+-------+-------+
+|                   |  2D05 |  2D09 |  2D09 |  2D09 |  2D0D |       |       |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+If the data at the addresses are less than DE then add BC
+(8BEB),(8B25),(8BD5),(8BD7),(8BD9),(8BDB),(85E1),(85E5),(85E9).
+
+Math
+----
+The tabel below lists the adresses of known FP math functions for all ROM
+versions. The offset row contains the offset most often used, but for ROM
+version 9.0 and 10.0 it changes, so for functions with addresses higher
+than F46 these does not work.
+
+For some functions an extra address is listed in the discription field. This
+address is for ROM version 3.0A. For some functions there are two versions,
+the normal one is listed, the other one is the one with the address in the
+discription field. The difference between the normal function and the extra
+verison is listed below.
+
++------------------------+----------------------------+---------------------+
+| Normal                 | Extra                      | Functions           |
++------------------------+----------------------------+---------------------+
+| Only real results      | Also cplx results          | LN/LOG              |
+| Numbers in radians     | Depends on current settings| ARCCOS/ARCSIN/ARCTAN|
+| Do not use extra digits| Use them                   | Other               |
++------------------------+----------------------------+---------------------+
+
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Rom version       |  3.0A |   4.0 |   5.0 |   6.0 |   8.0 |   9.0 |  10.0 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Offset            |     0 |     4 |     4 |     4 |     8 |     9 |     9 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=SQRT(OP1)10EE |  10E2 |  10E6 |  10E6 |  10E6 |  10EA |  10EB |  10EC |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1/OP2  101A |  1010 |  1014 |  1014 |  1014 |  1018 |  1019 |  101A |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=1/OP1         |  1016 |  101A |  101A |  101A |  101E |  101F |  1020 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1-OP2       |  0D68 |  0D6C |  0D6C |  0D6C |  0D70 |  0D71 |  0D71 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1-1         |  0D65 |  0D69 |  0D69 |  0D69 |  0D6D |  0D6E |  0D6E |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1+1         |  0D60 |  0D65 |  0D65 |  0D65 |  0D69 |  0D6A |  0D6A |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=2*OP1         |  0D5D |  0D61 |  0D61 |  0D61 |  0D65 |  0D66 |  0D66 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=IPART(OP1)    |  0D54 |  0D58 |  0D58 |  0D58 |  0D5C |  0D5D |  0D5D |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP2-OP1       |  0D4F |  0D53 |  0D53 |  0D53 |  0D57 |  0D58 |  0D58 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=INT(OP1)      |  0D3E |  0D42 |  0D42 |  0D42 |  0D46 |  0D47 |  0D47 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=|OP1|+|OP2|   |  0D36 |  0D3A |  0D3A |  0D3A |  0D3E |  0D3F |  0D3F |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1+(HL)      |  0D31 |  0D35 |  0D35 |  0D35 |  0D39 |  0D3A |  0D3A |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=MAX(OP1,OP2)  |  0D22 |  0D26 |  0D26 |  0D26 |  0D2A |  0D2B |  0D2B |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=MIN(OP1,OP2)  |  0D13 |  0D17 |  0D17 |  0D17 |  0D1B |  0D1C |  0D1C |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1+OP2  0D78 |  0D6F |  0D73 |  0D73 |  0D73 |  0D77 |  0D78 |  0D78 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1*OP2  0E59*|  0E52 |  0E56 |  0E56 |  0E56 |  0E5A |  0E5B |  0E5B |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Rad->Deg OP1 E24**|  0E32 |  0E36 |  0E36 |  0E36 |  0E3A |  0E3B |  0E3B |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| Deg->Rad OP1 E28**|  0E3B |  0E3F |  0E3F |  0E3F |  0E43 |  0E44 |  0E44 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1^3       **|  0E44 |  0E49 |  0E49 |  0E49 |  0E4D |  0E4E |  0E4E |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1*0.5     **|  0E49 |  0E4D |  0E4D |  0E4D |  0E51 |  0E52 |  0E52 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=OP1^2       **|  0E51 |  0E55 |  0E55 |  0E55 |  0E59 |  0E5A |  0E5A |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=-OP1          |  0F92 |  0F96 |  0F96 |  0F96 |  0F9A |  0F9B |  0F9C |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP2=-OP2          |  0FA3 |  0FA7 |  0FA7 |  0FA7 |  0FAB |  0FAC |  0FAD |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=FPART(OP1)    |  0FBA |  0FBE |  0FBE |  0FBE |  0FC2 |  0FC2 |  0FC3 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=LN(OP1)   12CE|  12BB |  12BF |  12BF |  12BF |  12C3 |  126E |  126F |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=LOG(OP1)  12D2|  12D6 |  12DA |  12DA |  12DA |  12DE |  1289 |  128A |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=e^OP1         |  14C2 |  14C6 |  14C6 |  14C6 |  14CA |  1475 |  1476 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=10^(OP1)      |  14CC |  14D0 |  14D0 |  14D0 |  14D4 |  147F |  1480 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=SIN(OP1)      |  16B6 |  16BA |  16BA |  16BA |  16BE |  1669 |  1683 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=COS(OP1)      |  16BA |  16BE |  16BE |  16BE |  16C2 |  166D |  1687 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+| OP1=TAN(OP1)      |  16BE |  16C2 |  16C2 |  16C2 |  16C6 |  1671 |  168B |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+|OP1=ARCCOS(OP1)1B62|  1B44 |  1B48 |  1B48 |  1B48 |  1B4C |  1AF7 |  1B11 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+|OP1=ARCSIN(OP1)1B6C#| 1B4A |  1B4E |  1B4E |  1B4E |  1B52 |  1AFD |  1B17 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+|OP1=ARCTAN(OP1)1B74#| 1B55 |  1B59 |  1B59 |  1B59 |  1B5D |  1B08 |  1B22 |
++-------------------+-------+-------+-------+-------+-------+-------+-------+
+* OP3 destroyed
+** OP2 and OP3 destroyed
+# These two function might be switched !
+
+Beside the above listed function several others has been found be decoding
+some code which handles BASIC execution. These functions has not been tested
+in an asm program, and only the address for ROM version 3.0A is known. If
+anyone tests these or find the address in other ROM versions please let me
+know.
+
+ 1605 OP1=OP1^OP2 
+ 15F6 OP1=OP1 root OP2
+ 1AA9 sinh    (1AAD in version 4.0)
+ 1DE5 sinh^-1 (1DE9 in version 4.0)
+ 1AA5 cosh    (1AA9 in version 4.0)
+ 1DF3 cosh^-1 (1DF7 in version 4.0)
+ 1AA1 tanh    (1AA5 in version 4.0)
+ 1D98 tanh^-1 (1DCB? in version 4.0)
+ 1265 OP1=OP1! ?
+ 25c0 abs (all ready listed once)
+ 25c7 OP1=OP1/100 (5) 
+ 1ef2 >pol (OP1/OP2) converted to pol
+ 1e7c nCr
+ 1ece nPr
+ 11d7 round (11BB cplx)
+ 398E and (34174)
+ 3994 or  (34181)
+ 399A xor (3418E)
+ 39A6 <=
+ 39AC >=
+ 3A06 not
+ 3A18 rotR
+ 3A1E rotL
+ 3A24 shiftR
+ 3A2A shiftL
+ 3A37 >bin,>oct,>hex (value in A 3,2,1)
+
+The following four function are useful when writing programs which uses FP
+numbers. The last three has been tested on ROM version 3.0A and works fine.
+
+ 39D6 DE = OP1
+ 75454 Convert cplx in OP1/OP2 to ASCIIZ string and store it at 8B3B
+ 74F3A Convert real in OP1 to ASCIIZ string and store it at 8098 (A=2C)
+ 3430  Convert OP2 to a string (3433 in ROM version 4.0)
+
+Menus
+-----
+
+Beside the function mentioned earlier in the document the following functions
+can be used to display standard TI85 menus. The location listed below is to
+the start of a menu entry, so add 3 bytes for the location to jump to. Most
+functions requires the input handler (and the buffer it uses) to be set up
+correctly.
+
+07D3 Polynomial Solver
+07E3 Solver
+07EE Delete Menu
+07FA Solver
+0806 Constant Editor
+0811 Vector Editor
+081C Matrix Editor
+0827 Program Editor
+0838 Stat-Draw
+0843 y(x)=
+084F E(t)=
+085B r(Theta)=
+0874 Range Menu
+0880 Format Menu
+088C Format Menu
+0898 Zoom Factor
+08A4 Stat-Edit
+08AF Catalog
+08B7 Mode
+08BD Mode
+08C3 Variables
+08C9 Last Error Screen
+08CF Interpolate
+08DB List Editor
+08E6 Stat-Calc
+08F1 1-VAR
+08FD LINR
+0908 LNR
+0912 EXPR
+091D PWRR
+0928 P2REG
+0934 P3REG
+0940 P4REG
+094C FCST
+0959 Tolerance Editor
+095C Initial Conditions
+096B AXES
+0976 Clear Memory?
+0980 Clear Defaults?
+098C Clear All?
+0998 Link Menu
+09A4 RAM Checker
+09F2 Draw Graph
+09F9 Goto Graph Menu
+09FC Trace Graph
+09FF QUIT (Error Menu)
+
+Jump to the two following by adding 1 to the adress listed
+
+09F1 MORE
+09F5 EXIT
+
+Table of Interesting Data (ROM)
+-------------------------------
+
+Page 0:
+
+39C  066C: misc data. Strings, lists of ascii chars ......
+           0681: character lookup table for something
+6    0C6B: 05, "xStat"
+     0A02: "QUIT" (ASCIIZ and length indexed)
+6    0C71: 05, "yStat"
+128  1439: table for calculating transcendental functions
+REAL 1F39: 0.5
+REAL 1F42 \ complex (1.0,0.0)
+REAL 1F4C /   \
+REAL 1F56     /complex (0.0,0.0)
+REAL 1F60: 0
+REAL 1F6A: 1
+REAL 24E6: 180/pi
+REAL 24F0: pi/2
+REAL 24FA: pi/4
+REAL 2504: log e
+REAL 250E: pi
+REAL 2518: pi/180
+REAL 2522: ln 10
+7    2664: 4,5,"PRegC" (Real list named PRegC) 
+2CD  30DF: misc strings used by calculator (zero terminated)
+
+Page 1:
+     42DD: pointers to catalog entries for alphabet
+112  4DC8: bitmap similar to menu box
+250  4E38: 124 pointers to menus (indexed by secondary menu type byte)
+1878 4F32: menu data structures (page 1)
+             1 byte for something
+             1 byte for number of pointers following
+             n pointers
+     5688: menu items (See listing above)
+     695C: mode screen strings (see above)
+     723E: normal character set (01-E0)
+     7936: character set for menus (00-D7)
+140  7B99: table to translate real key numbers to system keynumbers
+FF?  7D83: table to translate system keys to real keys
+
+Page 3:
+32   57A8  table to translate contrast to ASCII
+
+Page 4:
+     7D7A: system variable and constant names (cannot store to these)
+
+Page 5:
+     4788: Real numbers
+           4788: 0.069444444444444 = 1/14.4
+           4792: 0.083333333333333 = 1/12
+           479D: 0.125000000000000 = 1/8
+           47A6: 0.200000000000000 = 1/5
+           47B0: 0.900000000000000
+           47BA: 0.000050000000000 = 1/20000
+     6EFC: link error strings (ASCIIZ)
+           6EFC: "Waiting"
+           6F04: "Memory Backup"
+           6F12: "WARNING"
+           6F1A: "SYSTEM NO VARS OF THIS TYPE"
+           6F35: "MEMORY FULL"
+           6F41: "TRANSMISSION ERROR"
+           6F54: "DUPLICATE NAME"
+           6F63: "DELETE        BYTES"
+     71B2: variable type strings (ASCIIZ)
+           71B2: "CONS"
+           71B7: "CPLX"
+           71BC: "EQU"
+           71C0: "GDB"
+           71C4: "LIST"
+           71C9: "MATRX"
+           71CF: "PIC"
+           71D5: "PRGM"
+           71D8: "RANGE"
+           71DE: "REAL"
+           71E3: "STRNG"
+           71E9: "VECTR"
+     7268: zoom variable names:
+           7268: 4,"Func",0 \
+           726E: 3,"Pol",0   \
+           7273: 5,"Param",0  > Can be read as ASCIIZ or length index string.
+           727A: 5,"DifEq",0 /
+           7281: 4,"ZRCL",0 /
+     76B3: 8 real numbers
+     7775: "fnIntErr"
+     7F09: filler FF's
+
+Page 7:
+     6D7F: pointers to BASIC commands in token order
+     41E5: pointers to error strings
+     422B: error strings
+     6F7D: pointers to BASIC commands in alphabetical order
+     70E7: list of BASIC commands
+     76D4: pointers to variable names
+     773E: variable name strings
+     7869: more pointers to variable names
+     7F4F: filler FF's 
+     7FFF: ROM version byte
+             2Ah: 2.0
+             57h: 3.0A
+             8Eh: 4.0
+             5Eh: 5.0
+             3Dh: 6.0
+             97h: 8.0
+             91h: 9.0
+             35h: 10.0
