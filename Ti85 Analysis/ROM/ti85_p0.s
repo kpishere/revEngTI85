@@ -11935,6 +11935,7 @@
                              ; reads current page from port 5, modifies stack with new page info (0x84, 0x33),
                              ; and outputs new page number to port 5 to switch ROM banks for calling functions
                              ; in other pages. Used as a thunk for inter-page function calls.
+                             ; Page-switch thunk entry: prepares the page table data and invokes the selected ROM page.
         ram:335f e5              PUSH       HL
         ram:3360 e5              PUSH       HL
         ram:3361 f5              PUSH       AF
@@ -11966,14 +11967,21 @@
         ram:3381 d1              POP        DE
         ram:3382 f1              POP        AF
         ram:3383 c9              RET
-        ram:3384 e3              ??         E3h
-        ram:3385 f5              ??         F5h
-        ram:3386 7d              ??         7Dh    }
-        ram:3387 d3              ??         D3h
-        ram:3388 05              ??         05h
-        ram:3389 f1              ??         F1h
-        ram:338a e1              ??         E1h
-        ram:338b c9              ??         C9h
+                              ;+- Return from ROM function +-------+-------+-------+-------+-------+-------+
+                              ;|                   |  33D1*|  33D4*|  33D4*|  33D4*|  33D8*|  3384*|  339F*|
+                              ;+-------------------+-------+-------+-------+-------+-------+-------+-------+
+                              ;Called on return from a function called by 33AC.
+                              ;This functions restores the rom page and Jumps to
+                              ;your function.
+                              ;
+                              ;Do not call this function!
+        ram:3384 e3              EX (SP),HL
+        ram:3385 f5              PUSH AF
+        ram:3386 7d              LD A,L
+        ram:3387 d3 05           OUT (0x05),A
+        ram:3389 f1              POP AF
+        ram:338a e1              POP HL
+        ram:338b c9              RET
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
@@ -11989,6 +11997,8 @@
                                                                                           ram:3fa7(c), ram:3fad(c),
                                                                                           ram:3fb3(c)
         ram:338c e3              EX         (SP=>local_res0),HL
+        ; Page thunk helper: reads target address bytes and page number from the thunk entry,
+        ; then programs the ROM page select port before returning.
         ram:338d f5              PUSH       AF
         ram:338e d5              PUSH       DE
         ram:338f 5e              LD         E,(HL)
@@ -12002,3251 +12012,541 @@
         ram:3398 f1              POP        AF
         ram:3399 e3              EX         (SP=>local_res0),HL
         ram:339a c9              RET
-        ram:339b cd              ??         CDh
-        ram:339c 5f              ??         5Fh    _
-        ram:339d 33              ??         33h    3
-        ram:339e 41              ??         41h    A
-        ram:339f 7d              ??         7Dh    }
-        ram:33a0 06              ??         06h
-        ram:33a1 cd              ??         CDh
-        ram:33a2 5f              ??         5Fh    _
-        ram:33a3 33              ??         33h    3
-        ram:33a4 84              ??         84h
-        ram:33a5 7d              ??         7Dh    }
-        ram:33a6 06              ??         06h
-        ram:33a7 cd              ??         CDh
-        ram:33a8 5f              ??         5Fh    _
-        ram:33a9 33              ??         33h    3
-        ram:33aa 81              ??         81h
-        ram:33ab 43              ??         43h    C
-        ram:33ac 07              ??         07h
-        ram:33ad cd              ??         CDh
-        ram:33ae 5f              ??         5Fh    _
-        ram:33af 33              ??         33h    3
-        ram:33b0 1e              ??         1Eh
-        ram:33b1 49              ??         49h    I
-        ram:33b2 07              ??         07h
-        ram:33b3 cd              ??         CDh
-        ram:33b4 5f              ??         5Fh    _
-        ram:33b5 33              ??         33h    3
-        ram:33b6 65              ??         65h    e
-        ram:33b7 67              ??         67h    g
-        ram:33b8 06              ??         06h
-        ram:33b9 cd              ??         CDh
-        ram:33ba 5f              ??         5Fh    _
-        ram:33bb 33              ??         33h    3
-        ram:33bc 12              ??         12h
-        ram:33bd 69              ??         69h    i
-        ram:33be 06              ??         06h
-        ram:33bf cd              ??         CDh
-        ram:33c0 5f              ??         5Fh    _
-        ram:33c1 33              ??         33h    3
-        ram:33c2 5c              ??         5Ch    \
-        ram:33c3 69              ??         69h    i
-        ram:33c4 06              ??         06h
-        ram:33c5 cd              ??         CDh
-        ram:33c6 5f              ??         5Fh    _
-        ram:33c7 33              ??         33h    3
-        ram:33c8 26              ??         26h    &
-        ram:33c9 6d              ??         6Dh    m
-        ram:33ca 06              ??         06h
-        ram:33cb cd              ??         CDh
-        ram:33cc 5f              ??         5Fh    _
-        ram:33cd 33              ??         33h    3
-        ram:33ce d6              ??         D6h
-        ram:33cf 41              ??         41h    A
-        ram:33d0 07              ??         07h
-        ram:33d1 cd              ??         CDh
-        ram:33d2 5f              ??         5Fh    _
-        ram:33d3 33              ??         33h    3
-        ram:33d4 36              ??         36h    6
-        ram:33d5 69              ??         69h    i
-        ram:33d6 07              ??         07h
-        ram:33d7 cd              ??         CDh
-        ram:33d8 5f              ??         5Fh    _
-        ram:33d9 33              ??         33h    3
-        ram:33da 78              ??         78h    x
-        ram:33db 7d              ??         7Dh    }
-        ram:33dc 06              ??         06h
-        ram:33dd cd              ??         CDh
-        ram:33de 5f              ??         5Fh    _
-        ram:33df 33              ??         33h    3
-        ram:33e0 22              ??         22h    "
-        ram:33e1 52              ??         52h    R
-        ram:33e2 07              ??         07h
-        ram:33e3 cd              ??         CDh
-        ram:33e4 5f              ??         5Fh    _
-        ram:33e5 33              ??         33h    3
-        ram:33e6 60              ??         60h    `
-        ram:33e7 54              ??         54h    T
-        ram:33e8 07              ??         07h
-        ram:33e9 cd              ??         CDh
-        ram:33ea 5f              ??         5Fh    _
-        ram:33eb 33              ??         33h    3
-        ram:33ec 5f              ??         5Fh    _
-        ram:33ed 77              ??         77h    w
-        ram:33ee 06              ??         06h
-        ram:33ef cd              ??         CDh
-        ram:33f0 5f              ??         5Fh    _
-        ram:33f1 33              ??         33h    3
-        ram:33f2 2b              ??         2Bh    +
-        ram:33f3 4b              ??         4Bh    K
-        ram:33f4 07              ??         07h
-        ram:33f5 cd              ??         CDh
-        ram:33f6 5f              ??         5Fh    _
-        ram:33f7 33              ??         33h    3
-        ram:33f8 d6              ??         D6h
-        ram:33f9 5d              ??         5Dh    ]
-        ram:33fa 06              ??         06h
-        ram:33fb cd              ??         CDh
-        ram:33fc 5f              ??         5Fh    _
-        ram:33fd 33              ??         33h    3
-        ram:33fe 09              ??         09h
-        ram:33ff 55              ??         55h    U
-        ram:3400 06              ??         06h
-        ram:3401 cd              ??         CDh
-        ram:3402 5f              ??         5Fh    _
-        ram:3403 33              ??         33h    3
-        ram:3404 f9              ??         F9h
-        ram:3405 56              ??         56h    V
-        ram:3406 06              ??         06h
-        ram:3407 cd              ??         CDh
-        ram:3408 5f              ??         5Fh    _
-        ram:3409 33              ??         33h    3
-        ram:340a d3              ??         D3h
-        ram:340b 57              ??         57h    W
-        ram:340c 06              ??         06h
-        ram:340d cd              ??         CDh
-        ram:340e 5f              ??         5Fh    _
-        ram:340f 33              ??         33h    3
-        ram:3410 d6              ??         D6h
-        ram:3411 57              ??         57h    W
-        ram:3412 06              ??         06h
-        ram:3413 cd              ??         CDh
-        ram:3414 8c              ??         8Ch
-        ram:3415 33              ??         33h    3
-        ram:3416 b2              ??         B2h
-        ram:3417 58              ??         58h    X
-        ram:3418 06              ??         06h
-        ram:3419 cd              ??         CDh
-        ram:341a 5f              ??         5Fh    _
-        ram:341b 33              ??         33h    3
-        ram:341c b8              ??         B8h
-        ram:341d 54              ??         54h    T
-        ram:341e 06              ??         06h
-        ram:341f cd              ??         CDh
-        ram:3420 5f              ??         5Fh    _
-        ram:3421 33              ??         33h    3
-        ram:3422 b3              ??         B3h
-        ram:3423 55              ??         55h    U
-        ram:3424 06              ??         06h
-        ram:3425 cd              ??         CDh
-        ram:3426 5f              ??         5Fh    _
-        ram:3427 33              ??         33h    3
-        ram:3428 96              ??         96h
-        ram:3429 55              ??         55h    U
-        ram:342a 06              ??         06h
-        ram:342b cd              ??         CDh
-        ram:342c 5f              ??         5Fh    _
-        ram:342d 33              ??         33h    3
-        ram:342e 22              ??         22h    "
-        ram:342f 59              ??         59h    Y
-        ram:3430 07              ??         07h
-        ram:3431 cd              ??         CDh
-        ram:3432 5f              ??         5Fh    _
-        ram:3433 33              ??         33h    3
-        ram:3434 7f              ??         7Fh    
-        ram:3435 56              ??         56h    V
-        ram:3436 06              ??         06h
-        ram:3437 cd              ??         CDh
-        ram:3438 5f              ??         5Fh    _
-        ram:3439 33              ??         33h    3
-        ram:343a 43              ??         43h    C
-        ram:343b 4e              ??         4Eh    N
-        ram:343c 06              ??         06h
-        ram:343d cd              ??         CDh
-        ram:343e 5f              ??         5Fh    _
-        ram:343f 33              ??         33h    3
-        ram:3440 41              ??         41h    A
-        ram:3441 45              ??         45h    E
-        ram:3442 06              ??         06h
-        ram:3443 cd              ??         CDh
-        ram:3444 5f              ??         5Fh    _
-        ram:3445 33              ??         33h    3
-        ram:3446 81              ??         81h
-        ram:3447 45              ??         45h    E
-        ram:3448 06              ??         06h
-        ram:3449 cd              ??         CDh
-        ram:344a 5f              ??         5Fh    _
-        ram:344b 33              ??         33h    3
-        ram:344c c2              ??         C2h
-        ram:344d 45              ??         45h    E
-        ram:344e 06              ??         06h
-        ram:344f cd              ??         CDh
-        ram:3450 5f              ??         5Fh    _
-        ram:3451 33              ??         33h    3
-        ram:3452 cf              ??         CFh
-        ram:3453 45              ??         45h    E
-        ram:3454 06              ??         06h
-        ram:3455 cd              ??         CDh
-        ram:3456 5f              ??         5Fh    _
-        ram:3457 33              ??         33h    3
-        ram:3458 eb              ??         EBh
-        ram:3459 45              ??         45h    E
-        ram:345a 06              ??         06h
-        ram:345b cd              ??         CDh
-        ram:345c 5f              ??         5Fh    _
-        ram:345d 33              ??         33h    3
-        ram:345e 77              ??         77h    w
-        ram:345f 46              ??         46h    F
-        ram:3460 06              ??         06h
-        ram:3461 cd              ??         CDh
-        ram:3462 5f              ??         5Fh    _
-        ram:3463 33              ??         33h    3
-        ram:3464 42              ??         42h    B
-        ram:3465 49              ??         49h    I
-        ram:3466 06              ??         06h
-        ram:3467 cd              ??         CDh
-        ram:3468 5f              ??         5Fh    _
-        ram:3469 33              ??         33h    3
-        ram:346a a2              ??         A2h
-        ram:346b 49              ??         49h    I
-        ram:346c 06              ??         06h
-        ram:346d cd              ??         CDh
-        ram:346e 5f              ??         5Fh    _
-        ram:346f 33              ??         33h    3
-        ram:3470 3d              ??         3Dh    =
-        ram:3471 55              ??         55h    U
-        ram:3472 06              ??         06h
-        ram:3473 cd              ??         CDh
-        ram:3474 5f              ??         5Fh    _
-        ram:3475 33              ??         33h    3
-        ram:3476 f5              ??         F5h
-        ram:3477 56              ??         56h    V
-        ram:3478 06              ??         06h
-        ram:3479 cd              ??         CDh
-        ram:347a 5f              ??         5Fh    _
-        ram:347b 33              ??         33h    3
-        ram:347c 51              ??         51h    Q
-        ram:347d 55              ??         55h    U
-        ram:347e 06              ??         06h
-        ram:347f cd              ??         CDh
-        ram:3480 5f              ??         5Fh    _
-        ram:3481 33              ??         33h    3
-        ram:3482 ee              ??         EEh
-        ram:3483 56              ??         56h    V
-        ram:3484 06              ??         06h
-        ram:3485 cd              ??         CDh
-        ram:3486 5f              ??         5Fh    _
-        ram:3487 33              ??         33h    3
-        ram:3488 6f              ??         6Fh    o
-        ram:3489 65              ??         65h    e
-        ram:348a 06              ??         06h
-        ram:348b cd              ??         CDh
-        ram:348c 5f              ??         5Fh    _
-        ram:348d 33              ??         33h    3
-        ram:348e e9              ??         E9h
-        ram:348f 7d              ??         7Dh    }
-        ram:3490 06              ??         06h
-        ram:3491 cd              ??         CDh
-        ram:3492 8c              ??         8Ch
-        ram:3493 33              ??         33h    3
-        ram:3494 8f              ??         8Fh
-        ram:3495 5b              ??         5Bh    [
-        ram:3496 06              ??         06h
-        ram:3497 cd              ??         CDh
-        ram:3498 5f              ??         5Fh    _
-        ram:3499 33              ??         33h    3
-        ram:349a 87              ??         87h
-        ram:349b 65              ??         65h    e
-        ram:349c 06              ??         06h
-        ram:349d cd              ??         CDh
-        ram:349e 5f              ??         5Fh    _
-        ram:349f 33              ??         33h    3
-        ram:34a0 c5              ??         C5h
-        ram:34a1 7d              ??         7Dh    }
-        ram:34a2 06              ??         06h
-        ram:34a3 cd              ??         CDh
-        ram:34a4 5f              ??         5Fh    _
-        ram:34a5 33              ??         33h    3
-        ram:34a6 c4              ??         C4h
-        ram:34a7 56              ??         56h    V
-        ram:34a8 06              ??         06h
-        ram:34a9 cd              ??         CDh
-        ram:34aa 5f              ??         5Fh    _
-        ram:34ab 33              ??         33h    3
-        ram:34ac 28              ??         28h    (
-        ram:34ad 77              ??         77h    w
-        ram:34ae 06              ??         06h
-        ram:34af cd              ??         CDh
-        ram:34b0 5f              ??         5Fh    _
-        ram:34b1 33              ??         33h    3
-        ram:34b2 e3              ??         E3h
-        ram:34b3 58              ??         58h    X
-        ram:34b4 07              ??         07h
-        ram:34b5 cd              ??         CDh
-        ram:34b6 5f              ??         5Fh    _
-        ram:34b7 33              ??         33h    3
-        ram:34b8 af              ??         AFh
-        ram:34b9 58              ??         58h    X
-        ram:34ba 06              ??         06h
-        ram:34bb cd              ??         CDh
-        ram:34bc 5f              ??         5Fh    _
-        ram:34bd 33              ??         33h    3
-        ram:34be 65              ??         65h    e
-        ram:34bf 45              ??         45h    E
-        ram:34c0 06              ??         06h
-        ram:34c1 cd              ??         CDh
-        ram:34c2 8c              ??         8Ch
-        ram:34c3 33              ??         33h    3
-        ram:34c4 93              ??         93h
-        ram:34c5 62              ??         62h    b
-        ram:34c6 06              ??         06h
-        ram:34c7 cd              ??         CDh
-        ram:34c8 5f              ??         5Fh    _
-        ram:34c9 33              ??         33h    3
-        ram:34ca 84              ??         84h
-        ram:34cb 41              ??         41h    A
-        ram:34cc 07              ??         07h
-        ram:34cd cd              ??         CDh
-        ram:34ce 8c              ??         8Ch
-        ram:34cf 33              ??         33h    3
-        ram:34d0 fc              ??         FCh
-        ram:34d1 6d              ??         6Dh    m
-        ram:34d2 05              ??         05h
-        ram:34d3 cd              ??         CDh
-        ram:34d4 5f              ??         5Fh    _
-        ram:34d5 33              ??         33h    3
-        ram:34d6 17              ??         17h
-        ram:34d7 7c              ??         7Ch    |
-        ram:34d8 04              ??         04h
-        ram:34d9 cd              ??         CDh
-        ram:34da 5f              ??         5Fh    _
-        ram:34db 33              ??         33h    3
-        ram:34dc ff              ??         FFh
-        ram:34dd 57              ??         57h    W
-        ram:34de 06              ??         06h
-        ram:34df cd              ??         CDh
-        ram:34e0 5f              ??         5Fh    _
-        ram:34e1 33              ??         33h    3
-        ram:34e2 26              ??         26h    &
-        ram:34e3 44              ??         44h    D
-        ram:34e4 05              ??         05h
-        ram:34e5 cd              ??         CDh
-        ram:34e6 5f              ??         5Fh    _
-        ram:34e7 33              ??         33h    3
-        ram:34e8 f6              ??         F6h
-        ram:34e9 47              ??         47h    G
-        ram:34ea 05              ??         05h
-        ram:34eb cd              ??         CDh
-        ram:34ec 5f              ??         5Fh    _
-        ram:34ed 33              ??         33h    3
-        ram:34ee c4              ??         C4h
-        ram:34ef 47              ??         47h    G
-        ram:34f0 05              ??         05h
-        ram:34f1 cd              ??         CDh
-        ram:34f2 5f              ??         5Fh    _
-        ram:34f3 33              ??         33h    3
-        ram:34f4 d1              ??         D1h
-        ram:34f5 6b              ??         6Bh    k
-        ram:34f6 04              ??         04h
-        ram:34f7 cd              ??         CDh
-        ram:34f8 5f              ??         5Fh    _
-        ram:34f9 33              ??         33h    3
-        ram:34fa 8c              ??         8Ch
-        ram:34fb 64              ??         64h    d
-        ram:34fc 06              ??         06h
-        ram:34fd cd              ??         CDh
-        ram:34fe 5f              ??         5Fh    _
-        ram:34ff 33              ??         33h    3
-        ram:3500 16              ??         16h
-        ram:3501 64              ??         64h    d
-        ram:3502 06              ??         06h
-        ram:3503 cd              ??         CDh
-        ram:3504 8c              ??         8Ch
-        ram:3505 33              ??         33h    3
-        ram:3506 b5              ??         B5h
-        ram:3507 58              ??         58h    X
-        ram:3508 06              ??         06h
-        ram:3509 cd              ??         CDh
-        ram:350a 5f              ??         5Fh    _
-        ram:350b 33              ??         33h    3
-        ram:350c 8f              ??         8Fh
-        ram:350d 7b              ??         7Bh    {
-        ram:350e 06              ??         06h
-        ram:350f cd              ??         CDh
-        ram:3510 5f              ??         5Fh    _
-        ram:3511 33              ??         33h    3
-        ram:3512 62              ??         62h    b
-        ram:3513 7c              ??         7Ch    |
-        ram:3514 06              ??         06h
-        ram:3515 cd              ??         CDh
-        ram:3516 8c              ??         8Ch
-        ram:3517 33              ??         33h    3
-        ram:3518 c0              ??         C0h
-        ram:3519 54              ??         54h    T
-        ram:351a 06              ??         06h
-        ram:351b cd              ??         CDh
-        ram:351c 5f              ??         5Fh    _
-        ram:351d 33              ??         33h    3
-        ram:351e 68              ??         68h    h
-        ram:351f 55              ??         55h    U
-        ram:3520 06              ??         06h
-        ram:3521 cd              ??         CDh
-        ram:3522 5f              ??         5Fh    _
-        ram:3523 33              ??         33h    3
-        ram:3524 da              ??         DAh
-        ram:3525 7d              ??         7Dh    }
-        ram:3526 06              ??         06h
-        ram:3527 cd              ??         CDh
-        ram:3528 5f              ??         5Fh    _
-        ram:3529 33              ??         33h    3
-        ram:352a be              ??         BEh
-        ram:352b 57              ??         57h    W
-        ram:352c 06              ??         06h
-        ram:352d cd              ??         CDh
-        ram:352e 5f              ??         5Fh    _
-        ram:352f 33              ??         33h    3
-        ram:3530 03              ??         03h
-        ram:3531 40              ??         40h    @
-        ram:3532 05              ??         05h
-        ram:3533 cd              ??         CDh
-        ram:3534 5f              ??         5Fh    _
-        ram:3535 33              ??         33h    3
-        ram:3536 00              ??         00h
-        ram:3537 40              ??         40h    @
-        ram:3538 05              ??         05h
-        ram:3539 cd              ??         CDh
-        ram:353a 8c              ??         8Ch
-        ram:353b 33              ??         33h    3
-        ram:353c 88              ??         88h
-        ram:353d 62              ??         62h    b
-        ram:353e 06              ??         06h
-        ram:353f cd              ??         CDh
-        ram:3540 8c              ??         8Ch
-        ram:3541 33              ??         33h    3
-        ram:3542 8e              ??         8Eh
-        ram:3543 62              ??         62h    b
-        ram:3544 06              ??         06h
-        ram:3545 cd              ??         CDh
-        ram:3546 5f              ??         5Fh    _
-        ram:3547 33              ??         33h    3
-        ram:3548 36              ??         36h    6
-        ram:3549 7f              ??         7Fh    
-        ram:354a 06              ??         06h
-        ram:354b cd              ??         CDh
-        ram:354c 5f              ??         5Fh    _
-        ram:354d 33              ??         33h    3
-        ram:354e 3f              ??         3Fh    ?
-        ram:354f 63              ??         63h    c
-        ram:3550 06              ??         06h
-        ram:3551 cd              ??         CDh
-        ram:3552 5f              ??         5Fh    _
-        ram:3553 33              ??         33h    3
-        ram:3554 41              ??         41h    A
-        ram:3555 54              ??         54h    T
-        ram:3556 06              ??         06h
-        ram:3557 cd              ??         CDh
-        ram:3558 8c              ??         8Ch
-        ram:3559 33              ??         33h    3
-        ram:355a a0              ??         A0h
-        ram:355b 56              ??         56h    V
-        ram:355c 04              ??         04h
-        ram:355d cd              ??         CDh
-        ram:355e 5f              ??         5Fh    _
-        ram:355f 33              ??         33h    3
-        ram:3560 3f              ??         3Fh    ?
-        ram:3561 60              ??         60h    `
-        ram:3562 04              ??         04h
-        ram:3563 cd              ??         CDh
-        ram:3564 5f              ??         5Fh    _
-        ram:3565 33              ??         33h    3
-        ram:3566 af              ??         AFh
-        ram:3567 65              ??         65h    e
-        ram:3568 04              ??         04h
-        ram:3569 cd              ??         CDh
-        ram:356a 5f              ??         5Fh    _
-        ram:356b 33              ??         33h    3
-        ram:356c b0              ??         B0h
-        ram:356d 4e              ??         4Eh    N
-        ram:356e 04              ??         04h
-        ram:356f cd              ??         CDh
-        ram:3570 5f              ??         5Fh    _
-        ram:3571 33              ??         33h    3
-        ram:3572 e8              ??         E8h
-        ram:3573 6a              ??         6Ah    j
-        ram:3574 05              ??         05h
-        ram:3575 cd              ??         CDh
-        ram:3576 5f              ??         5Fh    _
-        ram:3577 33              ??         33h    3
-        ram:3578 58              ??         58h    X
-        ram:3579 43              ??         43h    C
-        ram:357a 05              ??         05h
-        ram:357b cd              ??         CDh
-        ram:357c 5f              ??         5Fh    _
-        ram:357d 33              ??         33h    3
-        ram:357e 29              ??         29h    )
-        ram:357f 49              ??         49h    I
-        ram:3580 06              ??         06h
-        ram:3581 cd              ??         CDh
-        ram:3582 5f              ??         5Fh    _
-        ram:3583 33              ??         33h    3
-        ram:3584 ea              ??         EAh
-        ram:3585 45              ??         45h    E
-        ram:3586 06              ??         06h
-        ram:3587 cd              ??         CDh
-        ram:3588 5f              ??         5Fh    _
-        ram:3589 33              ??         33h    3
-        ram:358a c8              ??         C8h
-        ram:358b 6c              ??         6Ch    l
-        ram:358c 07              ??         07h
-        ram:358d cd              ??         CDh
-        ram:358e 5f              ??         5Fh    _
-        ram:358f 33              ??         33h    3
-        ram:3590 a9              ??         A9h
-        ram:3591 6c              ??         6Ch    l
-        ram:3592 07              ??         07h
-        ram:3593 cd              ??         CDh
-        ram:3594 5f              ??         5Fh    _
-        ram:3595 33              ??         33h    3
-        ram:3596 15              ??         15h
-        ram:3597 4b              ??         4Bh    K
-        ram:3598 07              ??         07h
-        ram:3599 cd              ??         CDh
-        ram:359a 5f              ??         5Fh    _
-        ram:359b 33              ??         33h    3
-        ram:359c eb              ??         EBh
-        ram:359d 4a              ??         4Ah    J
-        ram:359e 07              ??         07h
-        ram:359f cd              ??         CDh
-        ram:35a0 5f              ??         5Fh    _
-        ram:35a1 33              ??         33h    3
-        ram:35a2 f9              ??         F9h
-        ram:35a3 4a              ??         4Ah    J
-        ram:35a4 07              ??         07h
-        ram:35a5 cd              ??         CDh
-        ram:35a6 5f              ??         5Fh    _
-        ram:35a7 33              ??         33h    3
-        ram:35a8 07              ??         07h
-        ram:35a9 4b              ??         4Bh    K
-        ram:35aa 07              ??         07h
-        ram:35ab cd              ??         CDh
-        ram:35ac 5f              ??         5Fh    _
-        ram:35ad 33              ??         33h    3
-        ram:35ae ef              ??         EFh
-        ram:35af 6c              ??         6Ch    l
-        ram:35b0 07              ??         07h
-        ram:35b1 cd              ??         CDh
-        ram:35b2 5f              ??         5Fh    _
-        ram:35b3 33              ??         33h    3
-        ram:35b4 3a              ??         3Ah    :
-        ram:35b5 59              ??         59h    Y
-        ram:35b6 07              ??         07h
-        ram:35b7 cd              ??         CDh
-        ram:35b8 5f              ??         5Fh    _
-        ram:35b9 33              ??         33h    3
-        ram:35ba 36              ??         36h    6
-        ram:35bb 6c              ??         6Ch    l
-        ram:35bc 04              ??         04h
-        ram:35bd cd              ??         CDh
-        ram:35be 5f              ??         5Fh    _
-        ram:35bf 33              ??         33h    3
-        ram:35c0 0d              ??         0Dh
-        ram:35c1 6d              ??         6Dh    m
-        ram:35c2 07              ??         07h
-        ram:35c3 cd              ??         CDh
-        ram:35c4 5f              ??         5Fh    _
-        ram:35c5 33              ??         33h    3
-        ram:35c6 39              ??         39h    9
-        ram:35c7 5e              ??         5Eh    ^
-        ram:35c8 07              ??         07h
-        ram:35c9 cd              ??         CDh
-        ram:35ca 5f              ??         5Fh    _
-        ram:35cb 33              ??         33h    3
-        ram:35cc 49              ??         49h    I
-        ram:35cd 6c              ??         6Ch    l
-        ram:35ce 04              ??         04h
-        ram:35cf cd              ??         CDh
-        ram:35d0 5f              ??         5Fh    _
-        ram:35d1 33              ??         33h    3
-        ram:35d2 a3              ??         A3h
-        ram:35d3 7c              ??         7Ch    |
-        ram:35d4 06              ??         06h
-        ram:35d5 cd              ??         CDh
-        ram:35d6 5f              ??         5Fh    _
-        ram:35d7 33              ??         33h    3
-        ram:35d8 ef              ??         EFh
-        ram:35d9 6b              ??         6Bh    k
-        ram:35da 05              ??         05h
-        ram:35db cd              ??         CDh
-        ram:35dc 5f              ??         5Fh    _
-        ram:35dd 33              ??         33h    3
-        ram:35de b2              ??         B2h
-        ram:35df 5a              ??         5Ah    Z
-        ram:35e0 03              ??         03h
-        ram:35e1 cd              ??         CDh
-        ram:35e2 5f              ??         5Fh    _
-        ram:35e3 33              ??         33h    3
-        ram:35e4 b8              ??         B8h
-        ram:35e5 5a              ??         5Ah    Z
-        ram:35e6 03              ??         03h
-        ram:35e7 cd              ??         CDh
-        ram:35e8 5f              ??         5Fh    _
-        ram:35e9 33              ??         33h    3
-        ram:35ea d8              ??         D8h
-        ram:35eb 5a              ??         5Ah    Z
-        ram:35ec 03              ??         03h
-        ram:35ed cd              ??         CDh
-        ram:35ee 5f              ??         5Fh    _
-        ram:35ef 33              ??         33h    3
-        ram:35f0 ff              ??         FFh
-        ram:35f1 5a              ??         5Ah    Z
-        ram:35f2 03              ??         03h
-        ram:35f3 cd              ??         CDh
-        ram:35f4 5f              ??         5Fh    _
-        ram:35f5 33              ??         33h    3
-        ram:35f6 66              ??         66h    f
-        ram:35f7 5b              ??         5Bh    [
-        ram:35f8 03              ??         03h
-        ram:35f9 cd              ??         CDh
-        ram:35fa 5f              ??         5Fh    _
-        ram:35fb 33              ??         33h    3
-        ram:35fc 85              ??         85h
-        ram:35fd 5c              ??         5Ch    \
-        ram:35fe 03              ??         03h
-        ram:35ff cd              ??         CDh
-        ram:3600 5f              ??         5Fh    _
-        ram:3601 33              ??         33h    3
-        ram:3602 a1              ??         A1h
-        ram:3603 5c              ??         5Ch    \
-        ram:3604 03              ??         03h
-        ram:3605 cd              ??         CDh
-        ram:3606 5f              ??         5Fh    _
-        ram:3607 33              ??         33h    3
-        ram:3608 f8              ??         F8h
-        ram:3609 5e              ??         5Eh    ^
-        ram:360a 03              ??         03h
-        ram:360b cd              ??         CDh
-        ram:360c 5f              ??         5Fh    _
-        ram:360d 33              ??         33h    3
-        ram:360e b5              ??         B5h
-        ram:360f 62              ??         62h    b
-        ram:3610 03              ??         03h
-        ram:3611 cd              ??         CDh
-        ram:3612 5f              ??         5Fh    _
-        ram:3613 33              ??         33h    3
-        ram:3614 2b              ??         2Bh    +
-        ram:3615 63              ??         63h    c
-        ram:3616 03              ??         03h
-        ram:3617 cd              ??         CDh
-        ram:3618 5f              ??         5Fh    _
-        ram:3619 33              ??         33h    3
-        ram:361a 4a              ??         4Ah    J
-        ram:361b 63              ??         63h    c
-        ram:361c 03              ??         03h
-        ram:361d cd              ??         CDh
-        ram:361e 5f              ??         5Fh    _
-        ram:361f 33              ??         33h    3
-        ram:3620 7f              ??         7Fh    
-        ram:3621 63              ??         63h    c
-        ram:3622 03              ??         03h
-        ram:3623 cd              ??         CDh
-        ram:3624 5f              ??         5Fh    _
-        ram:3625 33              ??         33h    3
-        ram:3626 ee              ??         EEh
-        ram:3627 63              ??         63h    c
-        ram:3628 03              ??         03h
-        ram:3629 cd              ??         CDh
-        ram:362a 5f              ??         5Fh    _
-        ram:362b 33              ??         33h    3
-        ram:362c 03              ??         03h
-        ram:362d 64              ??         64h    d
-        ram:362e 03              ??         03h
-        ram:362f cd              ??         CDh
-        ram:3630 5f              ??         5Fh    _
-        ram:3631 33              ??         33h    3
-        ram:3632 2d              ??         2Dh    -
-        ram:3633 64              ??         64h    d
-        ram:3634 03              ??         03h
-        ram:3635 cd              ??         CDh
-        ram:3636 5f              ??         5Fh    _
-        ram:3637 33              ??         33h    3
-        ram:3638 39              ??         39h    9
-        ram:3639 64              ??         64h    d
-        ram:363a 03              ??         03h
-        ram:363b cd              ??         CDh
-        ram:363c 5f              ??         5Fh    _
-        ram:363d 33              ??         33h    3
-        ram:363e 3f              ??         3Fh    ?
-        ram:363f 64              ??         64h    d
-        ram:3640 03              ??         03h
-        ram:3641 cd              ??         CDh
-        ram:3642 5f              ??         5Fh    _
-        ram:3643 33              ??         33h    3
-        ram:3644 45              ??         45h    E
-        ram:3645 64              ??         64h    d
-        ram:3646 03              ??         03h
-        ram:3647 cd              ??         CDh
-        ram:3648 5f              ??         5Fh    _
-        ram:3649 33              ??         33h    3
-        ram:364a 4b              ??         4Bh    K
-        ram:364b 64              ??         64h    d
-        ram:364c 03              ??         03h
-        ram:364d cd              ??         CDh
-        ram:364e 5f              ??         5Fh    _
-        ram:364f 33              ??         33h    3
-        ram:3650 51              ??         51h    Q
-        ram:3651 64              ??         64h    d
-        ram:3652 03              ??         03h
-        ram:3653 cd              ??         CDh
-        ram:3654 5f              ??         5Fh    _
-        ram:3655 33              ??         33h    3
-        ram:3656 57              ??         57h    W
-        ram:3657 64              ??         64h    d
-        ram:3658 03              ??         03h
-        ram:3659 cd              ??         CDh
-        ram:365a 5f              ??         5Fh    _
-        ram:365b 33              ??         33h    3
-        ram:365c b0              ??         B0h
-        ram:365d 64              ??         64h    d
-        ram:365e 03              ??         03h
-        ram:365f cd              ??         CDh
-        ram:3660 5f              ??         5Fh    _
-        ram:3661 33              ??         33h    3
-        ram:3662 af              ??         AFh
-        ram:3663 66              ??         66h    f
-        ram:3664 03              ??         03h
-        ram:3665 cd              ??         CDh
-        ram:3666 5f              ??         5Fh    _
-        ram:3667 33              ??         33h    3
-        ram:3668 b3              ??         B3h
-        ram:3669 66              ??         66h    f
-        ram:366a 03              ??         03h
-        ram:366b cd              ??         CDh
-        ram:366c 5f              ??         5Fh    _
-        ram:366d 33              ??         33h    3
-        ram:366e 07              ??         07h
-        ram:366f 67              ??         67h    g
-        ram:3670 03              ??         03h
-        ram:3671 cd              ??         CDh
-        ram:3672 5f              ??         5Fh    _
-        ram:3673 33              ??         33h    3
-        ram:3674 a8              ??         A8h
-        ram:3675 67              ??         67h    g
-        ram:3676 03              ??         03h
-        ram:3677 cd              ??         CDh
-        ram:3678 5f              ??         5Fh    _
-        ram:3679 33              ??         33h    3
-        ram:367a ae              ??         AEh
-        ram:367b 67              ??         67h    g
-        ram:367c 03              ??         03h
-        ram:367d cd              ??         CDh
-        ram:367e 5f              ??         5Fh    _
-        ram:367f 33              ??         33h    3
-        ram:3680 b7              ??         B7h
-        ram:3681 67              ??         67h    g
-        ram:3682 03              ??         03h
-        ram:3683 cd              ??         CDh
-        ram:3684 5f              ??         5Fh    _
-        ram:3685 33              ??         33h    3
-        ram:3686 bc              ??         BCh
-        ram:3687 67              ??         67h    g
-        ram:3688 03              ??         03h
-        ram:3689 cd              ??         CDh
-        ram:368a 5f              ??         5Fh    _
-        ram:368b 33              ??         33h    3
-        ram:368c c1              ??         C1h
-        ram:368d 67              ??         67h    g
-        ram:368e 03              ??         03h
-        ram:368f cd              ??         CDh
-        ram:3690 5f              ??         5Fh    _
-        ram:3691 33              ??         33h    3
-        ram:3692 c6              ??         C6h
-        ram:3693 67              ??         67h    g
-        ram:3694 03              ??         03h
-        ram:3695 cd              ??         CDh
-        ram:3696 5f              ??         5Fh    _
-        ram:3697 33              ??         33h    3
-        ram:3698 13              ??         13h
-        ram:3699 6b              ??         6Bh    k
-        ram:369a 07              ??         07h
-        ram:369b cd              ??         CDh
-        ram:369c 5f              ??         5Fh    _
-        ram:369d 33              ??         33h    3
-        ram:369e 6b              ??         6Bh    k
-        ram:369f 6b              ??         6Bh    k
-        ram:36a0 07              ??         07h
-        ram:36a1 cd              ??         CDh
-        ram:36a2 5f              ??         5Fh    _
-        ram:36a3 33              ??         33h    3
-        ram:36a4 29              ??         29h    )
-        ram:36a5 74              ??         74h    t
-        ram:36a6 06              ??         06h
-        ram:36a7 cd              ??         CDh
-        ram:36a8 5f              ??         5Fh    _
-        ram:36a9 33              ??         33h    3
-        ram:36aa af              ??         AFh
-        ram:36ab 43              ??         43h    C
-        ram:36ac 04              ??         04h
-        ram:36ad cd              ??         CDh
-        ram:36ae 5f              ??         5Fh    _
-        ram:36af 33              ??         33h    3
-        ram:36b0 68              ??         68h    h
-        ram:36b1 50              ??         50h    P
-        ram:36b2 04              ??         04h
-        ram:36b3 cd              ??         CDh
-        ram:36b4 5f              ??         5Fh    _
-        ram:36b5 33              ??         33h    3
-        ram:36b6 ba              ??         BAh
-        ram:36b7 6a              ??         6Ah    j
-        ram:36b8 05              ??         05h
-        ram:36b9 cd              ??         CDh
-        ram:36ba 5f              ??         5Fh    _
-        ram:36bb 33              ??         33h    3
-        ram:36bc 8a              ??         8Ah
-        ram:36bd 7c              ??         7Ch    |
-        ram:36be 03              ??         03h
-        ram:36bf cd              ??         CDh
-        ram:36c0 5f              ??         5Fh    _
-        ram:36c1 33              ??         33h    3
-        ram:36c2 8c              ??         8Ch
-        ram:36c3 73              ??         73h    s
-        ram:36c4 05              ??         05h
-        ram:36c5 cd              ??         CDh
-        ram:36c6 5f              ??         5Fh    _
-        ram:36c7 33              ??         33h    3
-        ram:36c8 62              ??         62h    b
-        ram:36c9 61              ??         61h    a
-        ram:36ca 04              ??         04h
-        ram:36cb cd              ??         CDh
-        ram:36cc 5f              ??         5Fh    _
-        ram:36cd 33              ??         33h    3
-        ram:36ce 4b              ??         4Bh    K
-        ram:36cf 61              ??         61h    a
-        ram:36d0 04              ??         04h
-        ram:36d1 cd              ??         CDh
-        ram:36d2 5f              ??         5Fh    _
-        ram:36d3 33              ??         33h    3
-        ram:36d4 60              ??         60h    `
-        ram:36d5 63              ??         63h    c
-        ram:36d6 04              ??         04h
-        ram:36d7 cd              ??         CDh
-        ram:36d8 5f              ??         5Fh    _
-        ram:36d9 33              ??         33h    3
-        ram:36da e5              ??         E5h
-        ram:36db 5f              ??         5Fh    _
-        ram:36dc 04              ??         04h
-        ram:36dd cd              ??         CDh
-        ram:36de 5f              ??         5Fh    _
-        ram:36df 33              ??         33h    3
-        ram:36e0 e7              ??         E7h
-        ram:36e1 65              ??         65h    e
-        ram:36e2 04              ??         04h
-        ram:36e3 cd              ??         CDh
-        ram:36e4 5f              ??         5Fh    _
-        ram:36e5 33              ??         33h    3
-        ram:36e6 62              ??         62h    b
-        ram:36e7 6c              ??         6Ch    l
-        ram:36e8 04              ??         04h
-        ram:36e9 cd              ??         CDh
-        ram:36ea 5f              ??         5Fh    _
-        ram:36eb 33              ??         33h    3
-        ram:36ec 54              ??         54h    T
-        ram:36ed 65              ??         65h    e
-        ram:36ee 04              ??         04h
-        ram:36ef cd              ??         CDh
-        ram:36f0 5f              ??         5Fh    _
-        ram:36f1 33              ??         33h    3
-        ram:36f2 00              ??         00h
-        ram:36f3 65              ??         65h    e
-        ram:36f4 04              ??         04h
-        ram:36f5 cd              ??         CDh
-        ram:36f6 5f              ??         5Fh    _
-        ram:36f7 33              ??         33h    3
-        ram:36f8 7f              ??         7Fh    
-        ram:36f9 64              ??         64h    d
-        ram:36fa 04              ??         04h
-        ram:36fb cd              ??         CDh
-        ram:36fc 5f              ??         5Fh    _
-        ram:36fd 33              ??         33h    3
-        ram:36fe f6              ??         F6h
-        ram:36ff 63              ??         63h    c
-        ram:3700 04              ??         04h
-        ram:3701 cd              ??         CDh
-        ram:3702 5f              ??         5Fh    _
-        ram:3703 33              ??         33h    3
-        ram:3704 d2              ??         D2h
-        ram:3705 63              ??         63h    c
-        ram:3706 04              ??         04h
-        ram:3707 cd              ??         CDh
-        ram:3708 5f              ??         5Fh    _
-        ram:3709 33              ??         33h    3
-        ram:370a 12              ??         12h
-        ram:370b 64              ??         64h    d
-        ram:370c 04              ??         04h
-        ram:370d cd              ??         CDh
-        ram:370e 5f              ??         5Fh    _
-        ram:370f 33              ??         33h    3
-        ram:3710 b6              ??         B6h
-        ram:3711 67              ??         67h    g
-        ram:3712 04              ??         04h
-        ram:3713 cd              ??         CDh
-        ram:3714 5f              ??         5Fh    _
-        ram:3715 33              ??         33h    3
-        ram:3716 bd              ??         BDh
-        ram:3717 67              ??         67h    g
-        ram:3718 04              ??         04h
-        ram:3719 cd              ??         CDh
-        ram:371a 5f              ??         5Fh    _
-        ram:371b 33              ??         33h    3
-        ram:371c 0d              ??         0Dh
-        ram:371d 45              ??         45h    E
-        ram:371e 04              ??         04h
-        ram:371f cd              ??         CDh
-        ram:3720 5f              ??         5Fh    _
-        ram:3721 33              ??         33h    3
-        ram:3722 59              ??         59h    Y
-        ram:3723 46              ??         46h    F
-        ram:3724 04              ??         04h
-        ram:3725 cd              ??         CDh
-        ram:3726 5f              ??         5Fh    _
-        ram:3727 33              ??         33h    3
-        ram:3728 a5              ??         A5h
-        ram:3729 67              ??         67h    g
-        ram:372a 04              ??         04h
-        ram:372b cd              ??         CDh
-        ram:372c 5f              ??         5Fh    _
-        ram:372d 33              ??         33h    3
-        ram:372e ef              ??         EFh
-        ram:372f 68              ??         68h    h
-        ram:3730 04              ??         04h
-        ram:3731 cd              ??         CDh
-        ram:3732 5f              ??         5Fh    _
-        ram:3733 33              ??         33h    3
-        ram:3734 3a              ??         3Ah    :
-        ram:3735 6c              ??         6Ch    l
-        ram:3736 04              ??         04h
-        ram:3737 cd              ??         CDh
-        ram:3738 5f              ??         5Fh    _
-        ram:3739 33              ??         33h    3
-        ram:373a b2              ??         B2h
-        ram:373b 67              ??         67h    g
-        ram:373c 04              ??         04h
-        ram:373d cd              ??         CDh
-        ram:373e 5f              ??         5Fh    _
-        ram:373f 33              ??         33h    3
-        ram:3740 1a              ??         1Ah
-        ram:3741 6c              ??         6Ch    l
-        ram:3742 04              ??         04h
-        ram:3743 cd              ??         CDh
-        ram:3744 5f              ??         5Fh    _
-        ram:3745 33              ??         33h    3
-        ram:3746 5a              ??         5Ah    Z
-        ram:3747 64              ??         64h    d
-        ram:3748 04              ??         04h
-        ram:3749 cd              ??         CDh
-        ram:374a 5f              ??         5Fh    _
-        ram:374b 33              ??         33h    3
-        ram:374c 12              ??         12h
-        ram:374d 44              ??         44h    D
-        ram:374e 04              ??         04h
-        ram:374f cd              ??         CDh
-        ram:3750 5f              ??         5Fh    _
-        ram:3751 33              ??         33h    3
-        ram:3752 7b              ??         7Bh    {
-        ram:3753 45              ??         45h    E
-        ram:3754 04              ??         04h
-        ram:3755 cd              ??         CDh
-        ram:3756 5f              ??         5Fh    _
-        ram:3757 33              ??         33h    3
-        ram:3758 9d              ??         9Dh
-        ram:3759 48              ??         48h    H
-        ram:375a 04              ??         04h
-        ram:375b cd              ??         CDh
-        ram:375c 5f              ??         5Fh    _
-        ram:375d 33              ??         33h    3
-        ram:375e c9              ??         C9h
-        ram:375f 49              ??         49h    I
-        ram:3760 04              ??         04h
-        ram:3761 cd              ??         CDh
-        ram:3762 5f              ??         5Fh    _
-        ram:3763 33              ??         33h    3
-        ram:3764 d2              ??         D2h
-        ram:3765 49              ??         49h    I
-        ram:3766 04              ??         04h
-        ram:3767 cd              ??         CDh
-        ram:3768 5f              ??         5Fh    _
-        ram:3769 33              ??         33h    3
-        ram:376a d6              ??         D6h
-        ram:376b 7c              ??         7Ch    |
-        ram:376c 06              ??         06h
-        ram:376d cd              ??         CDh
-        ram:376e 5f              ??         5Fh    _
-        ram:376f 33              ??         33h    3
-        ram:3770 db              ??         DBh
-        ram:3771 7c              ??         7Ch    |
-        ram:3772 06              ??         06h
-        ram:3773 cd              ??         CDh
-        ram:3774 5f              ??         5Fh    _
-        ram:3775 33              ??         33h    3
-        ram:3776 17              ??         17h
-        ram:3777 67              ??         67h    g
-        ram:3778 04              ??         04h
-        ram:3779 cd              ??         CDh
-        ram:377a 5f              ??         5Fh    _
-        ram:377b 33              ??         33h    3
-        ram:377c fb              ??         FBh
-        ram:377d 43              ??         43h    C
-        ram:377e 04              ??         04h
-        ram:377f cd              ??         CDh
-        ram:3780 5f              ??         5Fh    _
-        ram:3781 33              ??         33h    3
-        ram:3782 ec              ??         ECh
-        ram:3783 43              ??         43h    C
-        ram:3784 04              ??         04h
-        ram:3785 cd              ??         CDh
-        ram:3786 5f              ??         5Fh    _
-        ram:3787 33              ??         33h    3
-        ram:3788 df              ??         DFh
-        ram:3789 46              ??         46h    F
-        ram:378a 04              ??         04h
-        ram:378b cd              ??         CDh
-        ram:378c 5f              ??         5Fh    _
-        ram:378d 33              ??         33h    3
-        ram:378e d0              ??         D0h
-        ram:378f 43              ??         43h    C
-        ram:3790 04              ??         04h
-        ram:3791 cd              ??         CDh
-        ram:3792 5f              ??         5Fh    _
-        ram:3793 33              ??         33h    3
-        ram:3794 55              ??         55h    U
-        ram:3795 6c              ??         6Ch    l
-        ram:3796 04              ??         04h
-        ram:3797 cd              ??         CDh
-        ram:3798 5f              ??         5Fh    _
-        ram:3799 33              ??         33h    3
-        ram:379a 3a              ??         3Ah    :
-        ram:379b 4f              ??         4Fh    O
-        ram:379c 07              ??         07h
-        ram:379d cd              ??         CDh
-        ram:379e 5f              ??         5Fh    _
-        ram:379f 33              ??         33h    3
-        ram:37a0 29              ??         29h    )
-        ram:37a1 73              ??         73h    s
-        ram:37a2 05              ??         05h
-        ram:37a3 cd              ??         CDh
-        ram:37a4 5f              ??         5Fh    _
-        ram:37a5 33              ??         33h    3
-        ram:37a6 91              ??         91h
-        ram:37a7 63              ??         63h    c
-        ram:37a8 05              ??         05h
-        ram:37a9 cd              ??         CDh
-        ram:37aa 5f              ??         5Fh    _
-        ram:37ab 33              ??         33h    3
-        ram:37ac 42              ??         42h    B
-        ram:37ad 6e              ??         6Eh    n
-        ram:37ae 03              ??         03h
-        ram:37af cd              ??         CDh
-        ram:37b0 5f              ??         5Fh    _
-        ram:37b1 33              ??         33h    3
-        ram:37b2 4b              ??         4Bh    K
-        ram:37b3 6e              ??         6Eh    n
-        ram:37b4 03              ??         03h
-        ram:37b5 cd              ??         CDh
-        ram:37b6 5f              ??         5Fh    _
-        ram:37b7 33              ??         33h    3
-        ram:37b8 2e              ??         2Eh    .
-        ram:37b9 73              ??         73h    s
-        ram:37ba 05              ??         05h
-        ram:37bb cd              ??         CDh
-        ram:37bc 5f              ??         5Fh    _
-        ram:37bd 33              ??         33h    3
-        ram:37be 54              ??         54h    T
-        ram:37bf 4b              ??         4Bh    K
-        ram:37c0 03              ??         03h
-        ram:37c1 cd              ??         CDh
-        ram:37c2 5f              ??         5Fh    _
-        ram:37c3 33              ??         33h    3
-        ram:37c4 8d              ??         8Dh
-        ram:37c5 4b              ??         4Bh    K
-        ram:37c6 03              ??         03h
-        ram:37c7 cd              ??         CDh
-        ram:37c8 5f              ??         5Fh    _
-        ram:37c9 33              ??         33h    3
-        ram:37ca d0              ??         D0h
-        ram:37cb 4b              ??         4Bh    K
-        ram:37cc 03              ??         03h
-        ram:37cd cd              ??         CDh
-        ram:37ce 5f              ??         5Fh    _
-        ram:37cf 33              ??         33h    3
-        ram:37d0 04              ??         04h
-        ram:37d1 4d              ??         4Dh    M
-        ram:37d2 03              ??         03h
-        ram:37d3 cd              ??         CDh
-        ram:37d4 5f              ??         5Fh    _
-        ram:37d5 33              ??         33h    3
-        ram:37d6 d3              ??         D3h
-        ram:37d7 4e              ??         4Eh    N
-        ram:37d8 03              ??         03h
-        ram:37d9 cd              ??         CDh
-        ram:37da 5f              ??         5Fh    _
-        ram:37db 33              ??         33h    3
-        ram:37dc 33              ??         33h    3
-        ram:37dd 51              ??         51h    Q
-        ram:37de 03              ??         03h
-        ram:37df cd              ??         CDh
-        ram:37e0 5f              ??         5Fh    _
-        ram:37e1 33              ??         33h    3
-        ram:37e2 50              ??         50h    P
-        ram:37e3 51              ??         51h    Q
-        ram:37e4 03              ??         03h
-        ram:37e5 cd              ??         CDh
-        ram:37e6 5f              ??         5Fh    _
-        ram:37e7 33              ??         33h    3
-        ram:37e8 5d              ??         5Dh    ]
-        ram:37e9 51              ??         51h    Q
-        ram:37ea 03              ??         03h
-        ram:37eb cd              ??         CDh
-        ram:37ec 5f              ??         5Fh    _
-        ram:37ed 33              ??         33h    3
-        ram:37ee 98              ??         98h
-        ram:37ef 54              ??         54h    T
-        ram:37f0 03              ??         03h
-        ram:37f1 cd              ??         CDh
-        ram:37f2 5f              ??         5Fh    _
-        ram:37f3 33              ??         33h    3
-        ram:37f4 a5              ??         A5h
-        ram:37f5 54              ??         54h    T
-        ram:37f6 03              ??         03h
-        ram:37f7 cd              ??         CDh
-        ram:37f8 5f              ??         5Fh    _
-        ram:37f9 33              ??         33h    3
-        ram:37fa cb              ??         CBh
-        ram:37fb 7a              ??         7Ah    z
-        ram:37fc 02              ??         02h
-        ram:37fd cd              ??         CDh
-        ram:37fe 5f              ??         5Fh    _
-        ram:37ff 33              ??         33h    3
-        ram:3800 13              ??         13h
-        ram:3801 7b              ??         7Bh    {
-        ram:3802 02              ??         02h
-        ram:3803 cd              ??         CDh
-        ram:3804 5f              ??         5Fh    _
-        ram:3805 33              ??         33h    3
-        ram:3806 6a              ??         6Ah    j
-        ram:3807 7b              ??         7Bh    {
-        ram:3808 02              ??         02h
-        ram:3809 cd              ??         CDh
-        ram:380a 5f              ??         5Fh    _
-        ram:380b 33              ??         33h    3
-        ram:380c c3              ??         C3h
-        ram:380d 7b              ??         7Bh    {
-        ram:380e 02              ??         02h
-        ram:380f cd              ??         CDh
-        ram:3810 5f              ??         5Fh    _
-        ram:3811 33              ??         33h    3
-        ram:3812 ec              ??         ECh
-        ram:3813 7b              ??         7Bh    {
-        ram:3814 02              ??         02h
-        ram:3815 cd              ??         CDh
-        ram:3816 5f              ??         5Fh    _
-        ram:3817 33              ??         33h    3
-        ram:3818 80              ??         80h
-        ram:3819 7c              ??         7Ch    |
-        ram:381a 02              ??         02h
-        ram:381b cd              ??         CDh
-        ram:381c 5f              ??         5Fh    _
-        ram:381d 33              ??         33h    3
-        ram:381e 84              ??         84h
-        ram:381f 7c              ??         7Ch    |
-        ram:3820 02              ??         02h
-        ram:3821 cd              ??         CDh
-        ram:3822 5f              ??         5Fh    _
-        ram:3823 33              ??         33h    3
-        ram:3824 09              ??         09h
-        ram:3825 7d              ??         7Dh    }
-        ram:3826 02              ??         02h
-        ram:3827 cd              ??         CDh
-        ram:3828 5f              ??         5Fh    _
-        ram:3829 33              ??         33h    3
-        ram:382a 52              ??         52h    R
-        ram:382b 7d              ??         7Dh    }
-        ram:382c 02              ??         02h
-        ram:382d cd              ??         CDh
-        ram:382e 5f              ??         5Fh    _
-        ram:382f 33              ??         33h    3
-        ram:3830 78              ??         78h    x
-        ram:3831 7d              ??         7Dh    }
-        ram:3832 02              ??         02h
-        ram:3833 cd              ??         CDh
-        ram:3834 5f              ??         5Fh    _
-        ram:3835 33              ??         33h    3
-        ram:3836 bd              ??         BDh
-        ram:3837 7d              ??         7Dh    }
-        ram:3838 02              ??         02h
-        ram:3839 cd              ??         CDh
-        ram:383a 5f              ??         5Fh    _
-        ram:383b 33              ??         33h    3
-        ram:383c e1              ??         E1h
-        ram:383d 7d              ??         7Dh    }
-        ram:383e 02              ??         02h
-        ram:383f cd              ??         CDh
-        ram:3840 5f              ??         5Fh    _
-        ram:3841 33              ??         33h    3
-        ram:3842 fa              ??         FAh
-        ram:3843 7d              ??         7Dh    }
-        ram:3844 02              ??         02h
-        ram:3845 cd              ??         CDh
-        ram:3846 5f              ??         5Fh    _
-        ram:3847 33              ??         33h    3
-        ram:3848 8c              ??         8Ch
-        ram:3849 53              ??         53h    S
-        ram:384a 03              ??         03h
-        ram:384b cd              ??         CDh
-        ram:384c 5f              ??         5Fh    _
-        ram:384d 33              ??         33h    3
-        ram:384e b8              ??         B8h
-        ram:384f 6b              ??         6Bh    k
-        ram:3850 04              ??         04h
-        ram:3851 cd              ??         CDh
-        ram:3852 5f              ??         5Fh    _
-        ram:3853 33              ??         33h    3
-        ram:3854 a4              ??         A4h
-        ram:3855 76              ??         76h    v
-        ram:3856 02              ??         02h
-        ram:3857 cd              ??         CDh
-        ram:3858 5f              ??         5Fh    _
-        ram:3859 33              ??         33h    3
-        ram:385a aa              ??         AAh
-        ram:385b 76              ??         76h    v
-        ram:385c 02              ??         02h
-        ram:385d cd              ??         CDh
-        ram:385e 5f              ??         5Fh    _
-        ram:385f 33              ??         33h    3
-        ram:3860 b0              ??         B0h
-        ram:3861 76              ??         76h    v
-        ram:3862 02              ??         02h
-        ram:3863 cd              ??         CDh
-        ram:3864 5f              ??         5Fh    _
-        ram:3865 33              ??         33h    3
-        ram:3866 d5              ??         D5h
-        ram:3867 5c              ??         5Ch    \
-        ram:3868 03              ??         03h
-        ram:3869 cd              ??         CDh
-        ram:386a 5f              ??         5Fh    _
-        ram:386b 33              ??         33h    3
-        ram:386c 51              ??         51h    Q
-        ram:386d 61              ??         61h    a
-        ram:386e 05              ??         05h
-        ram:386f cd              ??         CDh
-        ram:3870 5f              ??         5Fh    _
-        ram:3871 33              ??         33h    3
-        ram:3872 ff              ??         FFh
-        ram:3873 7c              ??         7Ch    |
-        ram:3874 02              ??         02h
-        ram:3875 cd              ??         CDh
-        ram:3876 5f              ??         5Fh    _
-        ram:3877 33              ??         33h    3
-        ram:3878 23              ??         23h    #
-        ram:3879 61              ??         61h    a
-        ram:387a 05              ??         05h
-        ram:387b cd              ??         CDh
-        ram:387c 5f              ??         5Fh    _
-        ram:387d 33              ??         33h    3
-        ram:387e aa              ??         AAh
-        ram:387f 5c              ??         5Ch    \
-        ram:3880 03              ??         03h
-        ram:3881 cd              ??         CDh
-        ram:3882 5f              ??         5Fh    _
-        ram:3883 33              ??         33h    3
-        ram:3884 38              ??         38h    8
-        ram:3885 75              ??         75h    u
-        ram:3886 02              ??         02h
-        ram:3887 cd              ??         CDh
-        ram:3888 5f              ??         5Fh    _
-        ram:3889 33              ??         33h    3
-        ram:388a 79              ??         79h    y
-        ram:388b 5f              ??         5Fh    _
-        ram:388c 05              ??         05h
-        ram:388d cd              ??         CDh
-        ram:388e 5f              ??         5Fh    _
-        ram:388f 33              ??         33h    3
-        ram:3890 06              ??         06h
-        ram:3891 63              ??         63h    c
-        ram:3892 05              ??         05h
-        ram:3893 cd              ??         CDh
-        ram:3894 5f              ??         5Fh    _
-        ram:3895 33              ??         33h    3
-        ram:3896 c4              ??         C4h
-        ram:3897 5f              ??         5Fh    _
-        ram:3898 05              ??         05h
-        ram:3899 cd              ??         CDh
-        ram:389a 5f              ??         5Fh    _
-        ram:389b 33              ??         33h    3
-        ram:389c c5              ??         C5h
-        ram:389d 68              ??         68h    h
-        ram:389e 02              ??         02h
-        ram:389f cd              ??         CDh
-        ram:38a0 5f              ??         5Fh    _
-        ram:38a1 33              ??         33h    3
-        ram:38a2 23              ??         23h    #
-        ram:38a3 69              ??         69h    i
-        ram:38a4 02              ??         02h
-        ram:38a5 cd              ??         CDh
-        ram:38a6 5f              ??         5Fh    _
-        ram:38a7 33              ??         33h    3
-        ram:38a8 41              ??         41h    A
-        ram:38a9 69              ??         69h    i
-        ram:38aa 02              ??         02h
-        ram:38ab cd              ??         CDh
-        ram:38ac 5f              ??         5Fh    _
-        ram:38ad 33              ??         33h    3
-        ram:38ae 49              ??         49h    I
-        ram:38af 69              ??         69h    i
-        ram:38b0 02              ??         02h
-        ram:38b1 cd              ??         CDh
-        ram:38b2 5f              ??         5Fh    _
-        ram:38b3 33              ??         33h    3
-        ram:38b4 fe              ??         FEh
-        ram:38b5 6f              ??         6Fh    o
-        ram:38b6 02              ??         02h
-        ram:38b7 cd              ??         CDh
-        ram:38b8 5f              ??         5Fh    _
-        ram:38b9 33              ??         33h    3
-        ram:38ba 73              ??         73h    s
-        ram:38bb 70              ??         70h    p
-        ram:38bc 02              ??         02h
-        ram:38bd cd              ??         CDh
-        ram:38be 5f              ??         5Fh    _
-        ram:38bf 33              ??         33h    3
-        ram:38c0 7c              ??         7Ch    |
-        ram:38c1 70              ??         70h    p
-        ram:38c2 02              ??         02h
-        ram:38c3 cd              ??         CDh
-        ram:38c4 5f              ??         5Fh    _
-        ram:38c5 33              ??         33h    3
-        ram:38c6 91              ??         91h
-        ram:38c7 70              ??         70h    p
-        ram:38c8 02              ??         02h
-        ram:38c9 cd              ??         CDh
-        ram:38ca 5f              ??         5Fh    _
-        ram:38cb 33              ??         33h    3
-        ram:38cc 3f              ??         3Fh    ?
-        ram:38cd 78              ??         78h    x
-        ram:38ce 05              ??         05h
-        ram:38cf cd              ??         CDh
-        ram:38d0 5f              ??         5Fh    _
-        ram:38d1 33              ??         33h    3
-        ram:38d2 b6              ??         B6h
-        ram:38d3 67              ??         67h    g
-        ram:38d4 02              ??         02h
-        ram:38d5 cd              ??         CDh
-        ram:38d6 5f              ??         5Fh    _
-        ram:38d7 33              ??         33h    3
-        ram:38d8 37              ??         37h    7
-        ram:38d9 68              ??         68h    h
-        ram:38da 02              ??         02h
-        ram:38db cd              ??         CDh
-        ram:38dc 5f              ??         5Fh    _
-        ram:38dd 33              ??         33h    3
-        ram:38de 3f              ??         3Fh    ?
-        ram:38df 68              ??         68h    h
-        ram:38e0 02              ??         02h
-        ram:38e1 cd              ??         CDh
-        ram:38e2 5f              ??         5Fh    _
-        ram:38e3 33              ??         33h    3
-        ram:38e4 47              ??         47h    G
-        ram:38e5 68              ??         68h    h
-        ram:38e6 02              ??         02h
-        ram:38e7 cd              ??         CDh
-        ram:38e8 5f              ??         5Fh    _
-        ram:38e9 33              ??         33h    3
-        ram:38ea 61              ??         61h    a
-        ram:38eb 68              ??         68h    h
-        ram:38ec 02              ??         02h
-        ram:38ed cd              ??         CDh
-        ram:38ee 5f              ??         5Fh    _
-        ram:38ef 33              ??         33h    3
-        ram:38f0 ae              ??         AEh
-        ram:38f1 68              ??         68h    h
-        ram:38f2 02              ??         02h
-        ram:38f3 cd              ??         CDh
-        ram:38f4 5f              ??         5Fh    _
-        ram:38f5 33              ??         33h    3
-        ram:38f6 f8              ??         F8h
-        ram:38f7 60              ??         60h    `
-        ram:38f8 05              ??         05h
-        ram:38f9 cd              ??         CDh
-        ram:38fa 5f              ??         5Fh    _
-        ram:38fb 33              ??         33h    3
-        ram:38fc 0b              ??         0Bh
-        ram:38fd 61              ??         61h    a
-        ram:38fe 05              ??         05h
-        ram:38ff cd              ??         CDh
-        ram:3900 5f              ??         5Fh    _
-        ram:3901 33              ??         33h    3
-        ram:3902 3e              ??         3Eh    >
-        ram:3903 61              ??         61h    a
-        ram:3904 05              ??         05h
-        ram:3905 cd              ??         CDh
-        ram:3906 5f              ??         5Fh    _
-        ram:3907 33              ??         33h    3
-        ram:3908 1f              ??         1Fh
-        ram:3909 62              ??         62h    b
-        ram:390a 05              ??         05h
-        ram:390b cd              ??         CDh
-        ram:390c 5f              ??         5Fh    _
-        ram:390d 33              ??         33h    3
-        ram:390e dd              ??         DDh
-        ram:390f 60              ??         60h    `
-        ram:3910 05              ??         05h
-        ram:3911 cd              ??         CDh
-        ram:3912 5f              ??         5Fh    _
-        ram:3913 33              ??         33h    3
-        ram:3914 28              ??         28h    (
-        ram:3915 61              ??         61h    a
-        ram:3916 05              ??         05h
-        ram:3917 cd              ??         CDh
-        ram:3918 5f              ??         5Fh    _
-        ram:3919 33              ??         33h    3
-        ram:391a 28              ??         28h    (
-        ram:391b 62              ??         62h    b
-        ram:391c 05              ??         05h
-        ram:391d cd              ??         CDh
-        ram:391e 5f              ??         5Fh    _
-        ram:391f 33              ??         33h    3
-        ram:3920 b4              ??         B4h
-        ram:3921 66              ??         66h    f
-        ram:3922 02              ??         02h
-        ram:3923 cd              ??         CDh
-        ram:3924 5f              ??         5Fh    _
-        ram:3925 33              ??         33h    3
-        ram:3926 12              ??         12h
-        ram:3927 67              ??         67h    g
-        ram:3928 02              ??         02h
-        ram:3929 cd              ??         CDh
-        ram:392a 5f              ??         5Fh    _
-        ram:392b 33              ??         33h    3
-        ram:392c 32              ??         32h    2
-        ram:392d 62              ??         62h    b
-        ram:392e 02              ??         02h
-        ram:392f cd              ??         CDh
-        ram:3930 5f              ??         5Fh    _
-        ram:3931 33              ??         33h    3
-        ram:3932 4f              ??         4Fh    O
-        ram:3933 62              ??         62h    b
-        ram:3934 02              ??         02h
-        ram:3935 cd              ??         CDh
-        ram:3936 5f              ??         5Fh    _
-        ram:3937 33              ??         33h    3
-        ram:3938 5b              ??         5Bh    [
-        ram:3939 62              ??         62h    b
-        ram:393a 02              ??         02h
-        ram:393b cd              ??         CDh
-        ram:393c 5f              ??         5Fh    _
-        ram:393d 33              ??         33h    3
-        ram:393e 5e              ??         5Eh    ^
-        ram:393f 62              ??         62h    b
-        ram:3940 02              ??         02h
-        ram:3941 cd              ??         CDh
-        ram:3942 5f              ??         5Fh    _
-        ram:3943 33              ??         33h    3
-        ram:3944 62              ??         62h    b
-        ram:3945 62              ??         62h    b
-        ram:3946 02              ??         02h
-        ram:3947 cd              ??         CDh
-        ram:3948 5f              ??         5Fh    _
-        ram:3949 33              ??         33h    3
-        ram:394a 89              ??         89h
-        ram:394b 62              ??         62h    b
-        ram:394c 02              ??         02h
-        ram:394d cd              ??         CDh
-        ram:394e 5f              ??         5Fh    _
-        ram:394f 33              ??         33h    3
-        ram:3950 74              ??         74h    t
-        ram:3951 41              ??         41h    A
-        ram:3952 03              ??         03h
-        ram:3953 cd              ??         CDh
-        ram:3954 5f              ??         5Fh    _
-        ram:3955 33              ??         33h    3
-        ram:3956 81              ??         81h
-        ram:3957 41              ??         41h    A
-        ram:3958 03              ??         03h
-        ram:3959 cd              ??         CDh
-        ram:395a 5f              ??         5Fh    _
-        ram:395b 33              ??         33h    3
-        ram:395c 8e              ??         8Eh
-        ram:395d 41              ??         41h    A
-        ram:395e 03              ??         03h
-        ram:395f cd              ??         CDh
-        ram:3960 5f              ??         5Fh    _
-        ram:3961 33              ??         33h    3
-        ram:3962 6e              ??         6Eh    n
-        ram:3963 41              ??         41h    A
-        ram:3964 03              ??         03h
-        ram:3965 cd              ??         CDh
-        ram:3966 5f              ??         5Fh    _
-        ram:3967 33              ??         33h    3
-        ram:3968 d2              ??         D2h
-        ram:3969 65              ??         65h    e
-        ram:396a 02              ??         02h
-        ram:396b cd              ??         CDh
-        ram:396c 5f              ??         5Fh    _
-        ram:396d 33              ??         33h    3
-        ram:396e e5              ??         E5h
-        ram:396f 65              ??         65h    e
-        ram:3970 02              ??         02h
-        ram:3971 cd              ??         CDh
-        ram:3972 5f              ??         5Fh    _
-        ram:3973 33              ??         33h    3
-        ram:3974 48              ??         48h    H
-        ram:3975 62              ??         62h    b
-        ram:3976 02              ??         02h
-        ram:3977 cd              ??         CDh
-        ram:3978 5f              ??         5Fh    _
-        ram:3979 33              ??         33h    3
-        ram:397a 6a              ??         6Ah    j
-        ram:397b 62              ??         62h    b
-        ram:397c 02              ??         02h
-        ram:397d cd              ??         CDh
-        ram:397e 5f              ??         5Fh    _
-        ram:397f 33              ??         33h    3
-        ram:3980 82              ??         82h
-        ram:3981 62              ??         62h    b
-        ram:3982 02              ??         02h
-        ram:3983 cd              ??         CDh
-        ram:3984 5f              ??         5Fh    _
-        ram:3985 33              ??         33h    3
-        ram:3986 e5              ??         E5h
-        ram:3987 7c              ??         7Ch    |
-        ram:3988 02              ??         02h
-        ram:3989 cd              ??         CDh
-        ram:398a 5f              ??         5Fh    _
-        ram:398b 33              ??         33h    3
-        ram:398c 07              ??         07h
-        ram:398d 69              ??         69h    i
-        ram:398e 02              ??         02h
-        ram:398f cd              ??         CDh
-        ram:3990 5f              ??         5Fh    _
-        ram:3991 33              ??         33h    3
-        ram:3992 0f              ??         0Fh
-        ram:3993 69              ??         69h    i
-        ram:3994 02              ??         02h
-        ram:3995 cd              ??         CDh
-        ram:3996 5f              ??         5Fh    _
-        ram:3997 33              ??         33h    3
-        ram:3998 9c              ??         9Ch
-        ram:3999 77              ??         77h    w
-        ram:399a 03              ??         03h
-        ram:399b cd              ??         CDh
-        ram:399c 5f              ??         5Fh    _
-        ram:399d 33              ??         33h    3
-        ram:399e e5              ??         E5h
-        ram:399f 70              ??         70h    p
-        ram:39a0 02              ??         02h
-        ram:39a1 cd              ??         CDh
-        ram:39a2 5f              ??         5Fh    _
-        ram:39a3 33              ??         33h    3
-        ram:39a4 84              ??         84h
-        ram:39a5 63              ??         63h    c
-        ram:39a6 02              ??         02h
-        ram:39a7 cd              ??         CDh
-        ram:39a8 5f              ??         5Fh    _
-        ram:39a9 33              ??         33h    3
-        ram:39aa 83              ??         83h
-        ram:39ab 7d              ??         7Dh    }
-        ram:39ac 03              ??         03h
-        ram:39ad cd              ??         CDh
-        ram:39ae 5f              ??         5Fh    _
-        ram:39af 33              ??         33h    3
-        ram:39b0 5e              ??         5Eh    ^
-        ram:39b1 69              ??         69h    i
-        ram:39b2 02              ??         02h
-        ram:39b3 cd              ??         CDh
-        ram:39b4 5f              ??         5Fh    _
-        ram:39b5 33              ??         33h    3
-        ram:39b6 b3              ??         B3h
-        ram:39b7 7c              ??         7Ch    |
-        ram:39b8 06              ??         06h
-        ram:39b9 cd              ??         CDh
-        ram:39ba 5f              ??         5Fh    _
-        ram:39bb 33              ??         33h    3
-        ram:39bc 6d              ??         6Dh    m
-        ram:39bd 5a              ??         5Ah    Z
-        ram:39be 06              ??         06h
-        ram:39bf cd              ??         CDh
-        ram:39c0 5f              ??         5Fh    _
-        ram:39c1 33              ??         33h    3
-        ram:39c2 b0              ??         B0h
-        ram:39c3 73              ??         73h    s
-        ram:39c4 03              ??         03h
-        ram:39c5 cd              ??         CDh
-        ram:39c6 5f              ??         5Fh    _
-        ram:39c7 33              ??         33h    3
-        ram:39c8 9b              ??         9Bh
-        ram:39c9 41              ??         41h    A
-        ram:39ca 03              ??         03h
-        ram:39cb cd              ??         CDh
-        ram:39cc 5f              ??         5Fh    _
-        ram:39cd 33              ??         33h    3
-        ram:39ce d0              ??         D0h
-        ram:39cf 6a              ??         6Ah    j
-        ram:39d0 02              ??         02h
-        ram:39d1 cd              ??         CDh
-        ram:39d2 5f              ??         5Fh    _
-        ram:39d3 33              ??         33h    3
-        ram:39d4 64              ??         64h    d
-        ram:39d5 64              ??         64h    d
-        ram:39d6 02              ??         02h
-        ram:39d7 cd              ??         CDh
-        ram:39d8 5f              ??         5Fh    _
-        ram:39d9 33              ??         33h    3
-        ram:39da c8              ??         C8h
-        ram:39db 41              ??         41h    A
-        ram:39dc 03              ??         03h
-        ram:39dd cd              ??         CDh
-        ram:39de 5f              ??         5Fh    _
-        ram:39df 33              ??         33h    3
-        ram:39e0 23              ??         23h    #
-        ram:39e1 42              ??         42h    B
-        ram:39e2 03              ??         03h
-        ram:39e3 cd              ??         CDh
-        ram:39e4 5f              ??         5Fh    _
-        ram:39e5 33              ??         33h    3
-        ram:39e6 cc              ??         CCh
-        ram:39e7 41              ??         41h    A
-        ram:39e8 03              ??         03h
-        ram:39e9 cd              ??         CDh
-        ram:39ea 5f              ??         5Fh    _
-        ram:39eb 33              ??         33h    3
-        ram:39ec 27              ??         27h    '
-        ram:39ed 42              ??         42h    B
-        ram:39ee 03              ??         03h
-        ram:39ef cd              ??         CDh
-        ram:39f0 5f              ??         5Fh    _
-        ram:39f1 33              ??         33h    3
-        ram:39f2 87              ??         87h
-        ram:39f3 66              ??         66h    f
-        ram:39f4 04              ??         04h
-        ram:39f5 cd              ??         CDh
-        ram:39f6 5f              ??         5Fh    _
-        ram:39f7 33              ??         33h    3
-        ram:39f8 02              ??         02h
-        ram:39f9 40              ??         40h    @
-        ram:39fa 03              ??         03h
-        ram:39fb cd              ??         CDh
-        ram:39fc 5f              ??         5Fh    _
-        ram:39fd 33              ??         33h    3
-        ram:39fe 02              ??         02h
-        ram:39ff 49              ??         49h    I
-        ram:3a00 05              ??         05h
-        ram:3a01 cd              ??         CDh
-        ram:3a02 5f              ??         5Fh    _
-        ram:3a03 33              ??         33h    3
-        ram:3a04 89              ??         89h
-        ram:3a05 7a              ??         7Ah    z
-        ram:3a06 02              ??         02h
-        ram:3a07 cd              ??         CDh
-        ram:3a08 5f              ??         5Fh    _
-        ram:3a09 33              ??         33h    3
-        ram:3a0a fc              ??         FCh
-        ram:3a0b 58              ??         58h    X
-        ram:3a0c 06              ??         06h
-        ram:3a0d cd              ??         CDh
-        ram:3a0e 5f              ??         5Fh    _
-        ram:3a0f 33              ??         33h    3
-        ram:3a10 b9              ??         B9h
-        ram:3a11 79              ??         79h    y
-        ram:3a12 02              ??         02h
-        ram:3a13 cd              ??         CDh
-        ram:3a14 5f              ??         5Fh    _
-        ram:3a15 33              ??         33h    3
-        ram:3a16 12              ??         12h
-        ram:3a17 7a              ??         7Ah    z
-        ram:3a18 02              ??         02h
-        ram:3a19 cd              ??         CDh
-        ram:3a1a 5f              ??         5Fh    _
-        ram:3a1b 33              ??         33h    3
-        ram:3a1c 85              ??         85h
-        ram:3a1d 62              ??         62h    b
-        ram:3a1e 02              ??         02h
-        ram:3a1f cd              ??         CDh
-        ram:3a20 5f              ??         5Fh    _
-        ram:3a21 33              ??         33h    3
-        ram:3a22 52              ??         52h    R
-        ram:3a23 4a              ??         4Ah    J
-        ram:3a24 04              ??         04h
-        ram:3a25 cd              ??         CDh
-        ram:3a26 5f              ??         5Fh    _
-        ram:3a27 33              ??         33h    3
-        ram:3a28 66              ??         66h    f
-        ram:3a29 78              ??         78h    x
-        ram:3a2a 05              ??         05h
-        ram:3a2b cd              ??         CDh
-        ram:3a2c 5f              ??         5Fh    _
-        ram:3a2d 33              ??         33h    3
-        ram:3a2e 8e              ??         8Eh
-        ram:3a2f 7e              ??         7Eh    ~
-        ram:3a30 02              ??         02h
-        ram:3a31 cd              ??         CDh
-        ram:3a32 5f              ??         5Fh    _
-        ram:3a33 33              ??         33h    3
-        ram:3a34 eb              ??         EBh
-        ram:3a35 73              ??         73h    s
-        ram:3a36 05              ??         05h
-        ram:3a37 cd              ??         CDh
-        ram:3a38 5f              ??         5Fh    _
-        ram:3a39 33              ??         33h    3
-        ram:3a3a 52              ??         52h    R
-        ram:3a3b 78              ??         78h    x
-        ram:3a3c 05              ??         05h
-        ram:3a3d cd              ??         CDh
-        ram:3a3e 5f              ??         5Fh    _
-        ram:3a3f 33              ??         33h    3
-        ram:3a40 ea              ??         EAh
-        ram:3a41 65              ??         65h    e
-        ram:3a42 02              ??         02h
-        ram:3a43 cd              ??         CDh
-        ram:3a44 5f              ??         5Fh    _
-        ram:3a45 33              ??         33h    3
-        ram:3a46 61              ??         61h    a
-        ram:3a47 6a              ??         6Ah    j
-        ram:3a48 02              ??         02h
-        ram:3a49 cd              ??         CDh
-        ram:3a4a 5f              ??         5Fh    _
-        ram:3a4b 33              ??         33h    3
-        ram:3a4c 9c              ??         9Ch
-        ram:3a4d 66              ??         66h    f
-        ram:3a4e 03              ??         03h
-        ram:3a4f cd              ??         CDh
-        ram:3a50 5f              ??         5Fh    _
-        ram:3a51 33              ??         33h    3
-        ram:3a52 45              ??         45h    E
-        ram:3a53 69              ??         69h    i
-        ram:3a54 02              ??         02h
-        ram:3a55 cd              ??         CDh
-        ram:3a56 8c              ??         8Ch
-        ram:3a57 33              ??         33h    3
-        ram:3a58 13              ??         13h
-        ram:3a59 40              ??         40h    @
-        ram:3a5a 05              ??         05h
-        ram:3a5b cd              ??         CDh
-        ram:3a5c 5f              ??         5Fh    _
-        ram:3a5d 33              ??         33h    3
-        ram:3a5e 6a              ??         6Ah    j
-        ram:3a5f 65              ??         65h    e
-        ram:3a60 02              ??         02h
-        ram:3a61 cd              ??         CDh
-        ram:3a62 5f              ??         5Fh    _
-        ram:3a63 33              ??         33h    3
-        ram:3a64 37              ??         37h    7
-        ram:3a65 61              ??         61h    a
-        ram:3a66 05              ??         05h
-        ram:3a67 cd              ??         CDh
-        ram:3a68 5f              ??         5Fh    _
-        ram:3a69 33              ??         33h    3
-        ram:3a6a 7c              ??         7Ch    |
-        ram:3a6b 4c              ??         4Ch    L
-        ram:3a6c 02              ??         02h
-        ram:3a6d cd              ??         CDh
-        ram:3a6e 5f              ??         5Fh    _
-        ram:3a6f 33              ??         33h    3
-        ram:3a70 99              ??         99h
-        ram:3a71 54              ??         54h    T
-        ram:3a72 02              ??         02h
-        ram:3a73 cd              ??         CDh
-        ram:3a74 5f              ??         5Fh    _
-        ram:3a75 33              ??         33h    3
-        ram:3a76 02              ??         02h
-        ram:3a77 55              ??         55h    U
-        ram:3a78 02              ??         02h
-        ram:3a79 cd              ??         CDh
-        ram:3a7a 5f              ??         5Fh    _
-        ram:3a7b 33              ??         33h    3
-        ram:3a7c 5f              ??         5Fh    _
-        ram:3a7d 56              ??         56h    V
-        ram:3a7e 02              ??         02h
-        ram:3a7f cd              ??         CDh
-        ram:3a80 5f              ??         5Fh    _
-        ram:3a81 33              ??         33h    3
-        ram:3a82 a9              ??         A9h
-        ram:3a83 56              ??         56h    V
-        ram:3a84 02              ??         02h
-        ram:3a85 cd              ??         CDh
-        ram:3a86 5f              ??         5Fh    _
-        ram:3a87 33              ??         33h    3
-        ram:3a88 df              ??         DFh
-        ram:3a89 57              ??         57h    W
-        ram:3a8a 02              ??         02h
-        ram:3a8b cd              ??         CDh
-        ram:3a8c 5f              ??         5Fh    _
-        ram:3a8d 33              ??         33h    3
-        ram:3a8e 85              ??         85h
-        ram:3a8f 5e              ??         5Eh    ^
-        ram:3a90 02              ??         02h
-        ram:3a91 cd              ??         CDh
-        ram:3a92 5f              ??         5Fh    _
-        ram:3a93 33              ??         33h    3
-        ram:3a94 51              ??         51h    Q
-        ram:3a95 5f              ??         5Fh    _
-        ram:3a96 02              ??         02h
-        ram:3a97 cd              ??         CDh
-        ram:3a98 5f              ??         5Fh    _
-        ram:3a99 33              ??         33h    3
-        ram:3a9a 1b              ??         1Bh
-        ram:3a9b 61              ??         61h    a
-        ram:3a9c 02              ??         02h
-        ram:3a9d cd              ??         CDh
-        ram:3a9e 5f              ??         5Fh    _
-        ram:3a9f 33              ??         33h    3
-        ram:3aa0 b6              ??         B6h
-        ram:3aa1 56              ??         56h    V
-        ram:3aa2 02              ??         02h
-        ram:3aa3 cd              ??         CDh
-        ram:3aa4 5f              ??         5Fh    _
-        ram:3aa5 33              ??         33h    3
-        ram:3aa6 74              ??         74h    t
-        ram:3aa7 4c              ??         4Ch    L
-        ram:3aa8 02              ??         02h
-        ram:3aa9 cd              ??         CDh
-        ram:3aaa 5f              ??         5Fh    _
-        ram:3aab 33              ??         33h    3
-        ram:3aac 2f              ??         2Fh    /
-        ram:3aad 7e              ??         7Eh    ~
-        ram:3aae 02              ??         02h
-        ram:3aaf cd              ??         CDh
-        ram:3ab0 5f              ??         5Fh    _
-        ram:3ab1 33              ??         33h    3
-        ram:3ab2 5b              ??         5Bh    [
-        ram:3ab3 64              ??         64h    d
-        ram:3ab4 03              ??         03h
-        ram:3ab5 cd              ??         CDh
-        ram:3ab6 5f              ??         5Fh    _
-        ram:3ab7 33              ??         33h    3
-        ram:3ab8 43              ??         43h    C
-        ram:3ab9 61              ??         61h    a
-        ram:3aba 05              ??         05h
-        ram:3abb cd              ??         CDh
-        ram:3abc 5f              ??         5Fh    _
-        ram:3abd 33              ??         33h    3
-        ram:3abe e5              ??         E5h
-        ram:3abf 61              ??         61h    a
-        ram:3ac0 05              ??         05h
-        ram:3ac1 cd              ??         CDh
-        ram:3ac2 5f              ??         5Fh    _
-        ram:3ac3 33              ??         33h    3
-        ram:3ac4 c9              ??         C9h
-        ram:3ac5 67              ??         67h    g
-        ram:3ac6 03              ??         03h
-        ram:3ac7 cd              ??         CDh
-        ram:3ac8 5f              ??         5Fh    _
-        ram:3ac9 33              ??         33h    3
-        ram:3aca e7              ??         E7h
-        ram:3acb 67              ??         67h    g
-        ram:3acc 03              ??         03h
-        ram:3acd cd              ??         CDh
-        ram:3ace 5f              ??         5Fh    _
-        ram:3acf 33              ??         33h    3
-        ram:3ad0 ea              ??         EAh
-        ram:3ad1 60              ??         60h    `
-        ram:3ad2 05              ??         05h
-        ram:3ad3 cd              ??         CDh
-        ram:3ad4 5f              ??         5Fh    _
-        ram:3ad5 33              ??         33h    3
-        ram:3ad6 69              ??         69h    i
-        ram:3ad7 5b              ??         5Bh    [
-        ram:3ad8 03              ??         03h
-        ram:3ad9 cd              ??         CDh
-        ram:3ada 5f              ??         5Fh    _
-        ram:3adb 33              ??         33h    3
-        ram:3adc 35              ??         35h    5
-        ram:3add 71              ??         71h    q
-        ram:3ade 02              ??         02h
-        ram:3adf cd              ??         CDh
-        ram:3ae0 5f              ??         5Fh    _
-        ram:3ae1 33              ??         33h    3
-        ram:3ae2 3a              ??         3Ah    :
-        ram:3ae3 56              ??         56h    V
-        ram:3ae4 02              ??         02h
-        ram:3ae5 cd              ??         CDh
-        ram:3ae6 5f              ??         5Fh    _
-        ram:3ae7 33              ??         33h    3
-        ram:3ae8 4b              ??         4Bh    K
-        ram:3ae9 62              ??         62h    b
-        ram:3aea 02              ??         02h
-        ram:3aeb cd              ??         CDh
-        ram:3aec 5f              ??         5Fh    _
-        ram:3aed 33              ??         33h    3
-        ram:3aee 31              ??         31h    1
-        ram:3aef 45              ??         45h    E
-        ram:3af0 02              ??         02h
-        ram:3af1 cd              ??         CDh
-        ram:3af2 5f              ??         5Fh    _
-        ram:3af3 33              ??         33h    3
-        ram:3af4 28              ??         28h    (
-        ram:3af5 49              ??         49h    I
-        ram:3af6 02              ??         02h
-        ram:3af7 cd              ??         CDh
-        ram:3af8 5f              ??         5Fh    _
-        ram:3af9 33              ??         33h    3
-        ram:3afa f9              ??         F9h
-        ram:3afb 49              ??         49h    I
-        ram:3afc 02              ??         02h
-        ram:3afd cd              ??         CDh
-        ram:3afe 5f              ??         5Fh    _
-        ram:3aff 33              ??         33h    3
-        ram:3b00 1b              ??         1Bh
-        ram:3b01 4b              ??         4Bh    K
-        ram:3b02 02              ??         02h
-        ram:3b03 cd              ??         CDh
-        ram:3b04 5f              ??         5Fh    _
-        ram:3b05 33              ??         33h    3
-        ram:3b06 1f              ??         1Fh
-        ram:3b07 4b              ??         4Bh    K
-        ram:3b08 02              ??         02h
-        ram:3b09 cd              ??         CDh
-        ram:3b0a 5f              ??         5Fh    _
-        ram:3b0b 33              ??         33h    3
-        ram:3b0c 23              ??         23h    #
-        ram:3b0d 4b              ??         4Bh    K
-        ram:3b0e 02              ??         02h
-        ram:3b0f cd              ??         CDh
-        ram:3b10 5f              ??         5Fh    _
-        ram:3b11 33              ??         33h    3
-        ram:3b12 3c              ??         3Ch    <
-        ram:3b13 4b              ??         4Bh    K
-        ram:3b14 02              ??         02h
-        ram:3b15 cd              ??         CDh
-        ram:3b16 5f              ??         5Fh    _
-        ram:3b17 33              ??         33h    3
-        ram:3b18 40              ??         40h    @
-        ram:3b19 4b              ??         4Bh    K
-        ram:3b1a 02              ??         02h
-        ram:3b1b cd              ??         CDh
-        ram:3b1c 5f              ??         5Fh    _
-        ram:3b1d 33              ??         33h    3
-        ram:3b1e 44              ??         44h    D
-        ram:3b1f 4b              ??         4Bh    K
-        ram:3b20 02              ??         02h
-        ram:3b21 cd              ??         CDh
-        ram:3b22 5f              ??         5Fh    _
-        ram:3b23 33              ??         33h    3
-        ram:3b24 00              ??         00h
-        ram:3b25 40              ??         40h    @
-        ram:3b26 02              ??         02h
-        ram:3b27 cd              ??         CDh
-        ram:3b28 5f              ??         5Fh    _
-        ram:3b29 33              ??         33h    3
-        ram:3b2a 03              ??         03h
-        ram:3b2b 40              ??         40h    @
-        ram:3b2c 02              ??         02h
-        ram:3b2d cd              ??         CDh
-        ram:3b2e 5f              ??         5Fh    _
-        ram:3b2f 33              ??         33h    3
-        ram:3b30 12              ??         12h
-        ram:3b31 40              ??         40h    @
-        ram:3b32 02              ??         02h
-        ram:3b33 cd              ??         CDh
-        ram:3b34 5f              ??         5Fh    _
-        ram:3b35 33              ??         33h    3
-        ram:3b36 15              ??         15h
-        ram:3b37 40              ??         40h    @
-        ram:3b38 02              ??         02h
-        ram:3b39 cd              ??         CDh
-        ram:3b3a 5f              ??         5Fh    _
-        ram:3b3b 33              ??         33h    3
-        ram:3b3c 4d              ??         4Dh    M
-        ram:3b3d 40              ??         40h    @
-        ram:3b3e 02              ??         02h
-        ram:3b3f cd              ??         CDh
-        ram:3b40 5f              ??         5Fh    _
-        ram:3b41 33              ??         33h    3
-        ram:3b42 d3              ??         D3h
-        ram:3b43 40              ??         40h    @
-        ram:3b44 02              ??         02h
-        ram:3b45 cd              ??         CDh
-        ram:3b46 5f              ??         5Fh    _
-        ram:3b47 33              ??         33h    3
-        ram:3b48 a1              ??         A1h
-        ram:3b49 44              ??         44h    D
-        ram:3b4a 02              ??         02h
-        ram:3b4b cd              ??         CDh
-        ram:3b4c 5f              ??         5Fh    _
-        ram:3b4d 33              ??         33h    3
-        ram:3b4e b5              ??         B5h
-        ram:3b4f 44              ??         44h    D
-        ram:3b50 02              ??         02h
-        ram:3b51 cd              ??         CDh
-        ram:3b52 5f              ??         5Fh    _
-        ram:3b53 33              ??         33h    3
-        ram:3b54 2f              ??         2Fh    /
-        ram:3b55 45              ??         45h    E
-        ram:3b56 06              ??         06h
-        ram:3b57 cd              ??         CDh
-        ram:3b58 5f              ??         5Fh    _
-        ram:3b59 33              ??         33h    3
-        ram:3b5a 55              ??         55h    U
-        ram:3b5b 6c              ??         6Ch    l
-        ram:3b5c 01              ??         01h
-        ram:3b5d cd              ??         CDh
-        ram:3b5e 5f              ??         5Fh    _
-        ram:3b5f 33              ??         33h    3
-        ram:3b60 f4              ??         F4h
-        ram:3b61 6c              ??         6Ch    l
-        ram:3b62 01              ??         01h
-        ram:3b63 cd              ??         CDh
-        ram:3b64 5f              ??         5Fh    _
-        ram:3b65 33              ??         33h    3
-        ram:3b66 fe              ??         FEh
-        ram:3b67 6c              ??         6Ch    l
-        ram:3b68 01              ??         01h
-        ram:3b69 cd              ??         CDh
-        ram:3b6a 5f              ??         5Fh    _
-        ram:3b6b 33              ??         33h    3
-        ram:3b6c 25              ??         25h    %
-        ram:3b6d 6d              ??         6Dh    m
-        ram:3b6e 01              ??         01h
-        ram:3b6f cd              ??         CDh
-        ram:3b70 5f              ??         5Fh    _
-        ram:3b71 33              ??         33h    3
-        ram:3b72 cb              ??         CBh
-        ram:3b73 6d              ??         6Dh    m
-        ram:3b74 01              ??         01h
-        ram:3b75 cd              ??         CDh
-        ram:3b76 5f              ??         5Fh    _
-        ram:3b77 33              ??         33h    3
-        ram:3b78 df              ??         DFh
-        ram:3b79 6d              ??         6Dh    m
-        ram:3b7a 01              ??         01h
-        ram:3b7b cd              ??         CDh
-        ram:3b7c 5f              ??         5Fh    _
-        ram:3b7d 33              ??         33h    3
-        ram:3b7e fc              ??         FCh
-        ram:3b7f 6d              ??         6Dh    m
-        ram:3b80 01              ??         01h
-        ram:3b81 cd              ??         CDh
-        ram:3b82 5f              ??         5Fh    _
-        ram:3b83 33              ??         33h    3
-        ram:3b84 21              ??         21h    !
-        ram:3b85 6e              ??         6Eh    n
-        ram:3b86 01              ??         01h
-        ram:3b87 cd              ??         CDh
-        ram:3b88 5f              ??         5Fh    _
-        ram:3b89 33              ??         33h    3
-        ram:3b8a 2b              ??         2Bh    +
-        ram:3b8b 6e              ??         6Eh    n
-        ram:3b8c 01              ??         01h
-        ram:3b8d cd              ??         CDh
-        ram:3b8e 8c              ??         8Ch
-        ram:3b8f 33              ??         33h    3
-        ram:3b90 5b              ??         5Bh    [
-        ram:3b91 6f              ??         6Fh    o
-        ram:3b92 01              ??         01h
-        ram:3b93 cd              ??         CDh
-        ram:3b94 5f              ??         5Fh    _
-        ram:3b95 33              ??         33h    3
-        ram:3b96 7e              ??         7Eh    ~
-        ram:3b97 6f              ??         6Fh    o
-        ram:3b98 01              ??         01h
-        ram:3b99 cd              ??         CDh
-        ram:3b9a 5f              ??         5Fh    _
-        ram:3b9b 33              ??         33h    3
-        ram:3b9c e7              ??         E7h
-        ram:3b9d 70              ??         70h    p
-        ram:3b9e 01              ??         01h
-        ram:3b9f cd              ??         CDh
-        ram:3ba0 5f              ??         5Fh    _
-        ram:3ba1 33              ??         33h    3
-        ram:3ba2 c6              ??         C6h
-        ram:3ba3 71              ??         71h    q
-        ram:3ba4 01              ??         01h
-        ram:3ba5 cd              ??         CDh
-        ram:3ba6 8c              ??         8Ch
-        ram:3ba7 33              ??         33h    3
-        ram:3ba8 2e              ??         2Eh    .
-        ram:3ba9 72              ??         72h    r
-        ram:3baa 01              ??         01h
-        ram:3bab cd              ??         CDh
-        ram:3bac 5f              ??         5Fh    _
-        ram:3bad 33              ??         33h    3
-        ram:3bae 2e              ??         2Eh    .
-        ram:3baf 72              ??         72h    r
-        ram:3bb0 01              ??         01h
-        ram:3bb1 cd              ??         CDh
-        ram:3bb2 8c              ??         8Ch
-        ram:3bb3 33              ??         33h    3
-        ram:3bb4 49              ??         49h    I
-        ram:3bb5 72              ??         72h    r
-        ram:3bb6 01              ??         01h
-        ram:3bb7 cd              ??         CDh
-        ram:3bb8 5f              ??         5Fh    _
-        ram:3bb9 33              ??         33h    3
-        ram:3bba 8e              ??         8Eh
-        ram:3bbb 72              ??         72h    r
-        ram:3bbc 01              ??         01h
-        ram:3bbd cd              ??         CDh
-        ram:3bbe 5f              ??         5Fh    _
-        ram:3bbf 33              ??         33h    3
-        ram:3bc0 c0              ??         C0h
-        ram:3bc1 72              ??         72h    r
-        ram:3bc2 01              ??         01h
-        ram:3bc3 cd              ??         CDh
-        ram:3bc4 5f              ??         5Fh    _
-        ram:3bc5 33              ??         33h    3
-        ram:3bc6 e7              ??         E7h
-        ram:3bc7 72              ??         72h    r
-        ram:3bc8 01              ??         01h
-        ram:3bc9 cd              ??         CDh
-        ram:3bca 5f              ??         5Fh    _
-        ram:3bcb 33              ??         33h    3
-        ram:3bcc d2              ??         D2h
-        ram:3bcd 62              ??         62h    b
-        ram:3bce 04              ??         04h
-        ram:3bcf cd              ??         CDh
-        ram:3bd0 5f              ??         5Fh    _
-        ram:3bd1 33              ??         33h    3
-        ram:3bd2 f7              ??         F7h
-        ram:3bd3 62              ??         62h    b
-        ram:3bd4 04              ??         04h
-        ram:3bd5 cd              ??         CDh
-        ram:3bd6 5f              ??         5Fh    _
-        ram:3bd7 33              ??         33h    3
-        ram:3bd8 0a              ??         0Ah
-        ram:3bd9 63              ??         63h    c
-        ram:3bda 04              ??         04h
-        ram:3bdb cd              ??         CDh
-        ram:3bdc 5f              ??         5Fh    _
-        ram:3bdd 33              ??         33h    3
-        ram:3bde 1d              ??         1Dh
-        ram:3bdf 63              ??         63h    c
-        ram:3be0 04              ??         04h
-        ram:3be1 cd              ??         CDh
-        ram:3be2 5f              ??         5Fh    _
-        ram:3be3 33              ??         33h    3
-        ram:3be4 d9              ??         D9h
-        ram:3be5 71              ??         71h    q
-        ram:3be6 01              ??         01h
-        ram:3be7 cd              ??         CDh
-        ram:3be8 5f              ??         5Fh    _
-        ram:3be9 33              ??         33h    3
-        ram:3bea b2              ??         B2h
-        ram:3beb 6b              ??         6Bh    k
-        ram:3bec 04              ??         04h
-        ram:3bed cd              ??         CDh
-        ram:3bee 5f              ??         5Fh    _
-        ram:3bef 33              ??         33h    3
-        ram:3bf0 f0              ??         F0h
-        ram:3bf1 7c              ??         7Ch    |
-        ram:3bf2 06              ??         06h
-        ram:3bf3 cd              ??         CDh
-        ram:3bf4 5f              ??         5Fh    _
-        ram:3bf5 33              ??         33h    3
-        ram:3bf6 b6              ??         B6h
-        ram:3bf7 6b              ??         6Bh    k
-        ram:3bf8 04              ??         04h
-        ram:3bf9 cd              ??         CDh
-        ram:3bfa 5f              ??         5Fh    _
-        ram:3bfb 33              ??         33h    3
-        ram:3bfc 51              ??         51h    Q
-        ram:3bfd 4f              ??         4Fh    O
-        ram:3bfe 04              ??         04h
-        ram:3bff cd              ??         CDh
-        ram:3c00 5f              ??         5Fh    _
-        ram:3c01 33              ??         33h    3
-        ram:3c02 6b              ??         6Bh    k
-        ram:3c03 74              ??         74h    t
-        ram:3c04 03              ??         03h
-        ram:3c05 cd              ??         CDh
-        ram:3c06 5f              ??         5Fh    _
-        ram:3c07 33              ??         33h    3
-        ram:3c08 bf              ??         BFh
-        ram:3c09 47              ??         47h    G
-        ram:3c0a 01              ??         01h
-        ram:3c0b cd              ??         CDh
-        ram:3c0c 5f              ??         5Fh    _
-        ram:3c0d 33              ??         33h    3
-        ram:3c0e d5              ??         D5h
-        ram:3c0f 47              ??         47h    G
-        ram:3c10 01              ??         01h
-        ram:3c11 cd              ??         CDh
-        ram:3c12 5f              ??         5Fh    _
-        ram:3c13 33              ??         33h    3
-        ram:3c14 eb              ??         EBh
-        ram:3c15 47              ??         47h    G
-        ram:3c16 01              ??         01h
-        ram:3c17 cd              ??         CDh
-        ram:3c18 5f              ??         5Fh    _
-        ram:3c19 33              ??         33h    3
-        ram:3c1a f1              ??         F1h
-        ram:3c1b 47              ??         47h    G
-        ram:3c1c 01              ??         01h
-        ram:3c1d cd              ??         CDh
-        ram:3c1e 5f              ??         5Fh    _
-        ram:3c1f 33              ??         33h    3
-        ram:3c20 f6              ??         F6h
-        ram:3c21 47              ??         47h    G
-        ram:3c22 01              ??         01h
-        ram:3c23 cd              ??         CDh
-        ram:3c24 5f              ??         5Fh    _
-        ram:3c25 33              ??         33h    3
-        ram:3c26 fa              ??         FAh
-        ram:3c27 47              ??         47h    G
-        ram:3c28 01              ??         01h
-        ram:3c29 cd              ??         CDh
-        ram:3c2a 5f              ??         5Fh    _
-        ram:3c2b 33              ??         33h    3
-        ram:3c2c 5d              ??         5Dh    ]
-        ram:3c2d 48              ??         48h    H
-        ram:3c2e 01              ??         01h
-        ram:3c2f cd              ??         CDh
-        ram:3c30 5f              ??         5Fh    _
-        ram:3c31 33              ??         33h    3
-        ram:3c32 ee              ??         EEh
-        ram:3c33 48              ??         48h    H
-        ram:3c34 01              ??         01h
-        ram:3c35 cd              ??         CDh
-        ram:3c36 5f              ??         5Fh    _
-        ram:3c37 33              ??         33h    3
-        ram:3c38 24              ??         24h    $
-        ram:3c39 49              ??         49h    I
-        ram:3c3a 01              ??         01h
-        ram:3c3b cd              ??         CDh
-        ram:3c3c 5f              ??         5Fh    _
-        ram:3c3d 33              ??         33h    3
-        ram:3c3e 6e              ??         6Eh    n
-        ram:3c3f 4e              ??         4Eh    N
-        ram:3c40 01              ??         01h
-        ram:3c41 cd              ??         CDh
-        ram:3c42 5f              ??         5Fh    _
-        ram:3c43 33              ??         33h    3
-        ram:3c44 bd              ??         BDh
-        ram:3c45 7e              ??         7Eh    ~
-        ram:3c46 02              ??         02h
-        ram:3c47 cd              ??         CDh
-        ram:3c48 5f              ??         5Fh    _
-        ram:3c49 33              ??         33h    3
-        ram:3c4a c0              ??         C0h
-        ram:3c4b 7e              ??         7Eh    ~
-        ram:3c4c 02              ??         02h
-        ram:3c4d cd              ??         CDh
-        ram:3c4e 5f              ??         5Fh    _
-        ram:3c4f 33              ??         33h    3
-        ram:3c50 b6              ??         B6h
-        ram:3c51 7f              ??         7Fh    
-        ram:3c52 02              ??         02h
-        ram:3c53 cd              ??         CDh
-        ram:3c54 5f              ??         5Fh    _
-        ram:3c55 33              ??         33h    3
-        ram:3c56 b8              ??         B8h
-        ram:3c57 46              ??         46h    F
-        ram:3c58 01              ??         01h
-        ram:3c59 cd              ??         CDh
-        ram:3c5a 5f              ??         5Fh    _
-        ram:3c5b 33              ??         33h    3
-        ram:3c5c f5              ??         F5h
-        ram:3c5d 46              ??         46h    F
-        ram:3c5e 01              ??         01h
-        ram:3c5f cd              ??         CDh
-        ram:3c60 5f              ??         5Fh    _
-        ram:3c61 33              ??         33h    3
-        ram:3c62 f8              ??         F8h
-        ram:3c63 66              ??         66h    f
-        ram:3c64 04              ??         04h
-        ram:3c65 cd              ??         CDh
-        ram:3c66 5f              ??         5Fh    _
-        ram:3c67 33              ??         33h    3
-        ram:3c68 bd              ??         BDh
-        ram:3c69 5e              ??         5Eh    ^
-        ram:3c6a 04              ??         04h
-        ram:3c6b cd              ??         CDh
-        ram:3c6c 5f              ??         5Fh    _
-        ram:3c6d 33              ??         33h    3
-        ram:3c6e 88              ??         88h
-        ram:3c6f 69              ??         69h    i
-        ram:3c70 04              ??         04h
-        ram:3c71 cd              ??         CDh
-        ram:3c72 5f              ??         5Fh    _
-        ram:3c73 33              ??         33h    3
-        ram:3c74 94              ??         94h
-        ram:3c75 69              ??         69h    i
-        ram:3c76 04              ??         04h
-        ram:3c77 cd              ??         CDh
-        ram:3c78 5f              ??         5Fh    _
-        ram:3c79 33              ??         33h    3
-        ram:3c7a d1              ??         D1h
-        ram:3c7b 70              ??         70h    p
-        ram:3c7c 01              ??         01h
-        ram:3c7d cd              ??         CDh
-        ram:3c7e 5f              ??         5Fh    _
-        ram:3c7f 33              ??         33h    3
-        ram:3c80 16              ??         16h
-        ram:3c81 46              ??         46h    F
-        ram:3c82 06              ??         06h
-        ram:3c83 cd              ??         CDh
-        ram:3c84 5f              ??         5Fh    _
-        ram:3c85 33              ??         33h    3
-        ram:3c86 2e              ??         2Eh    .
-        ram:3c87 46              ??         46h    F
-        ram:3c88 06              ??         06h
-        ram:3c89 cd              ??         CDh
-        ram:3c8a 5f              ??         5Fh    _
-        ram:3c8b 33              ??         33h    3
-        ram:3c8c 3c              ??         3Ch    <
-        ram:3c8d 46              ??         46h    F
-        ram:3c8e 01              ??         01h
-        ram:3c8f cd              ??         CDh
-        ram:3c90 5f              ??         5Fh    _
-        ram:3c91 33              ??         33h    3
-        ram:3c92 1f              ??         1Fh
-        ram:3c93 7c              ??         7Ch    |
-        ram:3c94 03              ??         03h
-        ram:3c95 cd              ??         CDh
-        ram:3c96 5f              ??         5Fh    _
-        ram:3c97 33              ??         33h    3
-        ram:3c98 49              ??         49h    I
-        ram:3c99 72              ??         72h    r
-        ram:3c9a 01              ??         01h
-        ram:3c9b cd              ??         CDh
-        ram:3c9c 5f              ??         5Fh    _
-        ram:3c9d 33              ??         33h    3
-        ram:3c9e c8              ??         C8h
-        ram:3c9f 48              ??         48h    H
-        ram:3ca0 06              ??         06h
-        ram:3ca1 cd              ??         CDh
-        ram:3ca2 5f              ??         5Fh    _
-        ram:3ca3 33              ??         33h    3
-        ram:3ca4 20              ??         20h
-        ram:3ca5 59              ??         59h    Y
-        ram:3ca6 07              ??         07h
-        ram:3ca7 cd              ??         CDh
-        ram:3ca8 5f              ??         5Fh    _
-        ram:3ca9 33              ??         33h    3
-        ram:3caa f4              ??         F4h
-        ram:3cab 45              ??         45h    E
-        ram:3cac 06              ??         06h
-        ram:3cad cd              ??         CDh
-        ram:3cae 5f              ??         5Fh    _
-        ram:3caf 33              ??         33h    3
-        ram:3cb0 5a              ??         5Ah    Z
-        ram:3cb1 45              ??         45h    E
-        ram:3cb2 06              ??         06h
-        ram:3cb3 cd              ??         CDh
-        ram:3cb4 5f              ??         5Fh    _
-        ram:3cb5 33              ??         33h    3
-        ram:3cb6 04              ??         04h
-        ram:3cb7 47              ??         47h    G
-        ram:3cb8 06              ??         06h
-        ram:3cb9 cd              ??         CDh
-        ram:3cba 5f              ??         5Fh    _
-        ram:3cbb 33              ??         33h    3
-        ram:3cbc bf              ??         BFh
-        ram:3cbd 48              ??         48h    H
-        ram:3cbe 06              ??         06h
-        ram:3cbf cd              ??         CDh
-        ram:3cc0 5f              ??         5Fh    _
-        ram:3cc1 33              ??         33h    3
-        ram:3cc2 20              ??         20h
-        ram:3cc3 46              ??         46h    F
-        ram:3cc4 06              ??         06h
-        ram:3cc5 cd              ??         CDh
-        ram:3cc6 5f              ??         5Fh    _
-        ram:3cc7 33              ??         33h    3
-        ram:3cc8 b5              ??         B5h
-        ram:3cc9 65              ??         65h    e
-        ram:3cca 07              ??         07h
-        ram:3ccb cd              ??         CDh
-        ram:3ccc 5f              ??         5Fh    _
-        ram:3ccd 33              ??         33h    3
-        ram:3cce 7e              ??         7Eh    ~
-        ram:3ccf 49              ??         49h    I
-        ram:3cd0 06              ??         06h
-        ram:3cd1 cd              ??         CDh
-        ram:3cd2 5f              ??         5Fh    _
-        ram:3cd3 33              ??         33h    3
-        ram:3cd4 c9              ??         C9h
-        ram:3cd5 58              ??         58h    X
-        ram:3cd6 07              ??         07h
-        ram:3cd7 cd              ??         CDh
-        ram:3cd8 5f              ??         5Fh    _
-        ram:3cd9 33              ??         33h    3
-        ram:3cda 28              ??         28h    (
-        ram:3cdb 49              ??         49h    I
-        ram:3cdc 06              ??         06h
-        ram:3cdd cd              ??         CDh
-        ram:3cde 5f              ??         5Fh    _
-        ram:3cdf 33              ??         33h    3
-        ram:3ce0 63              ??         63h    c
-        ram:3ce1 5b              ??         5Bh    [
-        ram:3ce2 03              ??         03h
-        ram:3ce3 cd              ??         CDh
-        ram:3ce4 5f              ??         5Fh    _
-        ram:3ce5 33              ??         33h    3
-        ram:3ce6 00              ??         00h
-        ram:3ce7 4a              ??         4Ah    J
-        ram:3ce8 07              ??         07h
-        ram:3ce9 cd              ??         CDh
-        ram:3cea 5f              ??         5Fh    _
-        ram:3ceb 33              ??         33h    3
-        ram:3cec c0              ??         C0h
-        ram:3ced 4a              ??         4Ah    J
-        ram:3cee 07              ??         07h
-        ram:3cef cd              ??         CDh
-        ram:3cf0 8c              ??         8Ch
-        ram:3cf1 33              ??         33h    3
-        ram:3cf2 eb              ??         EBh
-        ram:3cf3 4a              ??         4Ah    J
-        ram:3cf4 07              ??         07h
-        ram:3cf5 cd              ??         CDh
-        ram:3cf6 8c              ??         8Ch
-        ram:3cf7 33              ??         33h    3
-        ram:3cf8 15              ??         15h
-        ram:3cf9 4b              ??         4Bh    K
-        ram:3cfa 07              ??         07h
-        ram:3cfb cd              ??         CDh
-        ram:3cfc 8c              ??         8Ch
-        ram:3cfd 33              ??         33h    3
-        ram:3cfe f9              ??         F9h
-        ram:3cff 4a              ??         4Ah    J
-        ram:3d00 07              ??         07h
-        ram:3d01 cd              ??         CDh
-        ram:3d02 8c              ??         8Ch
-        ram:3d03 33              ??         33h    3
-        ram:3d04 07              ??         07h
-        ram:3d05 4b              ??         4Bh    K
-        ram:3d06 07              ??         07h
-        ram:3d07 cd              ??         CDh
-        ram:3d08 8c              ??         8Ch
-        ram:3d09 33              ??         33h    3
-        ram:3d0a 77              ??         77h    w
-        ram:3d0b 46              ??         46h    F
-        ram:3d0c 06              ??         06h
-        ram:3d0d cd              ??         CDh
-        ram:3d0e 8c              ??         8Ch
-        ram:3d0f 33              ??         33h    3
-        ram:3d10 93              ??         93h
-        ram:3d11 46              ??         46h    F
-        ram:3d12 06              ??         06h
-        ram:3d13 cd              ??         CDh
-        ram:3d14 8c              ??         8Ch
-        ram:3d15 33              ??         33h    3
-        ram:3d16 a4              ??         A4h
-        ram:3d17 46              ??         46h    F
-        ram:3d18 06              ??         06h
-        ram:3d19 cd              ??         CDh
-        ram:3d1a 8c              ??         8Ch
-        ram:3d1b 33              ??         33h    3
-        ram:3d1c d5              ??         D5h
-        ram:3d1d 46              ??         46h    F
-        ram:3d1e 06              ??         06h
-        ram:3d1f cd              ??         CDh
-        ram:3d20 8c              ??         8Ch
-        ram:3d21 33              ??         33h    3
-        ram:3d22 45              ??         45h    E
-        ram:3d23 46              ??         46h    F
-        ram:3d24 06              ??         06h
-        ram:3d25 cd              ??         CDh
-        ram:3d26 8c              ??         8Ch
-        ram:3d27 33              ??         33h    3
-        ram:3d28 5f              ??         5Fh    _
-        ram:3d29 46              ??         46h    F
-        ram:3d2a 06              ??         06h
-        ram:3d2b cd              ??         CDh
-        ram:3d2c 8c              ??         8Ch
-        ram:3d2d 33              ??         33h    3
-        ram:3d2e a2              ??         A2h
-        ram:3d2f 49              ??         49h    I
-        ram:3d30 06              ??         06h
-        ram:3d31 cd              ??         CDh
-        ram:3d32 5f              ??         5Fh    _
-        ram:3d33 33              ??         33h    3
-        ram:3d34 b2              ??         B2h
-        ram:3d35 45              ??         45h    E
-        ram:3d36 06              ??         06h
-        ram:3d37 cd              ??         CDh
-        ram:3d38 8c              ??         8Ch
-        ram:3d39 33              ??         33h    3
-        ram:3d3a 55              ??         55h    U
-        ram:3d3b 48              ??         48h    H
-        ram:3d3c 06              ??         06h
-        ram:3d3d cd              ??         CDh
-        ram:3d3e 5f              ??         5Fh    _
-        ram:3d3f 33              ??         33h    3
-        ram:3d40 b6              ??         B6h
-        ram:3d41 48              ??         48h    H
-        ram:3d42 06              ??         06h
-        ram:3d43 cd              ??         CDh
-        ram:3d44 5f              ??         5Fh    _
-        ram:3d45 33              ??         33h    3
-        ram:3d46 38              ??         38h    8
-        ram:3d47 46              ??         46h    F
-        ram:3d48 06              ??         06h
-        ram:3d49 cd              ??         CDh
-        ram:3d4a 8c              ??         8Ch
-        ram:3d4b 33              ??         33h    3
-        ram:3d4c 9d              ??         9Dh
-        ram:3d4d 64              ??         64h    d
-        ram:3d4e 06              ??         06h
-        ram:3d4f cd              ??         CDh
-        ram:3d50 5f              ??         5Fh    _
-        ram:3d51 33              ??         33h    3
-        ram:3d52 1d              ??         1Dh
-        ram:3d53 47              ??         47h    G
-        ram:3d54 06              ??         06h
-        ram:3d55 cd              ??         CDh
-        ram:3d56 5f              ??         5Fh    _
-        ram:3d57 33              ??         33h    3
-        ram:3d58 a1              ??         A1h
-        ram:3d59 47              ??         47h    G
-        ram:3d5a 06              ??         06h
-        ram:3d5b cd              ??         CDh
-        ram:3d5c 8c              ??         8Ch
-        ram:3d5d 33              ??         33h    3
-        ram:3d5e cb              ??         CBh
-        ram:3d5f 47              ??         47h    G
-        ram:3d60 06              ??         06h
-        ram:3d61 cd              ??         CDh
-        ram:3d62 5f              ??         5Fh    _
-        ram:3d63 33              ??         33h    3
-        ram:3d64 19              ??         19h
-        ram:3d65 72              ??         72h    r
-        ram:3d66 01              ??         01h
-        ram:3d67 cd              ??         CDh
-        ram:3d68 5f              ??         5Fh    _
-        ram:3d69 33              ??         33h    3
-        ram:3d6a 06              ??         06h
-        ram:3d6b 6f              ??         6Fh    o
-        ram:3d6c 01              ??         01h
-        ram:3d6d cd              ??         CDh
-        ram:3d6e 5f              ??         5Fh    _
-        ram:3d6f 33              ??         33h    3
-        ram:3d70 6f              ??         6Fh    o
-        ram:3d71 57              ??         57h    W
-        ram:3d72 07              ??         07h
-        ram:3d73 cd              ??         CDh
-        ram:3d74 5f              ??         5Fh    _
-        ram:3d75 33              ??         33h    3
-        ram:3d76 cc              ??         CCh
-        ram:3d77 4a              ??         4Ah    J
-        ram:3d78 07              ??         07h
-        ram:3d79 cd              ??         CDh
-        ram:3d7a 5f              ??         5Fh    _
-        ram:3d7b 33              ??         33h    3
-        ram:3d7c 9d              ??         9Dh
-        ram:3d7d 72              ??         72h    r
-        ram:3d7e 01              ??         01h
-        ram:3d7f cd              ??         CDh
-        ram:3d80 5f              ??         5Fh    _
-        ram:3d81 33              ??         33h    3
-        ram:3d82 76              ??         76h    v
-        ram:3d83 53              ??         53h    S
-        ram:3d84 06              ??         06h
-        ram:3d85 cd              ??         CDh
-        ram:3d86 5f              ??         5Fh    _
-        ram:3d87 33              ??         33h    3
-        ram:3d88 b9              ??         B9h
-        ram:3d89 47              ??         47h    G
-        ram:3d8a 01              ??         01h
-        ram:3d8b cd              ??         CDh
-        ram:3d8c 5f              ??         5Fh    _
-        ram:3d8d 33              ??         33h    3
-        ram:3d8e 33              ??         33h    3
-        ram:3d8f 70              ??         70h    p
-        ram:3d90 01              ??         01h
-        ram:3d91 cd              ??         CDh
-        ram:3d92 5f              ??         5Fh    _
-        ram:3d93 33              ??         33h    3
-        ram:3d94 f2              ??         F2h
-        ram:3d95 6f              ??         6Fh    o
-        ram:3d96 06              ??         06h
-        ram:3d97 cd              ??         CDh
-        ram:3d98 5f              ??         5Fh    _
-        ram:3d99 33              ??         33h    3
-        ram:3d9a 6f              ??         6Fh    o
-        ram:3d9b 6f              ??         6Fh    o
-        ram:3d9c 01              ??         01h
-        ram:3d9d cd              ??         CDh
-        ram:3d9e 5f              ??         5Fh    _
-        ram:3d9f 33              ??         33h    3
-        ram:3da0 f8              ??         F8h
-        ram:3da1 6e              ??         6Eh    n
-        ram:3da2 01              ??         01h
-        ram:3da3 cd              ??         CDh
-        ram:3da4 5f              ??         5Fh    _
-        ram:3da5 33              ??         33h    3
-        ram:3da6 d4              ??         D4h
-        ram:3da7 6e              ??         6Eh    n
-        ram:3da8 01              ??         01h
-        ram:3da9 cd              ??         CDh
-        ram:3daa 5f              ??         5Fh    _
-        ram:3dab 33              ??         33h    3
-        ram:3dac 65              ??         65h    e
-        ram:3dad 6e              ??         6Eh    n
-        ram:3dae 01              ??         01h
-        ram:3daf cd              ??         CDh
-        ram:3db0 5f              ??         5Fh    _
-        ram:3db1 33              ??         33h    3
-        ram:3db2 5b              ??         5Bh    [
-        ram:3db3 6e              ??         6Eh    n
-        ram:3db4 01              ??         01h
-        ram:3db5 cd              ??         CDh
-        ram:3db6 5f              ??         5Fh    _
-        ram:3db7 33              ??         33h    3
-        ram:3db8 5d              ??         5Dh    ]
-        ram:3db9 4a              ??         4Ah    J
-        ram:3dba 01              ??         01h
-        ram:3dbb cd              ??         CDh
-        ram:3dbc 5f              ??         5Fh    _
-        ram:3dbd 33              ??         33h    3
-        ram:3dbe 5b              ??         5Bh    [
-        ram:3dbf 6f              ??         6Fh    o
-        ram:3dc0 01              ??         01h
-        ram:3dc1 cd              ??         CDh
-        ram:3dc2 5f              ??         5Fh    _
-        ram:3dc3 33              ??         33h    3
-        ram:3dc4 84              ??         84h
-        ram:3dc5 70              ??         70h    p
-        ram:3dc6 01              ??         01h
-        ram:3dc7 cd              ??         CDh
-        ram:3dc8 5f              ??         5Fh    _
-        ram:3dc9 33              ??         33h    3
-        ram:3dca a7              ??         A7h
-        ram:3dcb 70              ??         70h    p
-        ram:3dcc 01              ??         01h
-        ram:3dcd cd              ??         CDh
-        ram:3dce 5f              ??         5Fh    _
-        ram:3dcf 33              ??         33h    3
-        ram:3dd0 58              ??         58h    X
-        ram:3dd1 6b              ??         6Bh    k
-        ram:3dd2 01              ??         01h
-        ram:3dd3 cd              ??         CDh
-        ram:3dd4 5f              ??         5Fh    _
-        ram:3dd5 33              ??         33h    3
-        ram:3dd6 f9              ??         F9h
-        ram:3dd7 6f              ??         6Fh    o
-        ram:3dd8 01              ??         01h
-        ram:3dd9 cd              ??         CDh
-        ram:3dda 5f              ??         5Fh    _
-        ram:3ddb 33              ??         33h    3
-        ram:3ddc b7              ??         B7h
-        ram:3ddd 6c              ??         6Ch    l
-        ram:3dde 01              ??         01h
-        ram:3ddf cd              ??         CDh
-        ram:3de0 8c              ??         8Ch
-        ram:3de1 33              ??         33h    3
-        ram:3de2 12              ??         12h
-        ram:3de3 5d              ??         5Dh    ]
-        ram:3de4 07              ??         07h
-        ram:3de5 cd              ??         CDh
-        ram:3de6 8c              ??         8Ch
-        ram:3de7 33              ??         33h    3
-        ram:3de8 bd              ??         BDh
-        ram:3de9 5d              ??         5Dh    ]
-        ram:3dea 07              ??         07h
-        ram:3deb cd              ??         CDh
-        ram:3dec 8c              ??         8Ch
-        ram:3ded 33              ??         33h    3
-        ram:3dee b6              ??         B6h
-        ram:3def 7e              ??         7Eh    ~
-        ram:3df0 03              ??         03h
-        ram:3df1 cd              ??         CDh
-        ram:3df2 5f              ??         5Fh    _
-        ram:3df3 33              ??         33h    3
-        ram:3df4 e8              ??         E8h
-        ram:3df5 7c              ??         7Ch    |
-        ram:3df6 06              ??         06h
-        ram:3df7 cd              ??         CDh
-        ram:3df8 5f              ??         5Fh    _
-        ram:3df9 33              ??         33h    3
-        ram:3dfa ed              ??         EDh
-        ram:3dfb 7c              ??         7Ch    |
-        ram:3dfc 06              ??         06h
-        ram:3dfd cd              ??         CDh
-        ram:3dfe 8c              ??         8Ch
-        ram:3dff 33              ??         33h    3
-        ram:3e00 22              ??         22h    "
-        ram:3e01 43              ??         43h    C
-        ram:3e02 02              ??         02h
-        ram:3e03 cd              ??         CDh
-        ram:3e04 8c              ??         8Ch
-        ram:3e05 33              ??         33h    3
-        ram:3e06 40              ??         40h    @
-        ram:3e07 43              ??         43h    C
-        ram:3e08 02              ??         02h
-        ram:3e09 cd              ??         CDh
-        ram:3e0a 8c              ??         8Ch
-        ram:3e0b 33              ??         33h    3
-        ram:3e0c 4f              ??         4Fh    O
-        ram:3e0d 44              ??         44h    D
-        ram:3e0e 02              ??         02h
-        ram:3e0f cd              ??         CDh
-        ram:3e10 8c              ??         8Ch
-        ram:3e11 33              ??         33h    3
-        ram:3e12 db              ??         DBh
-        ram:3e13 41              ??         41h    A
-        ram:3e14 02              ??         02h
-        ram:3e15 cd              ??         CDh
-        ram:3e16 8c              ??         8Ch
-        ram:3e17 33              ??         33h    3
-        ram:3e18 df              ??         DFh
-        ram:3e19 41              ??         41h    A
-        ram:3e1a 02              ??         02h
-        ram:3e1b cd              ??         CDh
-        ram:3e1c 8c              ??         8Ch
-        ram:3e1d 33              ??         33h    3
-        ram:3e1e 5f              ??         5Fh    _
-        ram:3e1f 43              ??         43h    C
-        ram:3e20 02              ??         02h
-        ram:3e21 cd              ??         CDh
-        ram:3e22 8c              ??         8Ch
-        ram:3e23 33              ??         33h    3
-        ram:3e24 d7              ??         D7h
-        ram:3e25 41              ??         41h    A
-        ram:3e26 02              ??         02h
-        ram:3e27 cd              ??         CDh
-        ram:3e28 5f              ??         5Fh    _
-        ram:3e29 33              ??         33h    3
-        ram:3e2a 98              ??         98h
-        ram:3e2b 40              ??         40h    @
-        ram:3e2c 02              ??         02h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     FUN_ram_0aeb:0b2c(c)
-        ram:3e2d cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e30 b2              ??         B2h
-        ram:3e31 7f              ??         7Fh    
-        ram:3e32 03              ??         03h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0b2f(c)
-        ram:3e33 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e36 f4              ??         F4h
-        ram:3e37 45              ??         45h    E
-        ram:3e38 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[2]:     FUN_ram_00ea:0b44(c),
-                                                                                          FUN_ram_0aeb:0c09(c)
-        ram:3e39 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e3c 1d              ??         1Dh
-        ram:3e3d 70              ??         70h    p
-        ram:3e3e 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     FUN_ram_0aeb:0b89(c)
-        ram:3e3f cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e42 a3              ??         A3h
-        ram:3e43 45              ??         45h    E
-        ram:3e44 01              ??         01h
-        ram:3e45 cd              ??         CDh
-        ram:3e46 5f              ??         5Fh    _
-        ram:3e47 33              ??         33h    3
-        ram:3e48 db              ??         DBh
-        ram:3e49 6c              ??         6Ch    l
-        ram:3e4a 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0c24(c)
-        ram:3e4b cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e4e c6              ??         C6h
-        ram:3e4f 70              ??         70h    p
-        ram:3e50 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0c32(c)
-        ram:3e51 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e54 cd              ??         CDh
-        ram:3e55 42              ??         42h    B
-        ram:3e56 01              ??         01h
-        ram:3e57 cd              ??         CDh
-        ram:3e58 5f              ??         5Fh    _
-        ram:3e59 33              ??         33h    3
-        ram:3e5a 73              ??         73h    s
-        ram:3e5b 60              ??         60h    `
-        ram:3e5c 04              ??         04h
-        ram:3e5d cd              ??         CDh
-        ram:3e5e 5f              ??         5Fh    _
-        ram:3e5f 33              ??         33h    3
-        ram:3e60 83              ??         83h
-        ram:3e61 45              ??         45h    E
-        ram:3e62 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0c3b(c)
-        ram:3e63 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e66 46              ??         46h    F
-        ram:3e67 7e              ??         7Eh    ~
-        ram:3e68 03              ??         03h
-        ram:3e69 cd              ??         CDh
-        ram:3e6a 5f              ??         5Fh    _
-        ram:3e6b 33              ??         33h    3
-        ram:3e6c 27              ??         27h    '
-        ram:3e6d 64              ??         64h    d
-        ram:3e6e 03              ??         03h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     FUN_ram_0ccc:0ccf(c)
-        ram:3e6f cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e72 65              ??         65h    e
-        ram:3e73 7c              ??         7Ch    |
-        ram:3e74 03              ??         03h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:01f7(c)
-        ram:3e75 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e78 f0              ??         F0h
-        ram:3e79 50              ??         50h    P
-        ram:3e7a 04              ??         04h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0208(c)
-        ram:3e7b cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e7e 01              ??         01h
-        ram:3e7f 72              ??         72h    r
-        ram:3e80 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:020b(c)
-        ram:3e81 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e84 2c              ??         2Ch    ,
-        ram:3e85 46              ??         46h    F
-        ram:3e86 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0c5e(c)
-        ram:3e87 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e8a 79              ??         79h    y
-        ram:3e8b 4b              ??         4Bh    K
-        ram:3e8c 04              ??         04h
-        ram:3e8d cd              ??         CDh
-        ram:3e8e 5f              ??         5Fh    _
-        ram:3e8f 33              ??         33h    3
-        ram:3e90 de              ??         DEh
-        ram:3e91 45              ??         45h    E
-        ram:3e92 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0219(c)
-        ram:3e93 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e96 e9              ??         E9h
-        ram:3e97 71              ??         71h    q
-        ram:3e98 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:023d(c)
-        ram:3e99 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3e9c ee              ??         EEh
-        ram:3e9d 4b              ??         4Bh    K
-        ram:3e9e 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:04eb(c)
-        ram:3e9f cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3ea2 09              ??         09h
-        ram:3ea3 4c              ??         4Ch    L
-        ram:3ea4 01              ??         01h
-        ram:3ea5 cd              ??         CDh
-        ram:3ea6 5f              ??         5Fh    _
-        ram:3ea7 33              ??         33h    3
-        ram:3ea8 dd              ??         DDh
-        ram:3ea9 47              ??         47h    G
-        ram:3eaa 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f
-        ram:3eab cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3eae 16              ??         16h
-        ram:3eaf 73              ??         73h    s
-        ram:3eb0 01              ??         01h
-        ram:3eb1 cd              ??         CDh
-        ram:3eb2 5f              ??         5Fh    _
-        ram:3eb3 33              ??         33h    3
-        ram:3eb4 24              ??         24h    $
-        ram:3eb5 46              ??         46h    F
-        ram:3eb6 06              ??         06h
-        ram:3eb7 cd              ??         CDh
-        ram:3eb8 5f              ??         5Fh    _
-        ram:3eb9 33              ??         33h    3
-        ram:3eba 18              ??         18h
-        ram:3ebb 49              ??         49h    I
-        ram:3ebc 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[4]:     ram:0519(c), ram:05e5(c),
-                                                                                          ram:0608(c), ram:0617(c)
-        ram:3ebd cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3ec0 bf              ??         BFh
-        ram:3ec1 49              ??         49h    I
-        ram:3ec2 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0ca9(c)
-        ram:3ec3 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3ec6 fa              ??         FAh
-        ram:3ec7 48              ??         48h    H
-        ram:3ec8 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:05cb(c)
-        ram:3ec9 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3ecc cc              ??         CCh
-        ram:3ecd 48              ??         48h    H
-        ram:3ece 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:05f2(c)
-        ram:3ecf cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3ed2 dd              ??         DDh
-        ram:3ed3 48              ??         48h    H
-        ram:3ed4 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0629(c)
-        ram:3ed5 cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3ed8 11              ??         11h
-        ram:3ed9 43              ??         43h    C
-        ram:3eda 01              ??         01h
-                             **************************************************************
-                             *                       THUNK FUNCTION                       *
-                             **************************************************************
-                             thunk noreturn undefined thunk_FUN_ram_335f()
-                               Thunked-Function: FUN_ram_335f
-             undefined         A:1            <RETURN>
-                             thunk_FUN_ram_335f                              XREF[1]:     ram:0635(c)
-        ram:3edb cd 5f 33        CALL       FUN_ram_335f                                     undefined FUN_ram_335f()
-                             -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:3ede 3e              ??         3Eh    >
-        ram:3edf 63              ??         63h    c
-        ram:3ee0 07              ??         07h
-        ram:3ee1 cd              ??         CDh
-        ram:3ee2 5f              ??         5Fh    _
-        ram:3ee3 33              ??         33h    3
-        ram:3ee4 7c              ??         7Ch    |
-        ram:3ee5 41              ??         41h    A
-        ram:3ee6 07              ??         07h
-        ram:3ee7 cd              ??         CDh
-        ram:3ee8 5f              ??         5Fh    _
-        ram:3ee9 33              ??         33h    3
-        ram:3eea 5d              ??         5Dh    ]
-        ram:3eeb 41              ??         41h    A
-        ram:3eec 07              ??         07h
-        ram:3eed cd              ??         CDh
-        ram:3eee 8c              ??         8Ch
-        ram:3eef 33              ??         33h    3
-        ram:3ef0 11              ??         11h
-        ram:3ef1 43              ??         43h    C
-        ram:3ef2 01              ??         01h
-        ram:3ef3 cd              ??         CDh
-        ram:3ef4 8c              ??         8Ch
-        ram:3ef5 33              ??         33h    3
-        ram:3ef6 eb              ??         EBh
-        ram:3ef7 5a              ??         5Ah    Z
-        ram:3ef8 06              ??         06h
-        ram:3ef9 cd              ??         CDh
-        ram:3efa 8c              ??         8Ch
-        ram:3efb 33              ??         33h    3
-        ram:3efc d5              ??         D5h
-        ram:3efd 66              ??         66h    f
-        ram:3efe 06              ??         06h
-        ram:3eff cd              ??         CDh
-        ram:3f00 8c              ??         8Ch
-        ram:3f01 33              ??         33h    3
-        ram:3f02 8c              ??         8Ch
-        ram:3f03 5e              ??         5Eh    ^
-        ram:3f04 07              ??         07h
-        ram:3f05 cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f08 fa 79 04        JP         M,LAB_ram_0479
-        ram:3f0b cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f0e 87              ADD        A,A
-        ram:3f0f 41              LD         B,C
-        ram:3f10 06 cd           LD         B,0xcd
-        ram:3f12 8c              ADC        A,H
-        ram:3f13 33              INC        SP
-        ram:3f14 14              INC        D
-        ram:3f15 7f              LD         A,A
-        ram:3f16 07              RLCA
-        ram:3f17 cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f1a 70              LD         (HL),B
-        ram:3f1b 43              LD         B,E
-        ram:3f1c 07              RLCA
-        ram:3f1d cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f20 3b              DEC        SP
-        ram:3f21 60              LD         H,B
-        ram:3f22 06 cd           LD         B,0xcd
-        ram:3f24 8c              ADC        A,H
-        ram:3f25 33              INC        SP
-        ram:3f26 f3              DI
-        ram:3f27 4e              LD         C,(HL)
-        ram:3f28 04              INC        B
-        ram:3f29 cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f2c c4 4e 04        CALL       NZ,FUN_ram_044e                                  undefined FUN_ram_044e()
-        ram:3f2f cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f32 ab              XOR        E
-        ram:3f33 49              LD         C,C
-        ram:3f34 06 cd           LD         B,0xcd
-        ram:3f36 8c              ADC        A,H
-        ram:3f37 33              INC        SP
-        ram:3f38 0a              LD         A,(BC)
-        ram:3f39 66              LD         H,(HL)
-        ram:3f3a 06 cd           LD         B,0xcd
-        ram:3f3c 8c              ADC        A,H
-        ram:3f3d 33              INC        SP
-        ram:3f3e 62              LD         H,D
-        ram:3f3f 65              LD         H,L
-        ram:3f40 01 cd 8c        LD         BC,0x8ccd
-        ram:3f43 33              INC        SP
-        ram:3f44 d6 7f           SUB        0x7f
-        ram:3f46 06 cd           LD         B,0xcd
-        ram:3f48 8c              ADC        A,H
-        ram:3f49 33              INC        SP
-        ram:3f4a f7              RST        RST6                                             undefined RST6()
-        ram:3f4b 74              LD         (HL),H
-        ram:3f4c 06 cd           LD         B,0xcd
-        ram:3f4e 8c              ADC        A,H
-        ram:3f4f 33              INC        SP
-        ram:3f50 00              NOP
-        ram:3f51 40              LD         B,B
-        ram:3f52 01 cd 8c        LD         BC,0x8ccd
-        ram:3f55 33              INC        SP
-        ram:3f56 26 65           LD         H,0x65
-        ram:3f58 01 cd 8c        LD         BC,0x8ccd
-        ram:3f5b 33              INC        SP
-        ram:3f5c 00              NOP
-        ram:3f5d 40              LD         B,B
-        ram:3f5e 07              RLCA
-        ram:3f5f cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f62 3f              CCF
-        ram:3f63 50              LD         D,B
-        ram:3f64 06 cd           LD         B,0xcd
-        ram:3f66 8c              ADC        A,H
-        ram:3f67 33              INC        SP
-        ram:3f68 50              LD         D,B
-        ram:3f69 6f              LD         L,A
-        ram:3f6a 06 cd           LD         B,0xcd
-        ram:3f6c 8c              ADC        A,H
-        ram:3f6d 33              INC        SP
-        ram:3f6e 13              INC        DE
-        ram:3f6f 72              LD         (HL),D
-        ram:3f70 06 cd           LD         B,0xcd
-        ram:3f72 8c              ADC        A,H
-        ram:3f73 33              INC        SP
-        ram:3f74 bd              CP         L
-        ram:3f75 72              LD         (HL),D
-        ram:3f76 06 cd           LD         B,0xcd
-        ram:3f78 8c              ADC        A,H
-        ram:3f79 33              INC        SP
-        ram:3f7a 12              LD         (DE),A
-        ram:3f7b 7e              LD         A,(HL)
-        ram:3f7c 06 cd           LD         B,0xcd
-        ram:3f7e 8c              ADC        A,H
-        ram:3f7f 33              INC        SP
-        ram:3f80 aa              XOR        D
-        ram:3f81 7f              LD         A,A
-        ram:3f82 06 cd           LD         B,0xcd
-        ram:3f84 8c              ADC        A,H
-        ram:3f85 33              INC        SP
-        ram:3f86 04              INC        B
-        ram:3f87 43              LD         B,E
-        ram:3f88 06 cd           LD         B,0xcd
-        ram:3f8a 8c              ADC        A,H
-        ram:3f8b 33              INC        SP
-        ram:3f8c 00              NOP
-        ram:3f8d 40              LD         B,B
-        ram:3f8e 06 cd           LD         B,0xcd
-        ram:3f90 8c              ADC        A,H
-        ram:3f91 33              INC        SP
-        ram:3f92 3f              CCF
-        ram:3f93 78              LD         A,B
-        ram:3f94 04              INC        B
-        ram:3f95 cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f98 44              LD         B,H
-        ram:3f99 78              LD         A,B
-        ram:3f9a 04              INC        B
-        ram:3f9b cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3f9e 49              LD         C,C
-        ram:3f9f 78              LD         A,B
-        ram:3fa0 04              INC        B
-        ram:3fa1 cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3fa4 73              LD         (HL),E
-        ram:3fa5 6c              LD         L,H
-        ram:3fa6 05              DEC        B
-        ram:3fa7 cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3faa 87              ADD        A,A
-        ram:3fab 7a              LD         A,D
-        ram:3fac 03              INC        BC
-        ram:3fad cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3fb0 13              INC        DE
-        ram:3fb1 5c              LD         E,H
-        ram:3fb2 07              RLCA
-        ram:3fb3 cd 8c 33        CALL       FUN_ram_338c                                     undefined FUN_ram_338c()
-        ram:3fb6 bd              CP         L
-        ram:3fb7 4b              LD         C,E
-        ram:3fb8 01 cd 8c        LD         BC,0x8ccd
-        ram:3fbb 33              INC        SP
-        ram:3fbc 0f              RRCA
-        ram:3fbd 4e              LD         C,(HL=>DAT_ram_6565)
-                             LAB_ram_3fbe+1                                  XREF[0,1]:   NMI_ISR:006a(c)
-        ram:3fbe 01 cd 5f        LD         BC,0x5fcd
-        ram:3fc1 33              INC        SP
-        ram:3fc2 d1              POP        DE
-        ram:3fc3 45              LD         B,L
-        ram:3fc4 01 cd 5f        LD         BC,0x5fcd
-        ram:3fc7 33              INC        SP
-        ram:3fc8 2d              DEC        L
-        ram:3fc9 6c              LD         L,H
-        ram:3fca 01 ff ff        LD         BC,0xffff
-        ram:3fcd ff              RST        RST7                                             undefined RST7()
-        ram:3fce ff              RST        RST7                                             undefined RST7()
-        ram:3fcf ff              RST        RST7                                             undefined RST7()
-        ram:3fd0 ff              RST        RST7                                             undefined RST7()
-        ram:3fd1 ff              RST        RST7                                             undefined RST7()
-        ram:3fd2 ff              RST        RST7                                             undefined RST7()
-        ram:3fd3 ff              RST        RST7                                             undefined RST7()
-        ram:3fd4 ff              RST        RST7                                             undefined RST7()
-        ram:3fd5 ff              RST        RST7                                             undefined RST7()
-        ram:3fd6 ff              RST        RST7                                             undefined RST7()
-        ram:3fd7 ff              RST        RST7                                             undefined RST7()
-        ram:3fd8 ff              RST        RST7                                             undefined RST7()
-        ram:3fd9 ff              RST        RST7                                             undefined RST7()
-        ram:3fda ff              RST        RST7                                             undefined RST7()
-        ram:3fdb ff              RST        RST7                                             undefined RST7()
-        ram:3fdc ff              RST        RST7                                             undefined RST7()
-        ram:3fdd ff              RST        RST7                                             undefined RST7()
-        ram:3fde ff              RST        RST7                                             undefined RST7()
-        ram:3fdf ff              RST        RST7                                             undefined RST7()
-        ram:3fe0 ff              RST        RST7                                             undefined RST7()
-        ram:3fe1 ff              RST        RST7                                             undefined RST7()
-        ram:3fe2 ff              RST        RST7                                             undefined RST7()
-        ram:3fe3 ff              RST        RST7                                             undefined RST7()
-        ram:3fe4 ff              RST        RST7                                             undefined RST7()
-        ram:3fe5 ff              RST        RST7                                             undefined RST7()
-        ram:3fe6 ff              RST        RST7                                             undefined RST7()
-        ram:3fe7 ff              RST        RST7                                             undefined RST7()
-        ram:3fe8 ff              RST        RST7                                             undefined RST7()
-        ram:3fe9 ff              RST        RST7                                             undefined RST7()
-        ram:3fea ff              RST        RST7                                             undefined RST7()
-        ram:3feb ff              RST        RST7                                             undefined RST7()
-        ram:3fec ff              RST        RST7                                             undefined RST7()
-        ram:3fed ff              RST        RST7                                             undefined RST7()
-        ram:3fee ff              RST        RST7                                             undefined RST7()
-        ram:3fef ff              RST        RST7                                             undefined RST7()
-        ram:3ff0 ff              RST        RST7                                             undefined RST7()
-        ram:3ff1 ff              RST        RST7                                             undefined RST7()
-        ram:3ff2 ff              RST        RST7                                             undefined RST7()
-        ram:3ff3 ff              RST        RST7                                             undefined RST7()
-        ram:3ff4 ff              RST        RST7                                             undefined RST7()
-        ram:3ff5 ff              RST        RST7                                             undefined RST7()
-        ram:3ff6 ff              RST        RST7                                             undefined RST7()
-        ram:3ff7 ff              RST        RST7                                             undefined RST7()
-        ram:3ff8 ff              RST        RST7                                             undefined RST7()
-        ram:3ff9 ff              RST        RST7                                             undefined RST7()
-        ram:3ffa ff              RST        RST7                                             undefined RST7()
-        ram:3ffb ff              RST        RST7                                             undefined RST7()
-        ram:3ffc ff              RST        RST7                                             undefined RST7()
-        ram:3ffd ff              RST        RST7                                             undefined RST7()
-        ram:3ffe ff              RST        RST7                                             undefined RST7()
-        ram:3fff ff              RST        RST7                                             undefined RST7()
+        ; Thunk table entries for calling routines on switched ROM pages.
+        ; Format: CALL <target-lo> <target-hi> <func-lo> <func-hi> <page no>
+        ; The call target is typically a page-switch handler at 0x335F or 0x338C.
+        ; The final byte is the page number to switch in before invoking the handler.
+        ; The 16-bit argument address is on the switched page (0x4000 to 0x7fff) 
+        ; and is passed to the handler.
+        ; Total entries: 519 (447 calls to FUN_ram_335f, 72 calls to FUN_ram_338c)
+        ram:339b cd 5f 33 41 7d 06        ; thunk entry: CALL FUN_ram_335f arg=0x7d41 page=0x06
+        ram:33a1 cd 5f 33 84 7d 06        ; thunk entry: CALL FUN_ram_335f arg=0x7d84 page=0x06
+        ram:33a7 cd 5f 33 81 43 07        ; thunk entry: CALL FUN_ram_335f arg=0x4381 page=0x07
+        ram:33ad cd 5f 33 1e 49 07        ; thunk entry: CALL FUN_ram_335f arg=0x491e page=0x07
+        ram:33b3 cd 5f 33 65 67 06        ; thunk entry: CALL FUN_ram_335f arg=0x6765 page=0x06
+        ram:33b9 cd 5f 33 12 69 06        ; thunk entry: CALL FUN_ram_335f arg=0x6912 page=0x06
+        ram:33bf cd 5f 33 5c 69 06        ; thunk entry: CALL FUN_ram_335f arg=0x695c page=0x06
+        ram:33c5 cd 5f 33 26 6d 06        ; thunk entry: CALL FUN_ram_335f arg=0x6d26 page=0x06
+        ram:33cb cd 5f 33 d6 41 07        ; thunk entry: CALL FUN_ram_335f arg=0x41d6 page=0x07
+        ram:33d1 cd 5f 33 36 69 07        ; thunk entry: CALL FUN_ram_335f arg=0x6936 page=0x07
+        ram:33d7 cd 5f 33 78 7d 06        ; thunk entry: CALL FUN_ram_335f arg=0x7d78 page=0x06
+        ram:33dd cd 5f 33 22 52 07        ; thunk entry: CALL FUN_ram_335f arg=0x5222 page=0x07
+        ram:33e3 cd 5f 33 60 54 07        ; thunk entry: CALL FUN_ram_335f arg=0x5460 page=0x07
+        ram:33e9 cd 5f 33 5f 77 06        ; thunk entry: CALL FUN_ram_335f arg=0x775f page=0x06
+        ram:33ef cd 5f 33 2b 4b 07        ; thunk entry: CALL FUN_ram_335f arg=0x4b2b page=0x07
+        ram:33f5 cd 5f 33 d6 5d 06        ; thunk entry: CALL FUN_ram_335f arg=0x5dd6 page=0x06
+        ram:33fb cd 5f 33 09 55 06        ; thunk entry: CALL FUN_ram_335f arg=0x5509 page=0x06
+        ram:3401 cd 5f 33 f9 56 06        ; thunk entry: CALL FUN_ram_335f arg=0x56f9 page=0x06
+        ram:3407 cd 5f 33 d3 57 06        ; thunk entry: CALL FUN_ram_335f arg=0x57d3 page=0x06
+        ram:340d cd 5f 33 d6 57 06        ; thunk entry: CALL FUN_ram_335f arg=0x57d6 page=0x06
+        ram:3413 cd 8c 33 b2 58 06        ; thunk entry: CALL FUN_ram_338c arg=0x58b2 page=0x06
+        ram:3419 cd 5f 33 b8 54 06        ; thunk entry: CALL FUN_ram_335f arg=0x54b8 page=0x06
+        ram:341f cd 5f 33 b3 55 06        ; thunk entry: CALL FUN_ram_335f arg=0x55b3 page=0x06
+        ram:3425 cd 5f 33 96 55 06        ; thunk entry: CALL FUN_ram_335f arg=0x5596 page=0x06
+        ram:342b cd 5f 33 22 59 07        ; thunk entry: CALL FUN_ram_335f arg=0x5922 page=0x07
+        ram:3431 cd 5f 33 7f 56 06        ; thunk entry: CALL FUN_ram_335f arg=0x567f page=0x06
+        ram:3437 cd 5f 33 43 4e 06        ; thunk entry: CALL FUN_ram_335f arg=0x4e43 page=0x06
+        ram:343d cd 5f 33 41 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x4541 page=0x06
+        ram:3443 cd 5f 33 81 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x4581 page=0x06
+        ram:3449 cd 5f 33 c2 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x45c2 page=0x06
+        ram:344f cd 5f 33 cf 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x45cf page=0x06
+        ram:3455 cd 5f 33 eb 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x45eb page=0x06
+        ram:345b cd 5f 33 77 46 06        ; thunk entry: CALL FUN_ram_335f arg=0x4677 page=0x06
+        ram:3461 cd 5f 33 42 49 06        ; thunk entry: CALL FUN_ram_335f arg=0x4942 page=0x06
+        ram:3467 cd 5f 33 a2 49 06        ; thunk entry: CALL FUN_ram_335f arg=0x49a2 page=0x06
+        ram:346d cd 5f 33 3d 55 06        ; thunk entry: CALL FUN_ram_335f arg=0x553d page=0x06
+        ram:3473 cd 5f 33 f5 56 06        ; thunk entry: CALL FUN_ram_335f arg=0x56f5 page=0x06
+        ram:3479 cd 5f 33 51 55 06        ; thunk entry: CALL FUN_ram_335f arg=0x5551 page=0x06
+        ram:347f cd 5f 33 ee 56 06        ; thunk entry: CALL FUN_ram_335f arg=0x56ee page=0x06
+        ram:3485 cd 5f 33 6f 65 06        ; thunk entry: CALL FUN_ram_335f arg=0x656f page=0x06
+        ram:348b cd 5f 33 e9 7d 06        ; thunk entry: CALL FUN_ram_335f arg=0x7de9 page=0x06
+        ram:3491 cd 8c 33 8f 5b 06        ; thunk entry: CALL FUN_ram_338c arg=0x5b8f page=0x06
+        ram:3497 cd 5f 33 87 65 06        ; thunk entry: CALL FUN_ram_335f arg=0x6587 page=0x06
+        ram:349d cd 5f 33 c5 7d 06        ; thunk entry: CALL FUN_ram_335f arg=0x7dc5 page=0x06
+        ram:34a3 cd 5f 33 c4 56 06        ; thunk entry: CALL FUN_ram_335f arg=0x56c4 page=0x06
+        ram:34a9 cd 5f 33 28 77 06        ; thunk entry: CALL FUN_ram_335f arg=0x7728 page=0x06
+        ram:34af cd 5f 33 e3 58 07        ; thunk entry: CALL FUN_ram_335f arg=0x58e3 page=0x07
+        ram:34b5 cd 5f 33 af 58 06        ; thunk entry: CALL FUN_ram_335f arg=0x58af page=0x06
+        ram:34bb cd 5f 33 65 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x4565 page=0x06
+        ram:34c1 cd 8c 33 93 62 06        ; thunk entry: CALL FUN_ram_338c arg=0x6293 page=0x06
+        ram:34c7 cd 5f 33 84 41 07        ; thunk entry: CALL FUN_ram_335f arg=0x4184 page=0x07
+        ram:34cd cd 8c 33 fc 6d 05        ; thunk entry: CALL FUN_ram_338c arg=0x6dfc page=0x05
+        ram:34d3 cd 5f 33 17 7c 04        ; thunk entry: CALL FUN_ram_335f arg=0x7c17 page=0x04
+        ram:34d9 cd 5f 33 ff 57 06        ; thunk entry: CALL FUN_ram_335f arg=0x57ff page=0x06
+        ram:34df cd 5f 33 26 44 05        ; thunk entry: CALL FUN_ram_335f arg=0x4426 page=0x05
+        ram:34e5 cd 5f 33 f6 47 05        ; thunk entry: CALL FUN_ram_335f arg=0x47f6 page=0x05
+        ram:34eb cd 5f 33 c4 47 05        ; thunk entry: CALL FUN_ram_335f arg=0x47c4 page=0x05
+        ram:34f1 cd 5f 33 d1 6b 04        ; thunk entry: CALL FUN_ram_335f arg=0x6bd1 page=0x04
+        ram:34f7 cd 5f 33 8c 64 06        ; thunk entry: CALL FUN_ram_335f arg=0x648c page=0x06
+        ram:34fd cd 5f 33 16 64 06        ; thunk entry: CALL FUN_ram_335f arg=0x6416 page=0x06
+        ram:3503 cd 8c 33 b5 58 06        ; thunk entry: CALL FUN_ram_338c arg=0x58b5 page=0x06
+        ram:3509 cd 5f 33 8f 7b 06        ; thunk entry: CALL FUN_ram_335f arg=0x7b8f page=0x06
+        ram:350f cd 5f 33 62 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7c62 page=0x06
+        ram:3515 cd 8c 33 c0 54 06        ; thunk entry: CALL FUN_ram_338c arg=0x54c0 page=0x06
+        ram:351b cd 5f 33 68 55 06        ; thunk entry: CALL FUN_ram_335f arg=0x5568 page=0x06
+        ram:3521 cd 5f 33 da 7d 06        ; thunk entry: CALL FUN_ram_335f arg=0x7dda page=0x06
+        ram:3527 cd 5f 33 be 57 06        ; thunk entry: CALL FUN_ram_335f arg=0x57be page=0x06
+        ram:352d cd 5f 33 03 40 05        ; thunk entry: CALL FUN_ram_335f arg=0x4003 page=0x05
+        ram:3533 cd 5f 33 00 40 05        ; thunk entry: CALL FUN_ram_335f arg=0x4000 page=0x05
+        ram:3539 cd 8c 33 88 62 06        ; thunk entry: CALL FUN_ram_338c arg=0x6288 page=0x06
+        ram:353f cd 8c 33 8e 62 06        ; thunk entry: CALL FUN_ram_338c arg=0x628e page=0x06
+        ram:3545 cd 5f 33 36 7f 06        ; thunk entry: CALL FUN_ram_335f arg=0x7f36 page=0x06
+        ram:354b cd 5f 33 3f 63 06        ; thunk entry: CALL FUN_ram_335f arg=0x633f page=0x06
+        ram:3551 cd 5f 33 41 54 06        ; thunk entry: CALL FUN_ram_335f arg=0x5441 page=0x06
+        ram:3557 cd 8c 33 a0 56 04        ; thunk entry: CALL FUN_ram_338c arg=0x56a0 page=0x04
+        ram:355d cd 5f 33 3f 60 04        ; thunk entry: CALL FUN_ram_335f arg=0x603f page=0x04
+        ram:3563 cd 5f 33 af 65 04        ; thunk entry: CALL FUN_ram_335f arg=0x65af page=0x04
+        ram:3569 cd 5f 33 b0 4e 04        ; thunk entry: CALL FUN_ram_335f arg=0x4eb0 page=0x04
+        ram:356f cd 5f 33 e8 6a 05        ; thunk entry: CALL FUN_ram_335f arg=0x6ae8 page=0x05
+        ram:3575 cd 5f 33 58 43 05        ; thunk entry: CALL FUN_ram_335f arg=0x4358 page=0x05
+        ram:357b cd 5f 33 29 49 06        ; thunk entry: CALL FUN_ram_335f arg=0x4929 page=0x06
+        ram:3581 cd 5f 33 ea 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x45ea page=0x06
+        ram:3587 cd 5f 33 c8 6c 07        ; thunk entry: CALL FUN_ram_335f arg=0x6cc8 page=0x07
+        ram:358d cd 5f 33 a9 6c 07        ; thunk entry: CALL FUN_ram_335f arg=0x6ca9 page=0x07
+        ram:3593 cd 5f 33 15 4b 07        ; thunk entry: CALL FUN_ram_335f arg=0x4b15 page=0x07
+        ram:3599 cd 5f 33 eb 4a 07        ; thunk entry: CALL FUN_ram_335f arg=0x4aeb page=0x07
+        ram:359f cd 5f 33 f9 4a 07        ; thunk entry: CALL FUN_ram_335f arg=0x4af9 page=0x07
+        ram:35a5 cd 5f 33 07 4b 07        ; thunk entry: CALL FUN_ram_335f arg=0x4b07 page=0x07
+        ram:35ab cd 5f 33 ef 6c 07        ; thunk entry: CALL FUN_ram_335f arg=0x6cef page=0x07
+        ram:35b1 cd 5f 33 3a 59 07        ; thunk entry: CALL FUN_ram_335f arg=0x593a page=0x07
+        ram:35b7 cd 5f 33 36 6c 04        ; thunk entry: CALL FUN_ram_335f arg=0x6c36 page=0x04
+        ram:35bd cd 5f 33 0d 6d 07        ; thunk entry: CALL FUN_ram_335f arg=0x6d0d page=0x07
+        ram:35c3 cd 5f 33 39 5e 07        ; thunk entry: CALL FUN_ram_335f arg=0x5e39 page=0x07
+        ram:35c9 cd 5f 33 49 6c 04        ; thunk entry: CALL FUN_ram_335f arg=0x6c49 page=0x04
+        ram:35cf cd 5f 33 a3 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7ca3 page=0x06
+        ram:35d5 cd 5f 33 ef 6b 05        ; thunk entry: CALL FUN_ram_335f arg=0x6bef page=0x05
+        ram:35db cd 5f 33 b2 5a 03        ; thunk entry: CALL FUN_ram_335f arg=0x5ab2 page=0x03
+        ram:35e1 cd 5f 33 b8 5a 03        ; thunk entry: CALL FUN_ram_335f arg=0x5ab8 page=0x03
+        ram:35e7 cd 5f 33 d8 5a 03        ; thunk entry: CALL FUN_ram_335f arg=0x5ad8 page=0x03
+        ram:35ed cd 5f 33 ff 5a 03        ; thunk entry: CALL FUN_ram_335f arg=0x5aff page=0x03
+        ram:35f3 cd 5f 33 66 5b 03        ; thunk entry: CALL FUN_ram_335f arg=0x5b66 page=0x03
+        ram:35f9 cd 5f 33 85 5c 03        ; thunk entry: CALL FUN_ram_335f arg=0x5c85 page=0x03
+        ram:35ff cd 5f 33 a1 5c 03        ; thunk entry: CALL FUN_ram_335f arg=0x5ca1 page=0x03
+        ram:3605 cd 5f 33 f8 5e 03        ; thunk entry: CALL FUN_ram_335f arg=0x5ef8 page=0x03
+        ram:360b cd 5f 33 b5 62 03        ; thunk entry: CALL FUN_ram_335f arg=0x62b5 page=0x03
+        ram:3611 cd 5f 33 2b 63 03        ; thunk entry: CALL FUN_ram_335f arg=0x632b page=0x03
+        ram:3617 cd 5f 33 4a 63 03        ; thunk entry: CALL FUN_ram_335f arg=0x634a page=0x03
+        ram:361d cd 5f 33 7f 63 03        ; thunk entry: CALL FUN_ram_335f arg=0x637f page=0x03
+        ram:3623 cd 5f 33 ee 63 03        ; thunk entry: CALL FUN_ram_335f arg=0x63ee page=0x03
+        ram:3629 cd 5f 33 03 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x6403 page=0x03
+        ram:362f cd 5f 33 2d 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x642d page=0x03
+        ram:3635 cd 5f 33 39 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x6439 page=0x03
+        ram:363b cd 5f 33 3f 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x643f page=0x03
+        ram:3641 cd 5f 33 45 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x6445 page=0x03
+        ram:3647 cd 5f 33 4b 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x644b page=0x03
+        ram:364d cd 5f 33 51 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x6451 page=0x03
+        ram:3653 cd 5f 33 57 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x6457 page=0x03
+        ram:3659 cd 5f 33 b0 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x64b0 page=0x03
+        ram:365f cd 5f 33 af 66 03        ; thunk entry: CALL FUN_ram_335f arg=0x66af page=0x03
+        ram:3665 cd 5f 33 b3 66 03        ; thunk entry: CALL FUN_ram_335f arg=0x66b3 page=0x03
+        ram:366b cd 5f 33 07 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x6707 page=0x03
+        ram:3671 cd 5f 33 a8 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67a8 page=0x03
+        ram:3677 cd 5f 33 ae 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67ae page=0x03
+        ram:367d cd 5f 33 b7 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67b7 page=0x03
+        ram:3683 cd 5f 33 bc 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67bc page=0x03
+        ram:3689 cd 5f 33 c1 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67c1 page=0x03
+        ram:368f cd 5f 33 c6 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67c6 page=0x03
+        ram:3695 cd 5f 33 13 6b 07        ; thunk entry: CALL FUN_ram_335f arg=0x6b13 page=0x07
+        ram:369b cd 5f 33 6b 6b 07        ; thunk entry: CALL FUN_ram_335f arg=0x6b6b page=0x07
+        ram:36a1 cd 5f 33 29 74 06        ; thunk entry: CALL FUN_ram_335f arg=0x7429 page=0x06
+        ram:36a7 cd 5f 33 af 43 04        ; thunk entry: CALL FUN_ram_335f arg=0x43af page=0x04
+        ram:36ad cd 5f 33 68 50 04        ; thunk entry: CALL FUN_ram_335f arg=0x5068 page=0x04
+        ram:36b3 cd 5f 33 ba 6a 05        ; thunk entry: CALL FUN_ram_335f arg=0x6aba page=0x05
+        ram:36b9 cd 5f 33 8a 7c 03        ; thunk entry: CALL FUN_ram_335f arg=0x7c8a page=0x03
+        ram:36bf cd 5f 33 8c 73 05        ; thunk entry: CALL FUN_ram_335f arg=0x738c page=0x05
+        ram:36c5 cd 5f 33 62 61 04        ; thunk entry: CALL FUN_ram_335f arg=0x6162 page=0x04
+        ram:36cb cd 5f 33 4b 61 04        ; thunk entry: CALL FUN_ram_335f arg=0x614b page=0x04
+        ram:36d1 cd 5f 33 60 63 04        ; thunk entry: CALL FUN_ram_335f arg=0x6360 page=0x04
+        ram:36d7 cd 5f 33 e5 5f 04        ; thunk entry: CALL FUN_ram_335f arg=0x5fe5 page=0x04
+        ram:36dd cd 5f 33 e7 65 04        ; thunk entry: CALL FUN_ram_335f arg=0x65e7 page=0x04
+        ram:36e3 cd 5f 33 62 6c 04        ; thunk entry: CALL FUN_ram_335f arg=0x6c62 page=0x04
+        ram:36e9 cd 5f 33 54 65 04        ; thunk entry: CALL FUN_ram_335f arg=0x6554 page=0x04
+        ram:36ef cd 5f 33 00 65 04        ; thunk entry: CALL FUN_ram_335f arg=0x6500 page=0x04
+        ram:36f5 cd 5f 33 7f 64 04        ; thunk entry: CALL FUN_ram_335f arg=0x647f page=0x04
+        ram:36fb cd 5f 33 f6 63 04        ; thunk entry: CALL FUN_ram_335f arg=0x63f6 page=0x04
+        ram:3701 cd 5f 33 d2 63 04        ; thunk entry: CALL FUN_ram_335f arg=0x63d2 page=0x04
+        ram:3707 cd 5f 33 12 64 04        ; thunk entry: CALL FUN_ram_335f arg=0x6412 page=0x04
+        ram:370d cd 5f 33 b6 67 04        ; thunk entry: CALL FUN_ram_335f arg=0x67b6 page=0x04
+        ram:3713 cd 5f 33 bd 67 04        ; thunk entry: CALL FUN_ram_335f arg=0x67bd page=0x04
+        ram:3719 cd 5f 33 0d 45 04        ; thunk entry: CALL FUN_ram_335f arg=0x450d page=0x04
+        ram:371f cd 5f 33 59 46 04        ; thunk entry: CALL FUN_ram_335f arg=0x4659 page=0x04
+        ram:3725 cd 5f 33 a5 67 04        ; thunk entry: CALL FUN_ram_335f arg=0x67a5 page=0x04
+        ram:372b cd 5f 33 ef 68 04        ; thunk entry: CALL FUN_ram_335f arg=0x68ef page=0x04
+        ram:3731 cd 5f 33 3a 6c 04        ; thunk entry: CALL FUN_ram_335f arg=0x6c3a page=0x04
+        ram:3737 cd 5f 33 b2 67 04        ; thunk entry: CALL FUN_ram_335f arg=0x67b2 page=0x04
+        ram:373d cd 5f 33 1a 6c 04        ; thunk entry: CALL FUN_ram_335f arg=0x6c1a page=0x04
+        ram:3743 cd 5f 33 5a 64 04        ; thunk entry: CALL FUN_ram_335f arg=0x645a page=0x04
+        ram:3749 cd 5f 33 12 44 04        ; thunk entry: CALL FUN_ram_335f arg=0x4412 page=0x04
+        ram:374f cd 5f 33 7b 45 04        ; thunk entry: CALL FUN_ram_335f arg=0x457b page=0x04
+        ram:3755 cd 5f 33 9d 48 04        ; thunk entry: CALL FUN_ram_335f arg=0x489d page=0x04
+        ram:375b cd 5f 33 c9 49 04        ; thunk entry: CALL FUN_ram_335f arg=0x49c9 page=0x04
+        ram:3761 cd 5f 33 d2 49 04        ; thunk entry: CALL FUN_ram_335f arg=0x49d2 page=0x04
+        ram:3767 cd 5f 33 d6 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7cd6 page=0x06
+        ram:376d cd 5f 33 db 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7cdb page=0x06
+        ram:3773 cd 5f 33 17 67 04        ; thunk entry: CALL FUN_ram_335f arg=0x6717 page=0x04
+        ram:3779 cd 5f 33 fb 43 04        ; thunk entry: CALL FUN_ram_335f arg=0x43fb page=0x04
+        ram:377f cd 5f 33 ec 43 04        ; thunk entry: CALL FUN_ram_335f arg=0x43ec page=0x04
+        ram:3785 cd 5f 33 df 46 04        ; thunk entry: CALL FUN_ram_335f arg=0x46df page=0x04
+        ram:378b cd 5f 33 d0 43 04        ; thunk entry: CALL FUN_ram_335f arg=0x43d0 page=0x04
+        ram:3791 cd 5f 33 55 6c 04        ; thunk entry: CALL FUN_ram_335f arg=0x6c55 page=0x04
+        ram:3797 cd 5f 33 3a 4f 07        ; thunk entry: CALL FUN_ram_335f arg=0x4f3a page=0x07
+        ram:379d cd 5f 33 29 73 05        ; thunk entry: CALL FUN_ram_335f arg=0x7329 page=0x05
+        ram:37a3 cd 5f 33 91 63 05        ; thunk entry: CALL FUN_ram_335f arg=0x6391 page=0x05
+        ram:37a9 cd 5f 33 42 6e 03        ; thunk entry: CALL FUN_ram_335f arg=0x6e42 page=0x03
+        ram:37af cd 5f 33 4b 6e 03        ; thunk entry: CALL FUN_ram_335f arg=0x6e4b page=0x03
+        ram:37b5 cd 5f 33 2e 73 05        ; thunk entry: CALL FUN_ram_335f arg=0x732e page=0x05
+        ram:37bb cd 5f 33 54 4b 03        ; thunk entry: CALL FUN_ram_335f arg=0x4b54 page=0x03
+        ram:37c1 cd 5f 33 8d 4b 03        ; thunk entry: CALL FUN_ram_335f arg=0x4b8d page=0x03
+        ram:37c7 cd 5f 33 d0 4b 03        ; thunk entry: CALL FUN_ram_335f arg=0x4bd0 page=0x03
+        ram:37cd cd 5f 33 04 4d 03        ; thunk entry: CALL FUN_ram_335f arg=0x4d04 page=0x03
+        ram:37d3 cd 5f 33 d3 4e 03        ; thunk entry: CALL FUN_ram_335f arg=0x4ed3 page=0x03
+        ram:37d9 cd 5f 33 33 51 03        ; thunk entry: CALL FUN_ram_335f arg=0x5133 page=0x03
+        ram:37df cd 5f 33 50 51 03        ; thunk entry: CALL FUN_ram_335f arg=0x5150 page=0x03
+        ram:37e5 cd 5f 33 5d 51 03        ; thunk entry: CALL FUN_ram_335f arg=0x515d page=0x03
+        ram:37eb cd 5f 33 98 54 03        ; thunk entry: CALL FUN_ram_335f arg=0x5498 page=0x03
+        ram:37f1 cd 5f 33 a5 54 03        ; thunk entry: CALL FUN_ram_335f arg=0x54a5 page=0x03
+        ram:37f7 cd 5f 33 cb 7a 02        ; thunk entry: CALL FUN_ram_335f arg=0x7acb page=0x02
+        ram:37fd cd 5f 33 13 7b 02        ; thunk entry: CALL FUN_ram_335f arg=0x7b13 page=0x02
+        ram:3803 cd 5f 33 6a 7b 02        ; thunk entry: CALL FUN_ram_335f arg=0x7b6a page=0x02
+        ram:3809 cd 5f 33 c3 7b 02        ; thunk entry: CALL FUN_ram_335f arg=0x7bc3 page=0x02
+        ram:380f cd 5f 33 ec 7b 02        ; thunk entry: CALL FUN_ram_335f arg=0x7bec page=0x02
+        ram:3815 cd 5f 33 80 7c 02        ; thunk entry: CALL FUN_ram_335f arg=0x7c80 page=0x02
+        ram:381b cd 5f 33 84 7c 02        ; thunk entry: CALL FUN_ram_335f arg=0x7c84 page=0x02
+        ram:3821 cd 5f 33 09 7d 02        ; thunk entry: CALL FUN_ram_335f arg=0x7d09 page=0x02
+        ram:3827 cd 5f 33 52 7d 02        ; thunk entry: CALL FUN_ram_335f arg=0x7d52 page=0x02
+        ram:382d cd 5f 33 78 7d 02        ; thunk entry: CALL FUN_ram_335f arg=0x7d78 page=0x02
+        ram:3833 cd 5f 33 bd 7d 02        ; thunk entry: CALL FUN_ram_335f arg=0x7dbd page=0x02
+        ram:3839 cd 5f 33 e1 7d 02        ; thunk entry: CALL FUN_ram_335f arg=0x7de1 page=0x02
+        ram:383f cd 5f 33 fa 7d 02        ; thunk entry: CALL FUN_ram_335f arg=0x7dfa page=0x02
+        ram:3845 cd 5f 33 8c 53 03        ; thunk entry: CALL FUN_ram_335f arg=0x538c page=0x03
+        ram:384b cd 5f 33 b8 6b 04        ; thunk entry: CALL FUN_ram_335f arg=0x6bb8 page=0x04
+        ram:3851 cd 5f 33 a4 76 02        ; thunk entry: CALL FUN_ram_335f arg=0x76a4 page=0x02
+        ram:3857 cd 5f 33 aa 76 02        ; thunk entry: CALL FUN_ram_335f arg=0x76aa page=0x02
+        ram:385d cd 5f 33 b0 76 02        ; thunk entry: CALL FUN_ram_335f arg=0x76b0 page=0x02
+        ram:3863 cd 5f 33 d5 5c 03        ; thunk entry: CALL FUN_ram_335f arg=0x5cd5 page=0x03
+        ram:3869 cd 5f 33 51 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x6151 page=0x05
+        ram:386f cd 5f 33 ff 7c 02        ; thunk entry: CALL FUN_ram_335f arg=0x7cff page=0x02
+        ram:3875 cd 5f 33 23 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x6123 page=0x05
+        ram:387b cd 5f 33 aa 5c 03        ; thunk entry: CALL FUN_ram_335f arg=0x5caa page=0x03
+        ram:3881 cd 5f 33 38 75 02        ; thunk entry: CALL FUN_ram_335f arg=0x7538 page=0x02
+        ram:3887 cd 5f 33 79 5f 05        ; thunk entry: CALL FUN_ram_335f arg=0x5f79 page=0x05
+        ram:388d cd 5f 33 06 63 05        ; thunk entry: CALL FUN_ram_335f arg=0x6306 page=0x05
+        ram:3893 cd 5f 33 c4 5f 05        ; thunk entry: CALL FUN_ram_335f arg=0x5fc4 page=0x05
+        ram:3899 cd 5f 33 c5 68 02        ; thunk entry: CALL FUN_ram_335f arg=0x68c5 page=0x02
+        ram:389f cd 5f 33 23 69 02        ; thunk entry: CALL FUN_ram_335f arg=0x6923 page=0x02
+        ram:38a5 cd 5f 33 41 69 02        ; thunk entry: CALL FUN_ram_335f arg=0x6941 page=0x02
+        ram:38ab cd 5f 33 49 69 02        ; thunk entry: CALL FUN_ram_335f arg=0x6949 page=0x02
+        ram:38b1 cd 5f 33 fe 6f 02        ; thunk entry: CALL FUN_ram_335f arg=0x6ffe page=0x02
+        ram:38b7 cd 5f 33 73 70 02        ; thunk entry: CALL FUN_ram_335f arg=0x7073 page=0x02
+        ram:38bd cd 5f 33 7c 70 02        ; thunk entry: CALL FUN_ram_335f arg=0x707c page=0x02
+        ram:38c3 cd 5f 33 91 70 02        ; thunk entry: CALL FUN_ram_335f arg=0x7091 page=0x02
+        ram:38c9 cd 5f 33 3f 78 05        ; thunk entry: CALL FUN_ram_335f arg=0x783f page=0x05
+        ram:38cf cd 5f 33 b6 67 02        ; thunk entry: CALL FUN_ram_335f arg=0x67b6 page=0x02
+        ram:38d5 cd 5f 33 37 68 02        ; thunk entry: CALL FUN_ram_335f arg=0x6837 page=0x02
+        ram:38db cd 5f 33 3f 68 02        ; thunk entry: CALL FUN_ram_335f arg=0x683f page=0x02
+        ram:38e1 cd 5f 33 47 68 02        ; thunk entry: CALL FUN_ram_335f arg=0x6847 page=0x02
+        ram:38e7 cd 5f 33 61 68 02        ; thunk entry: CALL FUN_ram_335f arg=0x6861 page=0x02
+        ram:38ed cd 5f 33 ae 68 02        ; thunk entry: CALL FUN_ram_335f arg=0x68ae page=0x02
+        ram:38f3 cd 5f 33 f8 60 05        ; thunk entry: CALL FUN_ram_335f arg=0x60f8 page=0x05
+        ram:38f9 cd 5f 33 0b 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x610b page=0x05
+        ram:38ff cd 5f 33 3e 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x613e page=0x05
+        ram:3905 cd 5f 33 1f 62 05        ; thunk entry: CALL FUN_ram_335f arg=0x621f page=0x05
+        ram:390b cd 5f 33 dd 60 05        ; thunk entry: CALL FUN_ram_335f arg=0x60dd page=0x05
+        ram:3911 cd 5f 33 28 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x6128 page=0x05
+        ram:3917 cd 5f 33 28 62 05        ; thunk entry: CALL FUN_ram_335f arg=0x6228 page=0x05
+        ram:391d cd 5f 33 b4 66 02        ; thunk entry: CALL FUN_ram_335f arg=0x66b4 page=0x02
+        ram:3923 cd 5f 33 12 67 02        ; thunk entry: CALL FUN_ram_335f arg=0x6712 page=0x02
+        ram:3929 cd 5f 33 32 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x6232 page=0x02
+        ram:392f cd 5f 33 4f 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x624f page=0x02
+        ram:3935 cd 5f 33 5b 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x625b page=0x02
+        ram:393b cd 5f 33 5e 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x625e page=0x02
+        ram:3941 cd 5f 33 62 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x6262 page=0x02
+        ram:3947 cd 5f 33 89 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x6289 page=0x02
+        ram:394d cd 5f 33 74 41 03        ; thunk entry: CALL FUN_ram_335f arg=0x4174 page=0x03
+        ram:3953 cd 5f 33 81 41 03        ; thunk entry: CALL FUN_ram_335f arg=0x4181 page=0x03
+        ram:3959 cd 5f 33 8e 41 03        ; thunk entry: CALL FUN_ram_335f arg=0x418e page=0x03
+        ram:395f cd 5f 33 6e 41 03        ; thunk entry: CALL FUN_ram_335f arg=0x416e page=0x03
+        ram:3965 cd 5f 33 d2 65 02        ; thunk entry: CALL FUN_ram_335f arg=0x65d2 page=0x02
+        ram:396b cd 5f 33 e5 65 02        ; thunk entry: CALL FUN_ram_335f arg=0x65e5 page=0x02
+        ram:3971 cd 5f 33 48 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x6248 page=0x02
+        ram:3977 cd 5f 33 6a 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x626a page=0x02
+        ram:397d cd 5f 33 82 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x6282 page=0x02
+        ram:3983 cd 5f 33 e5 7c 02        ; thunk entry: CALL FUN_ram_335f arg=0x7ce5 page=0x02
+        ram:3989 cd 5f 33 07 69 02        ; thunk entry: CALL FUN_ram_335f arg=0x6907 page=0x02
+        ram:398f cd 5f 33 0f 69 02        ; thunk entry: CALL FUN_ram_335f arg=0x690f page=0x02
+        ram:3995 cd 5f 33 9c 77 03        ; thunk entry: CALL FUN_ram_335f arg=0x779c page=0x03
+        ram:399b cd 5f 33 e5 70 02        ; thunk entry: CALL FUN_ram_335f arg=0x70e5 page=0x02
+        ram:39a1 cd 5f 33 84 63 02        ; thunk entry: CALL FUN_ram_335f arg=0x6384 page=0x02
+        ram:39a7 cd 5f 33 83 7d 03        ; thunk entry: CALL FUN_ram_335f arg=0x7d83 page=0x03
+        ram:39ad cd 5f 33 5e 69 02        ; thunk entry: CALL FUN_ram_335f arg=0x695e page=0x02
+        ram:39b3 cd 5f 33 b3 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7cb3 page=0x06
+        ram:39b9 cd 5f 33 6d 5a 06        ; thunk entry: CALL FUN_ram_335f arg=0x5a6d page=0x06
+        ram:39bf cd 5f 33 b0 73 03        ; thunk entry: CALL FUN_ram_335f arg=0x73b0 page=0x03
+        ram:39c5 cd 5f 33 9b 41 03        ; thunk entry: CALL FUN_ram_335f arg=0x419b page=0x03
+        ram:39cb cd 5f 33 d0 6a 02        ; thunk entry: CALL FUN_ram_335f arg=0x6ad0 page=0x02
+        ram:39d1 cd 5f 33 64 64 02        ; thunk entry: CALL FUN_ram_335f arg=0x6464 page=0x02
+        ram:39d7 cd 5f 33 c8 41 03        ; thunk entry: CALL FUN_ram_335f arg=0x41c8 page=0x03
+        ram:39dd cd 5f 33 23 42 03        ; thunk entry: CALL FUN_ram_335f arg=0x4223 page=0x03
+        ram:39e3 cd 5f 33 cc 41 03        ; thunk entry: CALL FUN_ram_335f arg=0x41cc page=0x03
+        ram:39e9 cd 5f 33 27 42 03        ; thunk entry: CALL FUN_ram_335f arg=0x4227 page=0x03
+        ram:39ef cd 5f 33 87 66 04        ; thunk entry: CALL FUN_ram_335f arg=0x6687 page=0x04
+        ram:39f5 cd 5f 33 02 40 03        ; thunk entry: CALL FUN_ram_335f arg=0x4002 page=0x03
+        ram:39fb cd 5f 33 02 49 05        ; thunk entry: CALL FUN_ram_335f arg=0x4902 page=0x05
+        ram:3a01 cd 5f 33 89 7a 02        ; thunk entry: CALL FUN_ram_335f arg=0x7a89 page=0x02
+        ram:3a07 cd 5f 33 fc 58 06        ; thunk entry: CALL FUN_ram_335f arg=0x58fc page=0x06
+        ram:3a0d cd 5f 33 b9 79 02        ; thunk entry: CALL FUN_ram_335f arg=0x79b9 page=0x02
+        ram:3a13 cd 5f 33 12 7a 02        ; thunk entry: CALL FUN_ram_335f arg=0x7a12 page=0x02
+        ram:3a19 cd 5f 33 85 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x6285 page=0x02
+        ram:3a1f cd 5f 33 52 4a 04        ; thunk entry: CALL FUN_ram_335f arg=0x4a52 page=0x04
+        ram:3a25 cd 5f 33 66 78 05        ; thunk entry: CALL FUN_ram_335f arg=0x7866 page=0x05
+        ram:3a2b cd 5f 33 8e 7e 02        ; thunk entry: CALL FUN_ram_335f arg=0x7e8e page=0x02
+        ram:3a31 cd 5f 33 eb 73 05        ; thunk entry: CALL FUN_ram_335f arg=0x73eb page=0x05
+        ram:3a37 cd 5f 33 52 78 05        ; thunk entry: CALL FUN_ram_335f arg=0x7852 page=0x05
+        ram:3a3d cd 5f 33 ea 65 02        ; thunk entry: CALL FUN_ram_335f arg=0x65ea page=0x02
+        ram:3a43 cd 5f 33 61 6a 02        ; thunk entry: CALL FUN_ram_335f arg=0x6a61 page=0x02
+        ram:3a49 cd 5f 33 9c 66 03        ; thunk entry: CALL FUN_ram_335f arg=0x669c page=0x03
+        ram:3a4f cd 5f 33 45 69 02        ; thunk entry: CALL FUN_ram_335f arg=0x6945 page=0x02
+        ram:3a55 cd 8c 33 13 40 05        ; thunk entry: CALL FUN_ram_338c arg=0x4013 page=0x05
+        ram:3a5b cd 5f 33 6a 65 02        ; thunk entry: CALL FUN_ram_335f arg=0x656a page=0x02
+        ram:3a61 cd 5f 33 37 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x6137 page=0x05
+        ram:3a67 cd 5f 33 7c 4c 02        ; thunk entry: CALL FUN_ram_335f arg=0x4c7c page=0x02
+        ram:3a6d cd 5f 33 99 54 02        ; thunk entry: CALL FUN_ram_335f arg=0x5499 page=0x02
+        ram:3a73 cd 5f 33 02 55 02        ; thunk entry: CALL FUN_ram_335f arg=0x5502 page=0x02
+        ram:3a79 cd 5f 33 5f 56 02        ; thunk entry: CALL FUN_ram_335f arg=0x565f page=0x02
+        ram:3a7f cd 5f 33 a9 56 02        ; thunk entry: CALL FUN_ram_335f arg=0x56a9 page=0x02
+        ram:3a85 cd 5f 33 df 57 02        ; thunk entry: CALL FUN_ram_335f arg=0x57df page=0x02
+        ram:3a8b cd 5f 33 85 5e 02        ; thunk entry: CALL FUN_ram_335f arg=0x5e85 page=0x02
+        ram:3a91 cd 5f 33 51 5f 02        ; thunk entry: CALL FUN_ram_335f arg=0x5f51 page=0x02
+        ram:3a97 cd 5f 33 1b 61 02        ; thunk entry: CALL FUN_ram_335f arg=0x611b page=0x02
+        ram:3a9d cd 5f 33 b6 56 02        ; thunk entry: CALL FUN_ram_335f arg=0x56b6 page=0x02
+        ram:3aa3 cd 5f 33 74 4c 02        ; thunk entry: CALL FUN_ram_335f arg=0x4c74 page=0x02
+        ram:3aa9 cd 5f 33 2f 7e 02        ; thunk entry: CALL FUN_ram_335f arg=0x7e2f page=0x02
+        ram:3aaf cd 5f 33 5b 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x645b page=0x03
+        ram:3ab5 cd 5f 33 43 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x6143 page=0x05
+        ram:3abb cd 5f 33 e5 61 05        ; thunk entry: CALL FUN_ram_335f arg=0x61e5 page=0x05
+        ram:3ac1 cd 5f 33 c9 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67c9 page=0x03
+        ram:3ac7 cd 5f 33 e7 67 03        ; thunk entry: CALL FUN_ram_335f arg=0x67e7 page=0x03
+        ram:3acd cd 5f 33 ea 60 05        ; thunk entry: CALL FUN_ram_335f arg=0x60ea page=0x05
+        ram:3ad3 cd 5f 33 69 5b 03        ; thunk entry: CALL FUN_ram_335f arg=0x5b69 page=0x03
+        ram:3ad9 cd 5f 33 35 71 02        ; thunk entry: CALL FUN_ram_335f arg=0x7135 page=0x02
+        ram:3adf cd 5f 33 3a 56 02        ; thunk entry: CALL FUN_ram_335f arg=0x563a page=0x02
+        ram:3ae5 cd 5f 33 4b 62 02        ; thunk entry: CALL FUN_ram_335f arg=0x624b page=0x02
+        ram:3aeb cd 5f 33 31 45 02        ; thunk entry: CALL FUN_ram_335f arg=0x4531 page=0x02
+        ram:3af1 cd 5f 33 28 49 02        ; thunk entry: CALL FUN_ram_335f arg=0x4928 page=0x02
+        ram:3af7 cd 5f 33 f9 49 02        ; thunk entry: CALL FUN_ram_335f arg=0x49f9 page=0x02
+        ram:3afd cd 5f 33 1b 4b 02        ; thunk entry: CALL FUN_ram_335f arg=0x4b1b page=0x02
+        ram:3b03 cd 5f 33 1f 4b 02        ; thunk entry: CALL FUN_ram_335f arg=0x4b1f page=0x02
+        ram:3b09 cd 5f 33 23 4b 02        ; thunk entry: CALL FUN_ram_335f arg=0x4b23 page=0x02
+        ram:3b0f cd 5f 33 3c 4b 02        ; thunk entry: CALL FUN_ram_335f arg=0x4b3c page=0x02
+        ram:3b15 cd 5f 33 40 4b 02        ; thunk entry: CALL FUN_ram_335f arg=0x4b40 page=0x02
+        ram:3b1b cd 5f 33 44 4b 02        ; thunk entry: CALL FUN_ram_335f arg=0x4b44 page=0x02
+        ram:3b21 cd 5f 33 00 40 02        ; thunk entry: CALL FUN_ram_335f arg=0x4000 page=0x02
+        ram:3b27 cd 5f 33 03 40 02        ; thunk entry: CALL FUN_ram_335f arg=0x4003 page=0x02
+        ram:3b2d cd 5f 33 12 40 02        ; thunk entry: CALL FUN_ram_335f arg=0x4012 page=0x02
+        ram:3b33 cd 5f 33 15 40 02        ; thunk entry: CALL FUN_ram_335f arg=0x4015 page=0x02
+        ram:3b39 cd 5f 33 4d 40 02        ; thunk entry: CALL FUN_ram_335f arg=0x404d page=0x02
+        ram:3b3f cd 5f 33 d3 40 02        ; thunk entry: CALL FUN_ram_335f arg=0x40d3 page=0x02
+        ram:3b45 cd 5f 33 a1 44 02        ; thunk entry: CALL FUN_ram_335f arg=0x44a1 page=0x02
+        ram:3b4b cd 5f 33 b5 44 02        ; thunk entry: CALL FUN_ram_335f arg=0x44b5 page=0x02
+        ram:3b51 cd 5f 33 2f 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x452f page=0x06
+        ram:3b57 cd 5f 33 55 6c 01        ; thunk entry: CALL FUN_ram_335f arg=0x6c55 page=0x01
+        ram:3b5d cd 5f 33 f4 6c 01        ; thunk entry: CALL FUN_ram_335f arg=0x6cf4 page=0x01
+        ram:3b63 cd 5f 33 fe 6c 01        ; thunk entry: CALL FUN_ram_335f arg=0x6cfe page=0x01
+        ram:3b69 cd 5f 33 25 6d 01        ; thunk entry: CALL FUN_ram_335f arg=0x6d25 page=0x01
+        ram:3b6f cd 5f 33 cb 6d 01        ; thunk entry: CALL FUN_ram_335f arg=0x6dcb page=0x01
+        ram:3b75 cd 5f 33 df 6d 01        ; thunk entry: CALL FUN_ram_335f arg=0x6ddf page=0x01
+        ram:3b7b cd 5f 33 fc 6d 01        ; thunk entry: CALL FUN_ram_335f arg=0x6dfc page=0x01
+        ram:3b81 cd 5f 33 21 6e 01        ; thunk entry: CALL FUN_ram_335f arg=0x6e21 page=0x01
+        ram:3b87 cd 5f 33 2b 6e 01        ; thunk entry: CALL FUN_ram_335f arg=0x6e2b page=0x01
+        ram:3b8d cd 8c 33 5b 6f 01        ; thunk entry: CALL FUN_ram_338c arg=0x6f5b page=0x01
+        ram:3b93 cd 5f 33 7e 6f 01        ; thunk entry: CALL FUN_ram_335f arg=0x6f7e page=0x01
+        ram:3b99 cd 5f 33 e7 70 01        ; thunk entry: CALL FUN_ram_335f arg=0x70e7 page=0x01
+        ram:3b9f cd 5f 33 c6 71 01        ; thunk entry: CALL FUN_ram_335f arg=0x71c6 page=0x01
+        ram:3ba5 cd 8c 33 2e 72 01        ; thunk entry: CALL FUN_ram_338c arg=0x722e page=0x01
+        ram:3bab cd 5f 33 2e 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x722e page=0x01
+        ram:3bb1 cd 8c 33 49 72 01        ; thunk entry: CALL FUN_ram_338c arg=0x7249 page=0x01
+        ram:3bb7 cd 5f 33 8e 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x728e page=0x01
+        ram:3bbd cd 5f 33 c0 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x72c0 page=0x01
+        ram:3bc3 cd 5f 33 e7 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x72e7 page=0x01
+        ram:3bc9 cd 5f 33 d2 62 04        ; thunk entry: CALL FUN_ram_335f arg=0x62d2 page=0x04
+        ram:3bcf cd 5f 33 f7 62 04        ; thunk entry: CALL FUN_ram_335f arg=0x62f7 page=0x04
+        ram:3bd5 cd 5f 33 0a 63 04        ; thunk entry: CALL FUN_ram_335f arg=0x630a page=0x04
+        ram:3bdb cd 5f 33 1d 63 04        ; thunk entry: CALL FUN_ram_335f arg=0x631d page=0x04
+        ram:3be1 cd 5f 33 d9 71 01        ; thunk entry: CALL FUN_ram_335f arg=0x71d9 page=0x01
+        ram:3be7 cd 5f 33 b2 6b 04        ; thunk entry: CALL FUN_ram_335f arg=0x6bb2 page=0x04
+        ram:3bed cd 5f 33 f0 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7cf0 page=0x06
+        ram:3bf3 cd 5f 33 b6 6b 04        ; thunk entry: CALL FUN_ram_335f arg=0x6bb6 page=0x04
+        ram:3bf9 cd 5f 33 51 4f 04        ; thunk entry: CALL FUN_ram_335f arg=0x4f51 page=0x04
+        ram:3bff cd 5f 33 6b 74 03        ; thunk entry: CALL FUN_ram_335f arg=0x746b page=0x03
+        ram:3c05 cd 5f 33 bf 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47bf page=0x01
+        ram:3c0b cd 5f 33 d5 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47d5 page=0x01
+        ram:3c11 cd 5f 33 eb 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47eb page=0x01
+        ram:3c17 cd 5f 33 f1 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47f1 page=0x01
+        ram:3c1d cd 5f 33 f6 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47f6 page=0x01
+        ram:3c23 cd 5f 33 fa 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47fa page=0x01
+        ram:3c29 cd 5f 33 5d 48 01        ; thunk entry: CALL FUN_ram_335f arg=0x485d page=0x01
+        ram:3c2f cd 5f 33 ee 48 01        ; thunk entry: CALL FUN_ram_335f arg=0x48ee page=0x01
+        ram:3c35 cd 5f 33 24 49 01        ; thunk entry: CALL FUN_ram_335f arg=0x4924 page=0x01
+        ram:3c3b cd 5f 33 6e 4e 01        ; thunk entry: CALL FUN_ram_335f arg=0x4e6e page=0x01
+        ram:3c41 cd 5f 33 bd 7e 02        ; thunk entry: CALL FUN_ram_335f arg=0x7ebd page=0x02
+        ram:3c47 cd 5f 33 c0 7e 02        ; thunk entry: CALL FUN_ram_335f arg=0x7ec0 page=0x02
+        ram:3c4d cd 5f 33 b6 7f 02        ; thunk entry: CALL FUN_ram_335f arg=0x7fb6 page=0x02
+        ram:3c53 cd 5f 33 b8 46 01        ; thunk entry: CALL FUN_ram_335f arg=0x46b8 page=0x01
+        ram:3c59 cd 5f 33 f5 46 01        ; thunk entry: CALL FUN_ram_335f arg=0x46f5 page=0x01
+        ram:3c5f cd 5f 33 f8 66 04        ; thunk entry: CALL FUN_ram_335f arg=0x66f8 page=0x04
+        ram:3c65 cd 5f 33 bd 5e 04        ; thunk entry: CALL FUN_ram_335f arg=0x5ebd page=0x04
+        ram:3c6b cd 5f 33 88 69 04        ; thunk entry: CALL FUN_ram_335f arg=0x6988 page=0x04
+        ram:3c71 cd 5f 33 94 69 04        ; thunk entry: CALL FUN_ram_335f arg=0x6994 page=0x04
+        ram:3c77 cd 5f 33 d1 70 01        ; thunk entry: CALL FUN_ram_335f arg=0x70d1 page=0x01
+        ram:3c7d cd 5f 33 16 46 06        ; thunk entry: CALL FUN_ram_335f arg=0x4616 page=0x06
+        ram:3c83 cd 5f 33 2e 46 06        ; thunk entry: CALL FUN_ram_335f arg=0x462e page=0x06
+        ram:3c89 cd 5f 33 3c 46 01        ; thunk entry: CALL FUN_ram_335f arg=0x463c page=0x01
+        ram:3c8f cd 5f 33 1f 7c 03        ; thunk entry: CALL FUN_ram_335f arg=0x7c1f page=0x03
+        ram:3c95 cd 5f 33 49 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x7249 page=0x01
+        ram:3c9b cd 5f 33 c8 48 06        ; thunk entry: CALL FUN_ram_335f arg=0x48c8 page=0x06
+        ram:3ca1 cd 5f 33 20 59 07        ; thunk entry: CALL FUN_ram_335f arg=0x5920 page=0x07
+        ram:3ca7 cd 5f 33 f4 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x45f4 page=0x06
+        ram:3cad cd 5f 33 5a 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x455a page=0x06
+        ram:3cb3 cd 5f 33 04 47 06        ; thunk entry: CALL FUN_ram_335f arg=0x4704 page=0x06
+        ram:3cb9 cd 5f 33 bf 48 06        ; thunk entry: CALL FUN_ram_335f arg=0x48bf page=0x06
+        ram:3cbf cd 5f 33 20 46 06        ; thunk entry: CALL FUN_ram_335f arg=0x4620 page=0x06
+        ram:3cc5 cd 5f 33 b5 65 07        ; thunk entry: CALL FUN_ram_335f arg=0x65b5 page=0x07
+        ram:3ccb cd 5f 33 7e 49 06        ; thunk entry: CALL FUN_ram_335f arg=0x497e page=0x06
+        ram:3cd1 cd 5f 33 c9 58 07        ; thunk entry: CALL FUN_ram_335f arg=0x58c9 page=0x07
+        ram:3cd7 cd 5f 33 28 49 06        ; thunk entry: CALL FUN_ram_335f arg=0x4928 page=0x06
+        ram:3cdd cd 5f 33 63 5b 03        ; thunk entry: CALL FUN_ram_335f arg=0x5b63 page=0x03
+        ram:3ce3 cd 5f 33 00 4a 07        ; thunk entry: CALL FUN_ram_335f arg=0x4a00 page=0x07
+        ram:3ce9 cd 5f 33 c0 4a 07        ; thunk entry: CALL FUN_ram_335f arg=0x4ac0 page=0x07
+        ram:3cef cd 8c 33 eb 4a 07        ; thunk entry: CALL FUN_ram_338c arg=0x4aeb page=0x07
+        ram:3cf5 cd 8c 33 15 4b 07        ; thunk entry: CALL FUN_ram_338c arg=0x4b15 page=0x07
+        ram:3cfb cd 8c 33 f9 4a 07        ; thunk entry: CALL FUN_ram_338c arg=0x4af9 page=0x07
+        ram:3d01 cd 8c 33 07 4b 07        ; thunk entry: CALL FUN_ram_338c arg=0x4b07 page=0x07
+        ram:3d07 cd 8c 33 77 46 06        ; thunk entry: CALL FUN_ram_338c arg=0x4677 page=0x06
+        ram:3d0d cd 8c 33 93 46 06        ; thunk entry: CALL FUN_ram_338c arg=0x4693 page=0x06
+        ram:3d13 cd 8c 33 a4 46 06        ; thunk entry: CALL FUN_ram_338c arg=0x46a4 page=0x06
+        ram:3d19 cd 8c 33 d5 46 06        ; thunk entry: CALL FUN_ram_338c arg=0x46d5 page=0x06
+        ram:3d1f cd 8c 33 45 46 06        ; thunk entry: CALL FUN_ram_338c arg=0x4645 page=0x06
+        ram:3d25 cd 8c 33 5f 46 06        ; thunk entry: CALL FUN_ram_338c arg=0x465f page=0x06
+        ram:3d2b cd 8c 33 a2 49 06        ; thunk entry: CALL FUN_ram_338c arg=0x49a2 page=0x06
+        ram:3d31 cd 5f 33 b2 45 06        ; thunk entry: CALL FUN_ram_335f arg=0x45b2 page=0x06
+        ram:3d37 cd 8c 33 55 48 06        ; thunk entry: CALL FUN_ram_338c arg=0x4855 page=0x06
+        ram:3d3d cd 5f 33 b6 48 06        ; thunk entry: CALL FUN_ram_335f arg=0x48b6 page=0x06
+        ram:3d43 cd 5f 33 38 46 06        ; thunk entry: CALL FUN_ram_335f arg=0x4638 page=0x06
+        ram:3d49 cd 8c 33 9d 64 06        ; thunk entry: CALL FUN_ram_338c arg=0x649d page=0x06
+        ram:3d4f cd 5f 33 1d 47 06        ; thunk entry: CALL FUN_ram_335f arg=0x471d page=0x06
+        ram:3d55 cd 5f 33 a1 47 06        ; thunk entry: CALL FUN_ram_335f arg=0x47a1 page=0x06
+        ram:3d5b cd 8c 33 cb 47 06        ; thunk entry: CALL FUN_ram_338c arg=0x47cb page=0x06
+        ram:3d61 cd 5f 33 19 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x7219 page=0x01
+        ram:3d67 cd 5f 33 06 6f 01        ; thunk entry: CALL FUN_ram_335f arg=0x6f06 page=0x01
+        ram:3d6d cd 5f 33 6f 57 07        ; thunk entry: CALL FUN_ram_335f arg=0x576f page=0x07
+        ram:3d73 cd 5f 33 cc 4a 07        ; thunk entry: CALL FUN_ram_335f arg=0x4acc page=0x07
+        ram:3d79 cd 5f 33 9d 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x729d page=0x01
+        ram:3d7f cd 5f 33 76 53 06        ; thunk entry: CALL FUN_ram_335f arg=0x5376 page=0x06
+        ram:3d85 cd 5f 33 b9 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47b9 page=0x01
+        ram:3d8b cd 5f 33 33 70 01        ; thunk entry: CALL FUN_ram_335f arg=0x7033 page=0x01
+        ram:3d91 cd 5f 33 f2 6f 06        ; thunk entry: CALL FUN_ram_335f arg=0x6ff2 page=0x06
+        ram:3d97 cd 5f 33 6f 6f 01        ; thunk entry: CALL FUN_ram_335f arg=0x6f6f page=0x01
+        ram:3d9d cd 5f 33 f8 6e 01        ; thunk entry: CALL FUN_ram_335f arg=0x6ef8 page=0x01
+        ram:3da3 cd 5f 33 d4 6e 01        ; thunk entry: CALL FUN_ram_335f arg=0x6ed4 page=0x01
+        ram:3da9 cd 5f 33 65 6e 01        ; thunk entry: CALL FUN_ram_335f arg=0x6e65 page=0x01
+        ram:3daf cd 5f 33 5b 6e 01        ; thunk entry: CALL FUN_ram_335f arg=0x6e5b page=0x01
+        ram:3db5 cd 5f 33 5d 4a 01        ; thunk entry: CALL FUN_ram_335f arg=0x4a5d page=0x01
+        ram:3dbb cd 5f 33 5b 6f 01        ; thunk entry: CALL FUN_ram_335f arg=0x6f5b page=0x01
+        ram:3dc1 cd 5f 33 84 70 01        ; thunk entry: CALL FUN_ram_335f arg=0x7084 page=0x01
+        ram:3dc7 cd 5f 33 a7 70 01        ; thunk entry: CALL FUN_ram_335f arg=0x70a7 page=0x01
+        ram:3dcd cd 5f 33 58 6b 01        ; thunk entry: CALL FUN_ram_335f arg=0x6b58 page=0x01
+        ram:3dd3 cd 5f 33 f9 6f 01        ; thunk entry: CALL FUN_ram_335f arg=0x6ff9 page=0x01
+        ram:3dd9 cd 5f 33 b7 6c 01        ; thunk entry: CALL FUN_ram_335f arg=0x6cb7 page=0x01
+        ram:3ddf cd 8c 33 12 5d 07        ; thunk entry: CALL FUN_ram_338c arg=0x5d12 page=0x07
+        ram:3de5 cd 8c 33 bd 5d 07        ; thunk entry: CALL FUN_ram_338c arg=0x5dbd page=0x07
+        ram:3deb cd 8c 33 b6 7e 03        ; thunk entry: CALL FUN_ram_338c arg=0x7eb6 page=0x03
+        ram:3df1 cd 5f 33 e8 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7ce8 page=0x06
+        ram:3df7 cd 5f 33 ed 7c 06        ; thunk entry: CALL FUN_ram_335f arg=0x7ced page=0x06
+        ram:3dfd cd 8c 33 22 43 02        ; thunk entry: CALL FUN_ram_338c arg=0x4322 page=0x02
+        ram:3e03 cd 8c 33 40 43 02        ; thunk entry: CALL FUN_ram_338c arg=0x4340 page=0x02
+        ram:3e09 cd 8c 33 4f 44 02        ; thunk entry: CALL FUN_ram_338c arg=0x444f page=0x02
+        ram:3e0f cd 8c 33 db 41 02        ; thunk entry: CALL FUN_ram_338c arg=0x41db page=0x02
+        ram:3e15 cd 8c 33 df 41 02        ; thunk entry: CALL FUN_ram_338c arg=0x41df page=0x02
+        ram:3e1b cd 8c 33 5f 43 02        ; thunk entry: CALL FUN_ram_338c arg=0x435f page=0x02
+        ram:3e21 cd 8c 33 d7 41 02        ; thunk entry: CALL FUN_ram_338c arg=0x41d7 page=0x02
+        ram:3e27 cd 5f 33 98 40 02        ; thunk entry: CALL FUN_ram_335f arg=0x4098 page=0x02
+        ram:3e2d cd 5f 33 b2 7f 03        ; thunk entry: CALL FUN_ram_335f arg=0x7fb2 page=0x03
+        ram:3e33 cd 5f 33 f4 45 01        ; thunk entry: CALL FUN_ram_335f arg=0x45f4 page=0x01
+        ram:3e39 cd 5f 33 1d 70 01        ; thunk entry: CALL FUN_ram_335f arg=0x701d page=0x01
+        ram:3e3f cd 5f 33 a3 45 01        ; thunk entry: CALL FUN_ram_335f arg=0x45a3 page=0x01
+        ram:3e45 cd 5f 33 db 6c 01        ; thunk entry: CALL FUN_ram_335f arg=0x6cdb page=0x01
+        ram:3e4b cd 5f 33 c6 70 01        ; thunk entry: CALL FUN_ram_335f arg=0x70c6 page=0x01
+        ram:3e51 cd 5f 33 cd 42 01        ; thunk entry: CALL FUN_ram_335f arg=0x42cd page=0x01
+        ram:3e57 cd 5f 33 73 60 04        ; thunk entry: CALL FUN_ram_335f arg=0x6073 page=0x04
+        ram:3e5d cd 5f 33 83 45 01        ; thunk entry: CALL FUN_ram_335f arg=0x4583 page=0x01
+        ram:3e63 cd 5f 33 46 7e 03        ; thunk entry: CALL FUN_ram_335f arg=0x7e46 page=0x03
+        ram:3e69 cd 5f 33 27 64 03        ; thunk entry: CALL FUN_ram_335f arg=0x6427 page=0x03
+        ram:3e6f cd 5f 33 65 7c 03        ; thunk entry: CALL FUN_ram_335f arg=0x7c65 page=0x03
+        ram:3e75 cd 5f 33 f0 50 04        ; thunk entry: CALL FUN_ram_335f arg=0x50f0 page=0x04
+        ram:3e7b cd 5f 33 01 72 01        ; thunk entry: CALL FUN_ram_335f arg=0x7201 page=0x01
+        ram:3e81 cd 5f 33 2c 46 01        ; thunk entry: CALL FUN_ram_335f arg=0x462c page=0x01
+        ram:3e87 cd 5f 33 79 4b 04        ; thunk entry: CALL FUN_ram_335f arg=0x4b79 page=0x04
+        ram:3e8d cd 5f 33 de 45 01        ; thunk entry: CALL FUN_ram_335f arg=0x45de page=0x01
+        ram:3e93 cd 5f 33 e9 71 01        ; thunk entry: CALL FUN_ram_335f arg=0x71e9 page=0x01
+        ram:3e99 cd 5f 33 ee 4b 01        ; thunk entry: CALL FUN_ram_335f arg=0x4bee page=0x01
+        ram:3e9f cd 5f 33 09 4c 01        ; thunk entry: CALL FUN_ram_335f arg=0x4c09 page=0x01
+        ram:3ea5 cd 5f 33 dd 47 01        ; thunk entry: CALL FUN_ram_335f arg=0x47dd page=0x01
+        ram:3eab cd 5f 33 16 73 01        ; thunk entry: CALL FUN_ram_335f arg=0x7316 page=0x01
+        ram:3eb1 cd 5f 33 24 46 06        ; thunk entry: CALL FUN_ram_335f arg=0x4624 page=0x06
+        ram:3eb7 cd 5f 33 18 49 01        ; thunk entry: CALL FUN_ram_335f arg=0x4918 page=0x01
+        ram:3ebd cd 5f 33 bf 49 01        ; thunk entry: CALL FUN_ram_335f arg=0x49bf page=0x01
+        ram:3ec3 cd 5f 33 fa 48 01        ; thunk entry: CALL FUN_ram_335f arg=0x48fa page=0x01
+        ram:3ec9 cd 5f 33 cc 48 01        ; thunk entry: CALL FUN_ram_335f arg=0x48cc page=0x01
+        ram:3ecf cd 5f 33 dd 48 01        ; thunk entry: CALL FUN_ram_335f arg=0x48dd page=0x01
+        ram:3ed5 cd 5f 33 11 43 01        ; thunk entry: CALL FUN_ram_335f arg=0x4311 page=0x01
+        ram:3edb cd 5f 33 3e 63 07        ; thunk entry: CALL FUN_ram_335f arg=0x633e page=0x07
+        ram:3ee1 cd 5f 33 7c 41 07        ; thunk entry: CALL FUN_ram_335f arg=0x417c page=0x07
+        ram:3ee7 cd 5f 33 5d 41 07        ; thunk entry: CALL FUN_ram_335f arg=0x415d page=0x07
+        ram:3eed cd 8c 33 11 43 01        ; thunk entry: CALL FUN_ram_338c arg=0x4311 page=0x01
+        ram:3ef3 cd 8c 33 eb 5a 06        ; thunk entry: CALL FUN_ram_338c arg=0x5aeb page=0x06
+        ram:3ef9 cd 8c 33 d5 66 06        ; thunk entry: CALL FUN_ram_338c arg=0x66d5 page=0x06
+        ram:3eff cd 8c 33 8c 5e 07        ; thunk entry: CALL FUN_ram_338c arg=0x5e8c page=0x07
+        ram:3f05 cd 8c 33 fa 79 04        ; thunk entry: CALL FUN_ram_338c arg=0x79fa page=0x04
+        ram:3f0b cd 8c 33 87 41 06        ; thunk entry: CALL FUN_ram_338c arg=0x4187 page=0x06
+        ram:3f10 cd 8c 33 14 7f 07        ; thunk entry: CALL FUN_ram_338c arg=0x7f14 page=0x07
+        ram:3f17 cd 8c 33 70 43 07        ; thunk entry: CALL FUN_ram_338c arg=0x4370 page=0x07
+        ram:3f1d cd 8c 33 3b 60 06        ; thunk entry: CALL FUN_ram_338c arg=0x603b page=0x06
+        ram:3f23 cd 8c 33 f3 4e 04        ; thunk entry: CALL FUN_ram_338c arg=0x4ef3 page=0x04
+        ram:3f29 cd 8c 33 c4 4e 04        ; thunk entry: CALL FUN_ram_338c arg=0x4ec4 page=0x04
+        ram:3f2f cd 8c 33 ab 49 06        ; thunk entry: CALL FUN_ram_338c arg=0x49ab page=0x06
+        ram:3f35 cd 8c 33 0a 66 06        ; thunk entry: CALL FUN_ram_338c arg=0x660a page=0x06
+        ram:343b cd 8c 33 62 65 01        ; thunk entry: CALL FUN_ram_338c arg=0x6562 page=0x01
+        ram:3f41 cd 8c 33 d6 7f 06        ; thunk entry: CALL FUN_ram_338c arg=0x7fd6 page=0x06
+        ram:3f47 cd 8c 33 f7 74 06        ; thunk entry: CALL FUN_ram_338c arg=0x74f7 page=0x06
+        ram:3f4d cd 8c 33 00 40 01        ; thunk entry: CALL FUN_ram_338c arg=0x4000 page=0x01
+        ram:3f53 cd 8c 33 26 65 01        ; thunk entry: CALL FUN_ram_338c arg=0x6526 page=0x01
+        ram:3f59 cd 8c 33 00 40 07        ; thunk entry: CALL FUN_ram_338c arg=0x4000 page=0x07
+        ram:3f5f cd 8c 33 3f 50 06        ; thunk entry: CALL FUN_ram_338c arg=0x503f page=0x06
+        ram:3f65 cd 8c 33 50 6f 06        ; thunk entry: CALL FUN_ram_338c arg=0x6f50 page=0x06
+        ram:3f6b cd 8c 33 13 72 06        ; thunk entry: CALL FUN_ram_338c arg=0x7213 page=0x06
+        ram:3f71 cd 8c 33 bd 72 06        ; thunk entry: CALL FUN_ram_338c arg=0x72bd page=0x06
+        ram:3f77 cd 8c 33 12 7e 06        ; thunk entry: CALL FUN_ram_338c arg=0x7e12 page=0x06
+        ram:3f7d cd 8c 33 aa 7f 06        ; thunk entry: CALL FUN_ram_338c arg=0x7faa page=0x06
+        ram:3f83 cd 8c 33 04 43 06        ; thunk entry: CALL FUN_ram_338c arg=0x4304 page=0x06
+        ram:3f89 cd 8c 33 00 40 06        ; thunk entry: CALL FUN_ram_338c arg=0x4000 page=0x06
+        ram:3f8f cd 8c 33 3f 78 04        ; thunk entry: CALL FUN_ram_338c arg=0x783f page=0x04
+        ram:3f95 cd 8c 33 44 78 04        ; thunk entry: CALL FUN_ram_338c arg=0x7844 page=0x04
+        ram:3f9b cd 8c 33 49 78 04        ; thunk entry: CALL FUN_ram_338c arg=0x7849 page=0x04
+        ram:3fa1 cd 8c 33 73 6c 05        ; thunk entry: CALL FUN_ram_338c arg=0x6c73 page=0x05
+        ram:3fa7 cd 8c 33 87 7a 03        ; thunk entry: CALL FUN_ram_338c arg=0x7a87 page=0x03
+        ram:3fad cd 8c 33 13 5c 07        ; thunk entry: CALL FUN_ram_338c arg=0x5c13 page=0x07
+        ram:3fb3 cd 8c 33 bd 4b 01        ; thunk entry: CALL FUN_ram_338c arg=0x4bbd page=0x01
+        ram:3fb9 cd 8c 33 0f 4e 01        ; thunk entry: CALL FUN_ram_338c arg=0x4e0f page=0x01
+        ram:3fbf cd 5f 33 d1 45 01        ; thunk entry: CALL FUN_ram_335f arg=0x45d1 page=0x01
+        ram:3fc5 cd 5f 33 2d 6c 01        ; thunk entry: CALL FUN_ram_335f arg=0x6c2d page=0x01
+        ; 8 Unused table entries
+        ram:3fcb ff ff ff ff ff ff        ; 
+        ram:3fd1 ff ff ff ff ff ff        ; 
+        ram:3fd7 ff ff ff ff ff ff        ; 
+        ram:3fdd ff ff ff ff ff ff        ; 
+        ram:3fe3 ff ff ff ff ff ff        ; 
+        ram:3fe9 ff ff ff ff ff ff        ; 
+        ram:3fef ff ff ff ff ff ff        ; 
+        ram:3ff5 ff ff ff ff ff ff        ;
+        ;  Alignment padding to end of 16k block
+        ram:3ffb ff ff ff ff ff           ; 
