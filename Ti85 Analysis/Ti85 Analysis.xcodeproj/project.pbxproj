@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		0F313B5D2F9184FF00D94759 /* ti85_p5.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p5.s; sourceTree = "<group>"; };
+		0F313B5E2F91850000D94759 /* ti85_p3.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p3.s; sourceTree = "<group>"; };
+		0F313B5F2F91850000D94759 /* ti85_p7.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p7.s; sourceTree = "<group>"; };
+		0F313B602F91850000D94759 /* ti85_p6.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p6.s; sourceTree = "<group>"; };
+		0F313B612F91850000D94759 /* ti85_p1.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p1.s; sourceTree = "<group>"; };
+		0F313B622F91850000D94759 /* ti85_p2.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p2.s; sourceTree = "<group>"; };
+		0F313B632F91850000D94759 /* ti85_p4.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = ti85_p4.s; sourceTree = "<group>"; };
 		0F7149E62F912062001B3415 /* acconfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = acconfig.h; sourceTree = "<group>"; };
 		0F7149E72F912062001B3415 /* aclocal.m4 */ = {isa = PBXFileReference; lastKnownFileType = text; path = aclocal.m4; sourceTree = "<group>"; };
 		0F7149E82F912062001B3415 /* AUTHORS */ = {isa = PBXFileReference; lastKnownFileType = text; path = AUTHORS; sourceTree = "<group>"; };
@@ -232,6 +239,13 @@
 		0F714A462F912076001B3415 /* ROM */ = {
 			isa = PBXGroup;
 			children = (
+				0F313B612F91850000D94759 /* ti85_p1.s */,
+				0F313B622F91850000D94759 /* ti85_p2.s */,
+				0F313B5E2F91850000D94759 /* ti85_p3.s */,
+				0F313B632F91850000D94759 /* ti85_p4.s */,
+				0F313B5D2F9184FF00D94759 /* ti85_p5.s */,
+				0F313B602F91850000D94759 /* ti85_p6.s */,
+				0F313B5F2F91850000D94759 /* ti85_p7.s */,
 				0F714A472F91209E001B3415 /* ti85_p0.s */,
 			);
 			path = ROM;
