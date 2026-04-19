@@ -2852,7 +2852,7 @@ l5231h:
 	ram:523d 04             inc b                	;.
 	ram:523e ee 63          xor 063h             	;. c
 	ram:5240 f6 63          or 063h              	;. c
-	ram:ld iyh,e                defb 0fdh,063h       	;;5242	fd 63		. c
+	ram:5242 fd 63          ld iyh,e                ;defb 0fdh,063h ;. c
 l5244h:
 	ram:5244 03             inc bc               	;.
 	ram:5245 64             ld h,h               	;d
@@ -3122,7 +3122,7 @@ l5366h:
 	ram:536d 09             add hl,bc            	;.
 	ram:536e f1             pop af               	;.
 	ram:536f 08             ex af,af'            	;.
-	ram:illegal sequence                defb 0fdh,008h,008h  	;;5370	fd 08 08	. . .
+    ram:5370 fd 08 08       ;illegal sequence                defb 0fdh,008h,008h  	;. . .
 	ram:5373 09             add hl,bc            	;.
 	ram:5374 12             ld (de),a            	;.
 	ram:5375 09             add hl,bc            	;.
@@ -3161,6 +3161,7 @@ l5383h:
 	ram:53a0 e3             ex (sp),hl           	;.
 	ram:53a1 60             ld h,b               	;`
 	ram:53a2 e8             ret pe               	;.
+ ; BEGIN Looks like data block
 	ram:53a3 60             ld h,b               	;`
 	ram:53a4 ed 60          in h,(c)             	;. `
 	ram:53a6 f4 60 fa       call p,0fa60h        	;. ` .
@@ -3197,7 +3198,7 @@ l5383h:
 	ram:53c8 97             sub a                	;.
 	ram:53c9 64             ld h,h               	;d
 	ram:53ca f6 5b          or 05bh              	;. [
-	ram:illegal sequence                defb 0fdh,05bh,0cbh  	;;53cc	fd 5b cb	. [ .
+    ram:53cc fd 5b cb       ;illegal sequence   defb 0fdh,05bh,0cbh  	;. [ .
 	ram:53cf 5e             ld e,(hl)            	;^
 	ram:53d0 d2 5e 08       jp nc,0085eh         	;. ^ .
 	ram:53d3 09             add hl,bc            	;.
@@ -3293,6 +3294,7 @@ l5383h:
 	ram:5431 5a             ld e,d               	;Z
 	ram:5432 6a             ld l,d               	;j
 	ram:5433 5a             ld e,d               	;Z
+; END -- looks like data block
 l5434h:
 	ram:5434 07             rlca                 	;.
 	ram:5435 0d             dec c                	;.
@@ -3933,6 +3935,7 @@ l56d3h:
 	ram:56e9 15             dec d                	;.
 	ram:56ea 63             ld h,e               	;c
 	ram:56eb c0             ret nz               	;.
+ ; BEGIN - Looks like data block
 	ram:56ec 62             ld h,d               	;b
 	ram:56ed 01 62 94       ld bc,09462h         	;. b .
 	ram:56f0 61             ld h,c               	;a
@@ -12274,7 +12277,10 @@ l7ee6h:
 	ram:7f58 00             nop                  	;.
 	ram:7f59 06 04          ld b,004h            	;. .
 	ram:7f5b 06 04          ld b,004h            	;. .
-	ram:7f5d 06 ff          ld b,0ffh            	;. .
+	ram:7f5d 06                                     ;.
+  ; END - Looks like data block
+  ; Unused fills 16k block
+    ram:7f5e ff             rst 38h                 ;.
 	ram:7f5f ff             rst 38h              	;.
 	ram:7f60 ff             rst 38h              	;.
 	ram:7f61 ff             rst 38h              	;.

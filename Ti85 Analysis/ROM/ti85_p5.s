@@ -905,6 +905,7 @@ l4784h:
 l4785h:
 	ram:4785 10 fd          djnz l4784h          	;. .
 	ram:4787 c9             ret                  	;.
+; BEGIN looks like data table
 l4788h:
 	ram:4788 00             nop                  	;.
 	ram:4789 fe fb          cp 0fbh              	;. .
@@ -969,6 +970,7 @@ l47bah:
 	ram:47c1 00             nop                  	;.
 	ram:47c2 00             nop                  	;.
 	ram:47c3 00             nop                  	;.
+ ; END looks like data table
 	ram:47c4 fd cb 0f 4e    bit 1,(iy+00fh)      	;. . . N
 	ram:47c8 c2 60 1f       jp nz,01f60h         	;. ` .
 	ram:47cb cd 72 48       call sub_4872h       	;. r H
@@ -5873,6 +5875,7 @@ l6eb3h:
 	ram:6ec1 cd e3 6a       call sub_6ae3h       	;. . j
 	ram:6ec4 c3 ef 6b       jp sub_6befh         	;. . k
 	ram:6ec7 c9             ret                  	;.
+; BEGIN looks like data table
 l6ec8h:
 	ram:6ec8 1f             rra                  	;.
 	ram:6ec9 00             nop                  	;.
@@ -6007,6 +6010,7 @@ l6f3eh:
 	ram:6f4f 45             ld b,l               	;E
 	ram:6f50 53             ld d,e               	;S
 	ram:6f51 00             nop                  	;.
+; END looks like data table
 sub_6f52h:
 	ram:6f52 e7             rst 20h              	;.
 sub_6f53h:
@@ -6301,6 +6305,7 @@ l7167h:
 l716bh:
 	ram:716b cd e5 70       call sub_70e5h       	;. . p
 	ram:716e c8             ret z                	;.
+ ; BEGIN Looks like data table
 	ram:716f cd 4b 3e       call 03e4bh          	;. K >
 sub_7172h:
 	ram:7172 af             xor a                	;.
@@ -6387,6 +6392,7 @@ l71beh:
 	ram:71c7 54             ld d,h               	;T
 	ram:71c8 52             ld d,d               	;R
 	ram:71c9 00             nop                  	;.
+; END Looks like data table
 sub_71cah:
 	ram:71ca cd 95 3c       call 03c95h          	;. . <
 	ram:71cd fd cb 0d ce    set 1,(iy+00dh)      	;. . . .
@@ -8131,6 +8137,7 @@ l7fbbh:
 	ram:7fc1 cd 2b 0d       call 00d2bh          	;. + .
 	ram:7fc4 cd 2c 62       call sub_622ch       	;. , b
 	ram:7fc7 c9             ret                  	;.
+ ; Unused bytes fill in 16k block
 	ram:7fc8 ff             rst 38h              	;.
 	ram:7fc9 ff             rst 38h              	;.
 	ram:7fca ff             rst 38h              	;.

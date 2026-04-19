@@ -243,6 +243,7 @@ sub_41dfh:
 	ram:41df c6 30          add a,030h           	;. 0
 	ram:41e1 cd c5 3f       call 03fc5h          	;. . ?
 	ram:41e4 c9             ret                  	;.
+ ; BEGIN looks like data table
 l41e5h:
 	ram:41e5 2b             dec hl               	;+
 	ram:41e6 42             ld b,d               	;B
@@ -619,6 +620,7 @@ l4361h:
 l4366h:
 	ram:4366 3f             ccf                  	;?
 	ram:4367 00             nop                  	;.
+  ; END looks like data table
 l4368h:
 	ram:4368 cd d7 33       call 033d7h          	;. . 3
 	ram:436b 18 03          jr l4370h            	;. .
@@ -6315,7 +6317,8 @@ sub_6cefh:
 	ram:6d22 cd cb 3c       call 03ccbh          	;. . <
 	ram:6d25 fd cb 13 56    bit 2,(iy+013h)      	;. . . V
 	ram:6d29 c2 3c 0a       jp nz,00a3ch         	;. < .
-	ram:6d2c c3 60 20       jp 02060h            	;. `  
+	ram:6d2c c3 60 20       jp 02060h            	;. `
+ ; BEGIN looks like data
 	ram:6d2f 44             ld b,h               	;D
 	ram:6d30 44             ld b,h               	;D
 	ram:6d31 44             ld b,h               	;D
@@ -10270,6 +10273,7 @@ l7adbh:
 	ram:7f0e 05             dec b                	;.
 	ram:7f0f 00             nop                  	;.
 	ram:7f10 00             nop                  	;.
+ ; END looks like data
 l7f11h:
 	ram:7f11 cd d7 33       call 033d7h          	;. . 3
 l7f14h:

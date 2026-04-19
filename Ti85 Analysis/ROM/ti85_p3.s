@@ -9025,6 +9025,7 @@ sub_7fb2h:
 	ram:7fcf fd cb 11 a6    res 4,(iy+011h)      	;. . . .
 	ram:7fd3 f1             pop af               	;.
 	ram:7fd4 c9             ret                  	;.
+ ; Unused bytes remain to fill 16k block
 	ram:7fd5 ff             rst 38h              	;.
 	ram:7fd6 ff             rst 38h              	;.
 	ram:7fd7 ff             rst 38h              	;.

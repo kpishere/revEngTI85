@@ -8646,6 +8646,7 @@ l7fd2h:
 	ram:7fd3 36 20          ld (hl),020h         	;6  
 	ram:7fd5 10 fb          djnz l7fd2h          	;. .
 	ram:7fd7 c9             ret                  	;.
+ ; Unused bytes fill remaining 16k block
 	ram:7fd8 ff             rst 38h              	;.
 	ram:7fd9 ff             rst 38h              	;.
 	ram:7fda ff             rst 38h              	;.

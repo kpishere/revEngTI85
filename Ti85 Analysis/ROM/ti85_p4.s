@@ -8006,6 +8006,7 @@ sub_7dfbh:
 	ram:7dff 3e 20          ld a,020h            	;>  
 	ram:7e01 cd cd 3d       call 03dcdh          	;. . =
 	ram:7e04 c9             ret                  	;.
+ ; BEGIN Looks like data table
 	ram:7e05 ff             rst 38h              	;.
 l7e06h:
 	ram:7e06 01 40 04       ld bc,00440h         	;. @ .
@@ -8357,8 +8358,11 @@ l7fb6h:
 	ram:7fcb 7c             ld a,h               	;|
 	ram:7fcc 32 8b 32       ld (0328bh),a        	;2 . 2
 	ram:7fcf d8             ret c                	;.
-	ram:7fd0 32 ff ff       ld (0ffffh),a        	;2 . .
+	ram:7fd0 32
+    ram:7fd1 ff             rst 38h              	;.
+    ram:7fd2 ff             rst 38h              	;.
 	ram:7fd3 ff             rst 38h              	;.
+  ; END Looks like data table
 	ram:7fd4 ff             rst 38h              	;.
 	ram:7fd5 ff             rst 38h              	;.
 	ram:7fd6 ff             rst 38h              	;.
@@ -8388,7 +8392,6 @@ l7fb6h:
 	ram:7fee ff             rst 38h              	;.
 	ram:7fef ff             rst 38h              	;.
 	ram:7ff0 ff             rst 38h              	;.
-l7ff1h:
 	ram:7ff1 ff             rst 38h              	;.
 	ram:7ff2 ff             rst 38h              	;.
 	ram:7ff3 ff             rst 38h              	;.
