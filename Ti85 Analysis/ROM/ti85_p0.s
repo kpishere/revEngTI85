@@ -740,382 +740,280 @@
         ram:0368 0e 00        LD C,0x00                     ; argument or category = 0
         ram:036a cd a4 05     CALL       LAB_ram_05a4            ; compute or normalize the thunk parameters
         ram:036d cd a5 3e     CALL       thunk_FUN_ram_335f    ; dispatch to the thunk handler for this path
-        ram:0370 c3 fa 01     JP         LAB_ram_01fa
-        ram:0373 fe 03        CP 0x03
-        ram:0375 20 36        JR         NZ,LAB_ram_03ad
-        ram:0377 23           INC HL
-        ram:0378 7e           LD A,(HL)
-        ram:0379 32 05 80     LD (DAT_ram_0x8005),A
-        ram:037c fe cc        CP 0xcc
-        ram:037e 38 28        JR         C,LAB_ram_03a8
-        ram:0380 f5           PUSH AF
-        ram:0381 cd 9f 3e     CALL       thunk_FUN_ram_335f
-        ram:0384 28 0a        JR         Z,LAB_ram_0390
-        ram:0386 dd 6e 00     LD L,(IX+0x00)
+        ram:0370 c3 fa 01     JP         LAB_ram_01fa            ; exit this command branch and return to the main dispatcher
+        ram:0373 fe 03        CP 0x03                        ; branch for command/type id 3
+        ram:0375 20 36        JR         NZ,LAB_ram_03ad          ; otherwise fall through to indirect jump handling
+        ram:0377 23           INC HL                        ; HL -> parameter byte after command id
+        ram:0378 7e           LD A,(HL)                     ; A = command parameter
+        ram:0379 32 05 80     LD (DAT_ram_0x8005),A         ; cache parameter in a scratch/system byte
+        ram:037c fe cc        CP 0xcc                        ; threshold check for special handling
+        ram:037e 38 28        JR         C,LAB_ram_03a8          ; below threshold: skip thunk-driven path
+        ram:0380 f5           PUSH AF                       ; preserve parameter across helper calls
+        ram:0381 cd 9f 3e     CALL       thunk_FUN_ram_335f    ; query thunk-provided state/flags
+        ram:0384 28 0a        JR         Z,LAB_ram_0390          ; if zero, run alternate thunk call
+        ram:0386 dd 6e 00     LD L,(IX+0x00)                ; HL = pointer from IX structure
         ram:0389 dd 66 01     LD H,(IX+0x01)
-        ram:038c cb 66        BIT 4,(HL)
-        ram:038e 28 03        JR         Z,LAB_ram_0393
-        ram:0390 cd 99 3e     CALL       thunk_FUN_ram_335f
-        ram:0393 dd 7e 02     LD A,(IX+0x02)
-        ram:0396 32 7c 82     LD (0x827c),A
-        ram:0399 fd cb 11 f6  SET 6,(IY+0x11)
-        ram:039d 21 32 08     LD HL,0x0832
-        ram:03a0 cd a4 04     CALL       LAB_ram_04a4
-        ram:03a3 fd cb 11 b6  RES 6,(IY+0x11)
-        ram:03a7 f1           POP AF
-        ram:03a8 0e 00        LD C,0x00
-        ram:03aa c3 c6 02     JP         LAB_ram_02c6
-        ram:03ad 23           INC HL
-        ram:03ae e9           JP (HL)
-        ram:03af 2a aa 81     LD HL,(0x81aa)
-        ram:03b2 7c           LD A,H
+        ram:038c cb 66        BIT 4,(HL)                    ; test entry flag bit
+        ram:038e 28 03        JR         Z,LAB_ram_0393          ; if clear, skip alternate thunk call
+        ram:0390 cd 99 3e     CALL       thunk_FUN_ram_335f    ; alternate thunk action for flagged entries
+        ram:0393 dd 7e 02     LD A,(IX+0x02)                ; load IX entry metadata byte
+        ram:0396 32 7c 82     LD (0x827c),A                 ; publish metadata to system state
+        ram:0399 fd cb 11 f6  SET 6,(IY+0x11)               ; set transient mode bit while running helper
+        ram:039d 21 32 08     LD HL,0x0832                  ; helper selector/id
+        ram:03a0 cd a4 04     CALL       LAB_ram_04a4            ; perform lookup/dispatch using selected id
+        ram:03a3 fd cb 11 b6  RES 6,(IY+0x11)               ; restore mode bit after helper returns
+        ram:03a7 f1           POP AF                        ; recover saved parameter
+        ram:03a8 0e 00        LD C,0x00                      ; normalize C for common continuation
+        ram:03aa c3 c6 02     JP         LAB_ram_02c6             ; rejoin shared command-processing path
+        ram:03ad 23           INC HL                        ; HL -> jump target word
+        ram:03ae e9           JP (HL)                        ; execute handler pointer stored in table/stream
+        ram:03af 2a aa 81     LD HL,(0x81aa)                ; HL = ring index/state word
+        ram:03b2 7c           LD A,H                        ; compare high/low bytes for quick state test
         ram:03b3 bd           CP L
-        ram:03b4 28 11        JR         Z,LAB_ram_03c7
-        ram:03b6 6c           LD L,H
-        ram:03b7 26 00        LD H,0x00
-        ram:03b9 11 ac 81     LD DE,0x81ac
-        ram:03bc 19           ADD HL,DE
-        ram:03bd 4e           LD C,(HL)
-        ram:03be 3c           INC A
-        ram:03bf e6 0f        AND 0x0f
-        ram:03c1 32 ab 81     LD (DAT_ram_0x81ab),A
-        ram:03c4 97           SUB A
-        ram:03c5 37           SCF
+        ram:03b4 28 11        JR         Z,LAB_ram_03c7          ; equal: use alternate status path
+        ram:03b6 6c           LD L,H                        ; L = index
+        ram:03b7 26 00        LD H,0x00                      ; HL = zero-extended index
+        ram:03b9 11 ac 81     LD DE,0x81ac                  ; base of 16-byte circular data buffer
+        ram:03bc 19           ADD HL,DE                     ; HL -> current slot
+        ram:03bd 4e           LD C,(HL)                     ; C = buffered byte
+        ram:03be 3c           INC A                         ; next index
+        ram:03bf e6 0f        AND 0x0f                       ; wrap to 0..15
+        ram:03c1 32 ab 81     LD (DAT_ram_0x81ab),A         ; store next-read index/state
+        ram:03c4 97           SUB A                          ; A = 0
+        ram:03c5 37           SCF                            ; carry set marks successful fetch
         ram:03c6 c9           RET
-        ram:03c7 21 56 83     LD HL,0x8356
-        ram:03ca cb 6e        BIT 5,(HL)
-        ram:03cc c8           RET Z
-        ram:03cd cb ae        RES 5,(HL)
-        ram:03cf 0e 20        LD C,0x20
-        ram:03d1 cb 76        BIT 6,(HL)
-        ram:03d3 28 ef        JR         Z,LAB_ram_03c4
-        ram:03d5 0e 28        LD C,0x28
-        ram:03d7 18 eb        JR         LAB_ram_03c4
-        ram:03d9 e5           PUSH HL
-        ram:03da ed 5b aa 81  LD DE,(0x81aa)
-        ram:03de 16 00        LD D,0x00
-        ram:03e0 21 ac 81     LD HL,0x81ac
-        ram:03e3 19           ADD HL,DE
-        ram:03e4 77           LD (HL),A
-        ram:03e5 7b           LD A,E
-        ram:03e6 3c           INC A
-        ram:03e7 e6 0f        AND 0x0f
-        ram:03e9 32 aa 81     LD (DAT_ram_0x81aa),A
+        ram:03c7 21 56 83     LD HL,0x8356                  ; status flag byte
+        ram:03ca cb 6e        BIT 5,(HL)                    ; pending synthesized-byte flag?
+        ram:03cc c8           RET Z                          ; none pending
+        ram:03cd cb ae        RES 5,(HL)                    ; consume pending flag
+        ram:03cf 0e 20        LD C,0x20                      ; default synthesized token
+        ram:03d1 cb 76        BIT 6,(HL)                    ; alternate token selector
+        ram:03d3 28 ef        JR         Z,LAB_ram_03c4          ; return with C=0x20
+        ram:03d5 0e 28        LD C,0x28                      ; alternate synthesized token
+        ram:03d7 18 eb        JR         LAB_ram_03c4             ; return with C=0x28
+        ram:03d9 e5           PUSH HL                       ; preserve caller HL
+        ram:03da ed 5b aa 81  LD DE,(0x81aa)                ; E = write index
+        ram:03de 16 00        LD D,0x00                      ; DE = zero-extended index
+        ram:03e0 21 ac 81     LD HL,0x81ac                  ; ring buffer base
+        ram:03e3 19           ADD HL,DE                     ; HL -> write slot
+        ram:03e4 77           LD (HL),A                     ; enqueue byte from A
+        ram:03e5 7b           LD A,E                        ; A = old index
+        ram:03e6 3c           INC A                          ; increment index
+        ram:03e7 e6 0f        AND 0x0f                       ; wrap to 16-slot ring
+        ram:03e9 32 aa 81     LD (DAT_ram_0x81aa),A         ; persist new write index
         ram:03ec e1           POP HL
         ram:03ed c9           RET
-        ram:03ee e5           PUSH HL
-        ram:03ef cd b1 3e     CALL       thunk_FUN_ram_335f
-        ram:03f2 3e 05        LD A,0x05
-        ram:03f4 28 e4        JR         Z,LAB_ram_03da
-        ram:03f6 2b           DEC HL
-        ram:03f7 be           CP (HL)
-        ram:03f8 20 e0        JR         NZ,LAB_ram_03da
-        ram:03fa e1           POP HL
+        ram:03ee e5           PUSH HL                       ; preserve HL across predicate check
+        ram:03ef cd b1 3e     CALL       thunk_FUN_ram_335f    ; external/state check for current context
+        ram:03f2 3e 05        LD A,0x05                     ; expected marker byte
+        ram:03f4 28 e4        JR         Z,LAB_ram_03da          ; if check says yes, enqueue marker directly
+        ram:03f6 2b           DEC HL                         ; else inspect previous byte in stream
+        ram:03f7 be           CP (HL)                        ; equals 0x05?
+        ram:03f8 20 e0        JR         NZ,LAB_ram_03da          ; if not, enqueue marker
+        ram:03fa e1           POP HL                        ; marker already present; restore HL
         ram:03fb c9           RET
         ram:03fc f5           PUSH AF
         ram:03fd e5           PUSH HL
-        ram:03fe 21 8d 81     LD HL,0x818d
-        ram:0401 11 9b 81     LD DE,0x819b
-        ram:0404 01 0e 00     LD BC,0x000e
-        ram:0407 ed b0        LDIR
-        ram:0409 3a 53 83     LD A,(0x8353)
-        ram:040c 12           LD (DE),A
-        ram:040d 21 e1 81     LD HL,0x81e1
-        ram:0410 11 ff 81     LD DE,0x81ff
-        ram:0413 01 0f 00     LD BC,0x000f
-        ram:0416 ed b0        LDIR
+        ram:03fe 21 8d 81     LD HL,0x818d                  ; source block #1 (text parameter state)
+        ram:0401 11 9b 81     LD DE,0x819b                  ; backup block #1
+        ram:0404 01 0e 00     LD BC,0x000e                  ; copy 14 bytes (documented in ti-rom.txt)
+        ram:0407 ed b0        LDIR                           ; 818D..819A -> 819B..81A8
+        ram:0409 3a 53 83     LD A,(0x8353)                 ; capture adjacent mode/status byte
+        ram:040c 12           LD (DE),A                     ; store after first copied block (at 81A9)
+        ram:040d 21 e1 81     LD HL,0x81e1                  ; source block #2
+        ram:0410 11 ff 81     LD DE,0x81ff                  ; backup block #2
+        ram:0413 01 0f 00     LD BC,0x000f                  ; copy 15 bytes (documented in ti-rom.txt)
+        ram:0416 ed b0        LDIR                           ; 81E1..81EF -> 81FF..820D
         ram:0418 e1           POP HL
         ram:0419 f1           POP AF
-        ram:041a c9           RET                             
+        ram:041a c9           RET                             ; return after saving UI/text state snapshot
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_041b()
              undefined         A:1            <RETURN>
                              FUN_ram_041b                                    XREF[1]:     ram:0605(c)
-        ram:041b f5              PUSH       AF
+        ram:041b f5              PUSH       AF                       ; preserve caller registers
         ram:041c e5              PUSH       HL
-        ram:041d 21 9b 81        LD         HL,0x819b
-        ram:0420 11 8d 81        LD         DE,0x818d
-        ram:0423 01 0e 00        LD         BC,0xe
-        ram:0426 ed b0           LDIR
-        ram:0428 7e              LD         A,(HL=>DAT_ram_819c)
-        ram:0429 32 53 83        LD         (DAT_ram_8353),A
-        ram:042c 21 ff 81        LD         HL,0x81ff
-        ram:042f 11 e1 81        LD         DE,0x81e1
-        ram:0432 01 0f 00        LD         BC,0xf
-        ram:0435 ed b0           LDIR
-        ram:0437 3a ef 81        LD         A,(DAT_ram_81ef)
-        ram:043a fe 03           CP         0x3
+        ram:041d 21 9b 81        LD         HL,0x819b               ; source = backup block #1
+        ram:0420 11 8d 81        LD         DE,0x818d               ; destination = live block #1
+        ram:0423 01 0e 00        LD         BC,0xe                  ; restore 14 bytes (inverse of 03fc routine)
+        ram:0426 ed b0           LDIR                                ; 819B..81A8 -> 818D..819A
+        ram:0428 7e              LD         A,(HL=>DAT_ram_819c)    ; HL now points just past copied block (81A9)
+        ram:0429 32 53 83        LD         (DAT_ram_8353),A        ; restore saved companion state byte
+        ram:042c 21 ff 81        LD         HL,0x81ff               ; source = backup block #2
+        ram:042f 11 e1 81        LD         DE,0x81e1               ; destination = live block #2
+        ram:0432 01 0f 00        LD         BC,0xf                  ; restore 15 bytes
+        ram:0435 ed b0           LDIR                                ; 81FF..820D -> 81E1..81EF
+        ram:0437 3a ef 81        LD         A,(DAT_ram_81ef)        ; use restored UI/window parameter
+        ram:043a fe 03           CP         0x3                     ; clamp for next field (max value used here is 2)
         ram:043c 38 02           JR         C,LAB_ram_0440
         ram:043e 3e 02           LD         A,0x2
                              LAB_ram_0440                                    XREF[1]:     ram:043c(j)
-        ram:0440 32 dd 81        LD         (DAT_ram_81dd),A
-        ram:0443 d6 08           SUB        0x8
-        ram:0445 ed 44           NEG
-        ram:0447 32 30 8b        LD         (DAT_ram_8b30),A
+        ram:0440 32 dd 81        LD         (DAT_ram_81dd),A        ; normalized row/window selector
+        ram:0443 d6 08           SUB        0x8                     ; A = selector - 8
+        ram:0445 ed 44           NEG                                ; A = 8 - selector (maps into 1..8 window row domain)
+        ram:0447 32 30 8b        LD         (DAT_ram_8b30),A        ; set bottom row of text/scroll window (docs: 8B30)
         ram:044a e1              POP        HL
         ram:044b f1              POP        AF
         ram:044c c9              RET
-        ram:044d fd              ??         FDh
+        ram:044d fd              ??         FDh                     ; lone FD prefix byte before next decoded function body
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_044e()
              undefined         A:1            <RETURN>
                              FUN_ram_044e                                    XREF[1]:     ram:3f2c(c)
-        ram:044e cb 09           RRC        C
-        ram:0450 46              LD         B,(HL)
-        ram:0451 c8              RET        Z
+        ram:044e cb 09           RRC        C                       ; rotate C right through carry to expose a low-bit predicate in flags
+        ram:0450 46              LD         B,(HL)                 ; read current descriptor byte
+        ram:0451 c8              RET        Z                      ; quick-exit when rotated result indicates no work
         ram:0452 7c              LD         A,H
-        ram:0453 fe ff           CP         0xff
+        ram:0453 fe ff           CP         0xff                   ; reject sentinel/high-page pointers
         ram:0455 c8              RET        Z
-        ram:0456 7e              LD         A,(HL)
-        ram:0457 e6 07           AND        0x7
+        ram:0456 7e              LD         A,(HL)                 ; inspect descriptor flags
+        ram:0457 e6 07           AND        0x7                    ; require non-zero subtype/id in low 3 bits
         ram:0459 c8              RET        Z
-        ram:045a cb 7e           BIT        0x7,(HL)
+        ram:045a cb 7e           BIT        0x7,(HL)               ; require "active/extended" flag bit
         ram:045c c8              RET        Z
-        ram:045d 2b              DEC        HL
+        ram:045d 2b              DEC        HL                     ; step back to a 2-byte pointer field
         ram:045e 2b              DEC        HL
-        ram:045f c3 33 00        JP         LAB_ram_0033
-        ram:0462 0e              ??         0Eh
-        ram:0463 00              ??         00h
-        ram:0464 ed              ??         EDh
-        ram:0465 7b              ??         7Bh    {
-        ram:0466 bc              ??         BCh
-        ram:0467 81              ??         81h
-        ram:0468 fd              ??         FDh
-        ram:0469 cb              ??         CBh
-        ram:046a 0c              ??         0Ch
-        ram:046b b6              ??         B6h
-        ram:046c 21              ??         21h    !
-        ram:046d cb              ??         CBh
-        ram:046e 07              ??         07h
-        ram:046f cd              ??         CDh
-        ram:0470 a4              ??         A4h
-        ram:0471 04              ??         04h
-        ram:0472 97              ??         97h
-        ram:0473 c3              ??         C3h
-        ram:0474 c6              ??         C6h
-        ram:0475 02              ??         02h
+        ram:045f c3 33 00        JP         LAB_ram_0033            ; tail-call helper that loads HL <- (HL)
+        ram:0462 0e 00           LD         C,0x00                 ; setup for common command-dispatch path
+        ram:0464 ed 7b bc 81     LD         SP,(DAT_ram_81bc)      ; restore stack pointer from saved system stack location
+        ram:0468 fd cb 0c b6     RES        6,(IY+0x0c)            ; clear status bit in system flags
+        ram:046c 21 cb 07        LD         HL,0x07cb              ; load helper selector/id used elsewhere in this dispatcher
+        ram:046f cd a4 04        CALL       LAB_ram_04a4            ; invoke dispatcher/translation helper
+        ram:0472 97              SUB        A                      ; A = 0
+        ram:0473 c3 c6 02        JP         LAB_ram_02c6            ; jump to shared continuation with C=0, A=0
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
                              undefined FUN_ram_0476()
              undefined         A:1            <RETURN>
                              FUN_ram_0476                                    XREF[1]:     FUN_ram_0aeb:0b82(c)
-        ram:0476 2a e3 8b        LD         HL,(DAT_ram_8be3)
+        ram:0476 2a e3 8b        LD         HL,(DAT_ram_8be3)      ; docs: update VAT end pointer shadow
                              LAB_ram_0479                                    XREF[1]:     ram:3f08(j)
-        ram:0479 22 e5 8b        LD         (DAT_ram_8be5),HL
-        ram:047c 2a df 8b        LD         HL,(DAT_ram_8bdf)
-        ram:047f 22 e1 8b        LD         (DAT_ram_8be1),HL
-        ram:0482 2a bc 81        LD         HL,(DAT_ram_81bc)
-        ram:0485 22 38 83        LD         (DAT_ram_8338),HL
+        ram:0479 22 e5 8b        LD         (DAT_ram_8be5),HL      ; (8BE5)=(8BE3)
+        ram:047c 2a df 8b        LD         HL,(DAT_ram_8bdf)      ; docs: update end-of-used-user-memory shadow
+        ram:047f 22 e1 8b        LD         (DAT_ram_8be1),HL      ; (8BE1)=(8BDF)
+        ram:0482 2a bc 81        LD         HL,(DAT_ram_81bc)      ; saved stack/system pointer pair
+        ram:0485 22 38 83        LD         (DAT_ram_8338),HL      ; docs note this copy but leaves meaning unknown
         ram:0488 c9              RET
-        ram:0489 ed              ??         EDh
-        ram:048a 7b              ??         7Bh    {
-        ram:048b bc              ??         BCh
-        ram:048c 81              ??         81h
-        ram:048d 21              ??         21h    !
-        ram:048e c9              ??         C9h
-        ram:048f 08              ??         08h
-        ram:0490 cd              ??         CDh
-        ram:0491 96              ??         96h
-        ram:0492 04              ??         04h
-        ram:0493 c3              ??         C3h
-        ram:0494 fa              ??         FAh
-        ram:0495 01              ??         01h
-        ram:0496 97              ??         97h
-        ram:0497 32              ??         32h    2
-        ram:0498 05              ??         05h
-        ram:0499 80              ??         80h
-        ram:049a db              ??         DBh
-        ram:049b 05              ??         05h
-        ram:049c f5              ??         F5h
-        ram:049d cd              ??         CDh
-        ram:049e a4              ??         A4h
-        ram:049f 04              ??         04h
-        ram:04a0 f1              ??         F1h
-        ram:04a1 d3              ??         D3h
-        ram:04a2 05              ??         05h
-        ram:04a3 c9              ??         C9h
-        ram:04a4 23              ??         23h    #
-        ram:04a5 5e              ??         5Eh    ^
-        ram:04a6 23              ??         23h    #
-        ram:04a7 3a              ??         3Ah    :
-        ram:04a8 9a              ??         9Ah
-        ram:04a9 81              ??         81h
-        ram:04aa be              ??         BEh
-        ram:04ab 20              ??         20h
-        ram:04ac 15              ??         15h
-        ram:04ad fe              ??         FEh
-        ram:04ae 0e              ??         0Eh
-        ram:04af 28              ??         28h    (
-        ram:04b0 11              ??         11h
-        ram:04b1 fe              ??         FEh
-        ram:04b2 11              ??         11h
-        ram:04b3 28              ??         28h    (
-        ram:04b4 0d              ??         0Dh
-        ram:04b5 fe              ??         FEh
-        ram:04b6 1a              ??         1Ah
-        ram:04b7 20              ??         20h
-        ram:04b8 06              ??         06h
-        ram:04b9 83              ??         83h
-        ram:04ba fe              ??         FEh
-        ram:04bb 1a              ??         1Ah
-        ram:04bc 28              ??         28h    (
-        ram:04bd 04              ??         04h
-        ram:04be 93              ??         93h
-        ram:04bf 06              ??         06h
-        ram:04c0 c1              ??         C1h
-        ram:04c1 c9              ??         C9h
-        ram:04c2 cb              ??         CBh
-        ram:04c3 7e              ??         7Eh    ~
-        ram:04c4 28              ??         28h    (
-        ram:04c5 0e              ??         0Eh
-        ram:04c6 e6              ??         E6h
-        ram:04c7 3f              ??         3Fh    ?
-        ram:04c8 fe              ??         FEh
-        ram:04c9 19              ??         19h
-        ram:04ca 38              ??         38h    8
-        ram:04cb 08              ??         08h
-        ram:04cc 7e              ??         7Eh    ~
-        ram:04cd fe              ??         FEh
-        ram:04ce 98              ??         98h
-        ram:04cf 28              ??         28h    (
-        ram:04d0 03              ??         03h
-        ram:04d1 06              ??         06h
-        ram:04d2 00              ??         00h
-        ram:04d3 c9              ??         C9h
-        ram:04d4 fd              ??         FDh
-        ram:04d5 cb              ??         CBh
-        ram:04d6 0c              ??         0Ch
-        ram:04d7 a6              ??         A6h
-        ram:04d8 c5              ??         C5h
-        ram:04d9 d5              ??         D5h
-        ram:04da 3a              ??         3Ah    :
-        ram:04db fe              ??         FEh
-        ram:04dc 81              ??         81h
-        ram:04dd b7              ??         B7h
-        ram:04de 28              ??         28h    (
-        ram:04df 17              ??         17h
-        ram:04e0 e5              ??         E5h
-        ram:04e1 3a              ??         3Ah    :
-        ram:04e2 de              ??         DEh
-        ram:04e3 81              ??         81h
-        ram:04e4 f5              ??         F5h
-        ram:04e5 cd              ??         CDh
-        ram:04e6 b7              ??         B7h
-        ram:04e7 3e              ??         3Eh    >
-        ram:04e8 cd              ??         CDh
-        ram:04e9 bd              ??         BDh
-        ram:04ea 3e              ??         3Eh    >
+        ram:0489 ed 7b bc 81     LD         SP,(DAT_ram_81bc)      ; restore stack pointer from system save slot
+        ram:048d 21 c9 08        LD         HL,0x08c9              ; table/selector base used by helper at 04A4
+        ram:0490 cd 96 04        CALL       FUN_ram_0496
+        ram:0493 c3 fa 01        JP         LAB_ram_01fa           ; return to shared dispatcher exit
+        ram:0496 97              SUB        A                      ; A = 0
+        ram:0497 32 05 80        LD         (DAT_ram_0x8005),A     ; clear scratch/status byte
+        ram:049a db 05           IN         A,(0x05)               ; read current ROM page port value
+        ram:049c f5              PUSH       AF                     ; preserve current page mapping
+        ram:049d cd a4 04        CALL       LAB_ram_04a4           ; evaluate/translate current entry from table stream
+        ram:04a0 f1              POP        AF
+        ram:04a1 d3 05           OUT        (0x05),A               ; restore ROM page mapping
+        ram:04a3 c9              RET
+        ram:04a4 23              INC        HL                     ; skip selector byte
+        ram:04a5 5e              LD         E,(HL)                 ; E = per-entry adjustment value
+        ram:04a6 23              INC        HL
+        ram:04a7 3a 9a 81        LD         A,(DAT_ram_0x819a)     ; A = current token/key code
+        ram:04aa be              CP         (HL)                    ; compare against entry token
+        ram:04ab 20 15           JR         NZ,LAB_ram_04c2
+        ram:04ad fe 0e           CP         0x0e                    ; special token cases
+        ram:04af 28 11           JR         Z,LAB_ram_04c2
+        ram:04b1 fe 11           CP         0x11
+        ram:04b3 28 0d           JR         Z,LAB_ram_04c2
+        ram:04b5 fe 1a           CP         0x1a
+        ram:04b7 20 06           JR         NZ,LAB_ram_04bf
+        ram:04b9 83              ADD        A,E                     ; attempt token transform for 0x1A case
+        ram:04ba fe 1a           CP         0x1a
+        ram:04bc 28 04           JR         Z,LAB_ram_04c2
+        ram:04be 93              SUB        E                       ; restore A when transform not accepted
+        ram:04bf 06 c1           LD         B,0xc1                  ; mark successful match/classification in B
+        ram:04c1 c9              RET
+                 LAB_ram_04c2                                    XREF[5]:     ram:04ab(j), ram:04af(j),
+                              ram:04b3(j), ram:04bc(j),
+                              ram:058f(c)
+        ram:04c2 cb 7e           BIT        7,(HL)                 ; fallback path validates entry flags and range
+        ram:04c4 28 0e           JR         Z,LAB_ram_04d4
+        ram:04c6 e6 3f           AND        0x3f                    ; use lower 6 bits as normalized token id
+        ram:04c8 fe 19           CP         0x19
+        ram:04ca 38 08           JR         C,LAB_ram_04d4
+        ram:04cc 7e              LD         A,(HL)
+        ram:04cd fe 98           CP         0x98
+        ram:04cf 28 03           JR         Z,LAB_ram_04d4
+        ram:04d1 06 00           LD         B,0x00                  ; invalidate classification when checks fail
+        ram:04d3 c9              RET
+                 LAB_ram_04d4                                    XREF[4]:     ram:04c4(j), ram:04ca(j),
+                              ram:04cf(j), ram:0530(j)
+        ram:04d4 fd cb 0c a6     RES        4,(IY+0x0c)             ; clear mode/status flag before input handling
+        ram:04d8 c5              PUSH       BC
+        ram:04d9 d5              PUSH       DE
+        ram:04da 3a fe 81        LD         A,(DAT_ram_81fe)
+        ram:04dd b7              OR         A
+        ram:04de 28 17           JR         Z,LAB_ram_04f7          ; skip pre-processing if state byte is zero
+        ram:04e0 e5              PUSH       HL
+        ram:04e1 3a de 81        LD         A,(DAT_ram_81de)
+        ram:04e4 f5              PUSH       AF
+        ram:04e5 cd b7 3e        CALL       thunk_FUN_ram_335f      ; thunked helper sequence for active state
+        ram:04e8 cd bd 3e        CALL       thunk_FUN_ram_335f
         ram:04eb cd 9f 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:04ee 37              ??         37h    7
-        ram:04ef cc              ??         CCh
-        ram:04f0 81              ??         81h
-        ram:04f1 05              ??         05h
-        ram:04f2 f1              ??         F1h
-        ram:04f3 32              ??         32h    2
-        ram:04f4 de              ??         DEh
-        ram:04f5 81              ??         81h
-        ram:04f6 e1              ??         E1h
-        ram:04f7 cd              ??         CDh
-        ram:04f8 63              ??         63h    c
-        ram:04f9 05              ??         05h
-        ram:04fa 3a              ??         3Ah    :
-        ram:04fb 9a              ??         9Ah
-        ram:04fc 81              ??         81h
-        ram:04fd 17              ??         17h
-        ram:04fe 38              ??         38h    8
-        ram:04ff 09              ??         09h
-        ram:0500 cb              ??         CBh
-        ram:0501 7e              ??         7Eh    ~
-        ram:0502 28              ??         28h    (
-        ram:0503 1c              ??         1Ch
-        ram:0504 cd              ??         CDh
-        ram:0505 fc              ??         FCh
-        ram:0506 03              ??         03h
-        ram:0507 18              ??         18h
-        ram:0508 1a              ??         1Ah
-        ram:0509 cd              ??         CDh
-        ram:050a 6e              ??         6Eh    n
-        ram:050b 05              ??         05h
-        ram:050c cb              ??         CBh
-        ram:050d 7e              ??         7Eh    ~
-        ram:050e 20              ??         20h
-        ram:050f 13              ??         13h
-        ram:0510 cd              ??         CDh
-        ram:0511 1b              ??         1Bh
-        ram:0512 04              ??         04h
-        ram:0513 3a              ??         3Ah    :
-        ram:0514 9a              ??         9Ah
-        ram:0515 81              ??         81h
-        ram:0516 be              ??         BEh
-        ram:0517 20              ??         20h
-        ram:0518 07              ??         07h
+        ram:04ee 37              SCF                               ; force carry for conditional call below
+        ram:04ef cc 81 05        CALL       Z,FUN_ram_0581         ; executes only if Z still set despite SCF
+        ram:04f2 f1              POP        AF
+        ram:04f3 32 de 81        LD         (DAT_ram_81de),A       ; restore preserved state byte
+        ram:04f6 e1              POP        HL
+                 LAB_ram_04f7                                    XREF[1]:     ram:04de(j)
+        ram:04f7 cd 63 05        CALL       FUN_ram_0563           ; setup HL/context from state pointer 818F
+        ram:04fa 3a 9a 81        LD         A,(DAT_ram_0x819a)     ; current token/key code
+        ram:04fd 17              RLA                               ; use carry from high bit to choose path
+        ram:04fe 38 09           JR         C,LAB_ram_0509
+        ram:0500 cb 7e           BIT        7,(HL)
+        ram:0502 28 1c           JR         Z,LAB_ram_0520
+        ram:0504 cd fc 03        CALL       FUN_ram_03fc           ; save text/UI context snapshot
+        ram:0507 18 1a           JR         LAB_ram_0523
+                 LAB_ram_0509                                    XREF[1]:     ram:04fe(j)
+        ram:0509 cd 6e 05        CALL       FUN_ram_056e           ; alternate setup path
+        ram:050c cb 7e           BIT        7,(HL)
+        ram:050e 20 13           JR         NZ,LAB_ram_0523
+        ram:0510 cd 1b 04        CALL       FUN_ram_041b           ; restore context snapshot
+        ram:0513 3a 9a 81        LD         A,(DAT_ram_0x819a)
+        ram:0516 be              CP         (HL)
+        ram:0517 20 07           JR         NZ,LAB_ram_0520
         ram:0519 cd bd 3e        CALL       thunk_FUN_ram_335f                               undefined thunk_FUN_ram_335f()
                              -- Flow Override: CALL_RETURN (CALL_TERMINATOR)
-        ram:051c d1              ??         D1h
-        ram:051d c1              ??         C1h
-        ram:051e 18              ??         18h
-        ram:051f 5c              ??         5Ch    \
-        ram:0520 cd              ??         CDh
-        ram:0521 57              ??         57h    W
-        ram:0522 05              ??         05h
-        ram:0523 cd              ??         CDh
-        ram:0524 c3              ??         C3h
-        ram:0525 3e              ??         3Eh    >
-        ram:0526 fd              ??         FDh
-        ram:0527 cb              ??         CBh
-        ram:0528 11              ??         11h
-        ram:0529 96              ??         96h
-        ram:052a 7e              ??         7Eh    ~
-        ram:052b 32              ??         32h    2
-        ram:052c 9a              ??         9Ah
-        ram:052d 81              ??         81h
-        ram:052e fe              ??         FEh
-        ram:052f 04              ??         04h
-        ram:0530 28              ??         28h    (
-        ram:0531 10              ??         10h
-        ram:0532 fe              ??         FEh
-        ram:0533 4c              ??         4Ch    L
-        ram:0534 28              ??         28h    (
-        ram:0535 0c              ??         0Ch
-        ram:0536 fe              ??         FEh
-        ram:0537 4b              ??         4Bh    K
-        ram:0538 28              ??         28h    (
-        ram:0539 08              ??         08h
-        ram:053a fe              ??         FEh
-        ram:053b 4a              ??         4Ah    J
-        ram:053c 28              ??         28h    (
-        ram:053d 04              ??         04h
-        ram:053e 17              ??         17h
-        ram:053f d4              ??         D4h
-        ram:0540 2d              ??         2Dh    -
-        ram:0541 06              ??         06h
-        ram:0542 d1              ??         D1h
-        ram:0543 3a              ??         3Ah    :
-        ram:0544 05              ??         05h
-        ram:0545 80              ??         80h
-        ram:0546 23              ??         23h    #
-        ram:0547 fd              ??         FDh
-        ram:0548 cb              ??         CBh
-        ram:0549 01              ??         01h
-        ram:054a ee              ??         EEh
-        ram:054b cd              ??         CDh
-        ram:054c b4              ??         B4h
-        ram:054d 05              ??         05h
-        ram:054e fd              ??         FDh
-        ram:054f cb              ??         CBh
-        ram:0550 01              ??         01h
-        ram:0551 ae              ??         AEh
-        ram:0552 c1              ??         C1h
-        ram:0553 c9              ??         C9h
-        ram:0554 cd              ??         CDh
-        ram:0555 63              ??         63h    c
-        ram:0556 05              ??         05h
+        ram:051c d1              POP        DE
+        ram:051d c1              POP        BC
+        ram:051e 18 5c           JR         LAB_ram_057c           ; branch into continuation path outside requested range
+                 LAB_ram_0520                                    XREF[3]:     ram:0502(j), ram:0517(j),
+                              ram:05a5(j)
+        ram:0520 cd 57 05        CALL       FUN_ram_0557           ; clear/update state bits and alpha flags
+                 LAB_ram_0523                                    XREF[3]:     ram:0507(j), ram:050e(j),
+                              ram:0526(c)
+        ram:0523 cd c3 3e        CALL       thunk_FUN_ram_335f
+        ram:0526 fd cb 11 96     RES        2,(IY+0x11)            ; clear transient mode bit
+        ram:052a 7e              LD         A,(HL)
+        ram:052b 32 9a 81        LD         (DAT_ram_0x819a),A     ; publish selected token/key code
+        ram:052e fe 04           CP         0x04                    ; special token filters (4,4C,4B,4A)
+        ram:0530 28 10           JR         Z,LAB_ram_0542
+        ram:0532 fe 4c           CP         0x4c
+        ram:0534 28 0c           JR         Z,LAB_ram_0542
+        ram:0536 fe 4b           CP         0x4b
+        ram:0538 28 08           JR         Z,LAB_ram_0542
+        ram:053a fe 4a           CP         0x4a
+        ram:053c 28 04           JR         Z,LAB_ram_0542
+        ram:053e 17              RLA
+        ram:053f d4 2d 06        CALL       NC,FUN_ram_062d        ; conditional helper when carry remains clear
+                 LAB_ram_0542                                    XREF[4]:     ram:0530(j), ram:0534(j),
+                              ram:0538(j), ram:053c(j)
+        ram:0542 d1              POP        DE
+        ram:0543 3a 05 80        LD         A,(DAT_ram_0x8005)
+        ram:0546 23              INC        HL
+        ram:0547 fd cb 01 ee     SET        5,(IY+0x1)             ; enter protected state around call
+        ram:054b cd b4 05        CALL       FUN_ram_05b4
+        ram:054e fd cb 01 ae     RES        5,(IY+0x1)             ; leave protected state
+        ram:0552 c1              POP        BC
+        ram:0553 c9              RET
+        ram:0554 cd 63 05        CALL       FUN_ram_0563           ; alternate entry tail (instruction crosses 0556 boundary)
                              **************************************************************
                              *                          FUNCTION                          *
                              **************************************************************
